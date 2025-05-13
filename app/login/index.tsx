@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, Dimensions, Pressable } from 'react-native'
+import { View, Text, StyleSheet, FlatList, Dimensions, Pressable, TouchableWithoutFeedback, Keyboard } from 'react-native'
 import React from 'react'
 import { Image } from 'expo-image'
 import Fonts from '@/constants/Fonts'
@@ -39,14 +39,14 @@ const LoginView = () => {
             setError('Por favor completa todos los campos')
             return
         }
-        
+
         setError('')
         setIsLoading(true)
-        
+
         try {
             const response = await login({ email, password })
             const data = response.data
-            
+
             if (data) {
                 router.push('/(tabs)/two')
             }
@@ -60,31 +60,31 @@ const LoginView = () => {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 15 }}>
             <Text style={styles.textPrincipal}>Bosko</Text>
-            <TextInput 
-                placeholder='E-mail' 
-                value={email} 
-                placeholderTextColor={'gray'} 
+            <TextInput
+                placeholder='E-mail'
+                value={email}
+                placeholderTextColor={'gray'}
                 onChangeText={text => {
                     setEmail(text)
                     setError('')
-                }} 
+                }}
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
-            <TextInput 
-                placeholder='Contraseña' 
-                value={password} 
-                placeholderTextColor={'gray'} 
+            <TextInput
+                placeholder='Contraseña'
+                value={password}
+                placeholderTextColor={'gray'}
                 onChangeText={text => {
                     setPassword(text)
                     setError('')
-                }} 
+                }}
                 style={styles.input}
                 secureTextEntry
             />
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <Pressable 
+            <Pressable
                 onPress={handleLogin}
                 disabled={isLoading}
                 style={({ pressed }) => [
@@ -138,8 +138,8 @@ const RegisterPage = () => {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 15 }}>
             <Text style={styles.textPrincipal}>Registro en Bosko</Text>
-            
-            <TextInput 
+
+            <TextInput
                 placeholder='Nombre completo'
                 value={formData.fullName}
                 placeholderTextColor={'gray'}
@@ -151,7 +151,7 @@ const RegisterPage = () => {
                 autoCapitalize="words"
             />
 
-            <TextInput 
+            <TextInput
                 placeholder='Nombre de usuario'
                 value={formData.userName}
                 placeholderTextColor={'gray'}
@@ -163,7 +163,7 @@ const RegisterPage = () => {
                 autoCapitalize="none"
             />
 
-            <TextInput 
+            <TextInput
                 placeholder='E-mail'
                 value={formData.email}
                 placeholderTextColor={'gray'}
@@ -176,7 +176,7 @@ const RegisterPage = () => {
                 autoCapitalize="none"
             />
 
-            <TextInput 
+            <TextInput
                 placeholder='Contraseña'
                 value={formData.password}
                 placeholderTextColor={'gray'}
@@ -190,7 +190,7 @@ const RegisterPage = () => {
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <Pressable 
+            <Pressable
                 onPress={handleRegister}
                 disabled={isLoading}
                 style={({ pressed }) => [
@@ -286,13 +286,13 @@ export default function Index() {
                 pagingEnabled={true}
                 snapEnabled={true}
             />
-            <Pagination.Basic
+            {/* <Pagination.Basic
                 progress={progress}
                 data={data}
                 dotStyle={{ backgroundColor: "rgba(0,0,0,0.2)", borderRadius: 50 }}
                 containerStyle={{ gap: 5, marginTop: 10 }}
                 onPress={onPressPagination}
-            />
+            /> */}
         </View>
     )
 }
