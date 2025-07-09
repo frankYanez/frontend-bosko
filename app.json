@@ -4,15 +4,18 @@
     "slug": "Bosko",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/bosko-logo.png",
     "scheme": "bosko",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/bosko-logo.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000"
+      "backgroundColor": "red"
     },
+
+
+    "newArchEnabled": true,
+   
     "ios": {
       "supportsTablet": true
     },

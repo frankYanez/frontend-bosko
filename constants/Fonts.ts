@@ -5,4 +5,6 @@ export default {
         light: 'Poppins_300Light',
         thin: "200",
     },
+    
+
 }
