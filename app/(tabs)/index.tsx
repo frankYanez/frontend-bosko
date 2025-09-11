@@ -1,144 +1,72 @@
-import Header from "@/components/Header";
-import TopCarousel from "@/components/TopCarousel";
-import { globalStyles } from "@/styles/global-styles";
-import { Image } from "expo-image";
-import { router } from "expo-router";
-import { useState } from "react";
-import {
-  Keyboard,
-  StyleSheet,
-  Text,
-  ScrollView,
-  TouchableWithoutFeedback,
-  View,
-  FlatList,
-  Pressable,
-} from "react-native";
+// /screens/Dashboard.tsx
+import { View, FlatList } from "react-native";
+import { NavBar } from "@/components/Navbar";
+import { HeroCarousel } from "@/components/HeroCarousel";
+import { CategoryChips } from "@/components/CategoryChips";
+import { ProfessionalsCarousel } from "@/components/ProfesionalCarousel";
+import { PromoBanner } from "@/components/PromoBanner";
+import { OffersGrid } from "@/components/OffersGrid";
+import { QuickActions } from "@/components/QuickActions";
+import { TOKENS } from "@/theme/tokens";
 
-import { Searchbar } from "react-native-paper";
+const hero = [
+  {
+    title: "Encontrá profesionales",
+    subtitle: "Cerca tuyo, verificados",
+    cta: "Explorar",
+  },
+  {
+    title: "Ofrecé tu trabajo",
+    subtitle: "Mostrá tu perfil y crecé",
+    cta: "Publicar",
+  },
+];
+const categories = [
+  { id: "1", label: "Plomería" },
+  { id: "2", label: "Electricidad" },
+  { id: "3", label: "Belleza" },
+  { id: "4", label: "Diseño" },
+];
+const pros = [
+  {
+    id: "p1",
+    name: "Pedro García",
+    role: "Plomero",
+    rating: 4.9,
+    avatar: "https://i.pravatar.cc/100?img=1",
+  },
+  {
+    id: "p2",
+    name: "Ana López",
+    role: "Electricista",
+    rating: 4.8,
+    avatar: "https://i.pravatar.cc/100?img=2",
+  },
+];
+const offers = [
+  { id: "o1", title: "Instalación de grifería", price: "$12.000" },
+  { id: "o2", title: "Cambio de luminarias", price: "$9.500" },
+  { id: "o3", title: "Pintura ambiente", price: "$25.000" },
+  { id: "o4", title: "Logo express", price: "$18.000" },
+];
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const users = [
-    {
-      id: "1",
-      image:
-        "https://img.freepik.com/vector-premium/bandera-insignia-servicio-plomeria-vintage-o-emblema-logotipo-ilustracion-vectorial_580339-726.jpg?w=1060",
-      nombre: "Comercio 1",
-      descripcion: "Descripción del comercio 1",
-    },
-    {
-      id: "2",
-      image: "https://picsum.photos/400/300?random=2",
-      nombre: "Comercio 2",
-      descripcion: "Descripción del comercio 2",
-    },
-    {
-      id: "3",
-      image: "https://picsum.photos/400/300?random=3",
-      nombre: "Comercio 3",
-      descripcion: "Descripción del comercio 3",
-    },
-    {
-      id: "4",
-      image: "https://picsum.photos/400/300?random=4",
-      nombre: "Comercio 4",
-      descripcion: "Descripción del comercio 4",
-    },
-    {
-      id: "5",
-      image: "https://picsum.photos/400/300?random=5",
-      nombre: "Comercio 5",
-      descripcion: "Descripción del comercio 5",
-    },
-  ];
+export default function Dashboard() {
   return (
-    <ScrollView>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          // Dismiss the keyboard when tapping outside the input
-          Keyboard.dismiss();
-        }}
-      >
-        <View>
-          <Header />
-          <Searchbar
-            placeholder="Buscar"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            elevation={4}
-            cursorColor={"black"}
-            loading={false}
-            style={{
-              width: "90%",
-              alignSelf: "center",
-              marginTop: 10,
-              borderRadius: 20,
-              backgroundColor: "white",
-            }}
-          />
-          <View
-            style={{
-              width: "90%",
-              alignSelf: "center",
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 20,
-            }}
-          >
-            <Text
-              style={[
-                globalStyles.title,
-                {
-                  fontSize: 20,
-                  marginLeft: 25,
-                  marginTop: 20,
-                  color: globalStyles.colorPrimary,
-                },
-              ]}
-            >
-              Top comercios
-            </Text>
-            <Pressable
-              style={{
-                marginLeft: "auto",
-              }}
-              onPress={() => {
-                router.push("/(tabs)/profile");
-              }}
-            >
-              <Text>Ver todos</Text>
-            </Pressable>
-          </View>
-          <View
-            style={{
-              width: "90%",
-              alignSelf: "center",
-              marginTop: 20,
-              marginBottom: 10,
-            }}
-          >
-            <TopCarousel users={users} />
-          </View>
+    <FlatList
+      data={[]}
+      style={{ backgroundColor: TOKENS.color.bg }}
+      ListHeaderComponent={
+        <View style={{ gap: 20, paddingBottom: 120, paddingHorizontal: 5 }}>
+          <NavBar />
+          <HeroCarousel data={hero} />
+          <CategoryChips items={categories} />
+          <ProfessionalsCarousel data={pros} />
+          <PromoBanner />
+          <OffersGrid data={offers} />
+          <QuickActions onPublish={() => {}} onRequest={() => {}} />
         </View>
-      </TouchableWithoutFeedback>
-    </ScrollView>
+      }
+      renderItem={null}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
-});

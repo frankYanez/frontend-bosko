@@ -1,17 +1,13 @@
-import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet } from "react-native";
 import React from "react";
-import { Image } from "expo-image";
-import { Redirect, router } from "expo-router";
+import { router } from "expo-router";
 import Carousel, {
   ICarouselInstance,
   Pagination,
 } from "react-native-reanimated-carousel";
 import OnBoardingSlide from "@/components/OnBoardingSlide";
 import { useSharedValue } from "react-native-reanimated";
-import Colors from "@/constants/Colors";
 import { globalStyles } from "@/styles/global-styles";
-import BackgroundAnimated from "@/components/BackgroundAnimated";
-import LottieView from "lottie-react-native";
 import ButtonBosko from "@/components/ButtonBosko";
 
 export default function OnBoarding() {
@@ -82,14 +78,14 @@ export default function OnBoarding() {
       <Pagination.Basic
         progress={progress}
         data={slides}
-        size={20}
+        size={14}
         dotStyle={{
-          width: 30,
-          borderRadius: 30,
-          backgroundColor: "transparent",
+          width: 14,
+          borderRadius: 14,
+          backgroundColor: "gray",
         }}
         activeDotStyle={{
-          borderRadius: 20,
+          borderRadius: 14,
           overflow: "hidden",
           backgroundColor: globalStyles.colorPrimary,
         }}

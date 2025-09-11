@@ -5,20 +5,20 @@ export const globalStyles = {
     colorSecondary: '#DB0C36',
     title: {
         fontFamily: 'Inter-Bold',
-        fontSize: 50,
+        fontSize: 30,
         color: Colors.colorPrimary,
        
     }
     ,
     subtitle: {
         fontFamily: 'Inter-bold',
-        fontSize: 28,
+        fontSize: 20,
         color: '#333',
         marginBottom: 10,
     },
      input: {
-    borderColor: "gray",
-    borderWidth: 1,
+    // borderColor: "gray",
+    // borderWidth: 1,
 
     width: 300,
 

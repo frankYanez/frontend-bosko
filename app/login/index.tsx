@@ -26,14 +26,14 @@ import { globalStyles } from "@/styles/global-styles";
 import LogInView from "./LogInView";
 
 export default function Index() {
-  const [toLogin, setToLogin] = React.useState(true);
+  const [toLogin, setToLogin] = React.useState(false);
 
   const handleLogin = () => {
     setToLogin(!toLogin);
   };
   return (
-    <View style={{ justifyContent: "center", alignItems: "center" }}>
-      <Text style={globalStyles.title}>Bosko</Text>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {/* <Text style={globalStyles.title}>Bosko</Text> */}
       {toLogin ? (
         <RegisterView toLogin={handleLogin} />
       ) : (

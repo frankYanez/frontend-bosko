@@ -10,11 +10,15 @@ interface RegisterData {
 }
 
 export const loginHandler = async (email: string, password: string) => {
+    console.log(email,password);
+    
     try {
         const response = await axios.post(API_URL + '/auth/login', {
             email,
             password
         });
+        console.log(response);
+        
         return response;
     } catch (error) {
         console.error('Error en loginHandler:', error);
@@ -22,9 +26,11 @@ export const loginHandler = async (email: string, password: string) => {
     }
 }
 
-export const registerHandler = async (data: RegisterData) => {
+export const registerHandler = async (data: FormData) => {
+    
+    
     try {
-        const response = await axios.post(API_URL + '/auth/register', data);
+        const response = await axios.post(API_URL + '/auth/register', data, );
         return response;
     } catch (error) {
         console.error('Error en registerHandler:', error);

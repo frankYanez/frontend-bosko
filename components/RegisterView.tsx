@@ -1,239 +1,200 @@
-import Fonts from "@/constants/Fonts";
-import { useAuth } from "@/context/AuthContext";
-import { Image } from "expo-image";
-import { router } from "expo-router";
-import { useState } from "react";
-import {
-  Keyboard,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
-import { TextInput } from "react-native-paper";
+// import React from "react";
+// import {
+//   View,
+//   Text,
+//   TextInput,
+//   StyleSheet,
+//   KeyboardAvoidingView,
+//   Platform,
+//   TouchableWithoutFeedback,
+//   Keyboard,
+// } from "react-native";
+// import { useSharedValue } from "react-native-reanimated";
+// import Carousel, {
+//   ICarouselInstance,
+//   Pagination,
+// } from "react-native-reanimated-carousel";
+// import { router } from "expo-router";
+// import ButtonBosko from "@/components/ButtonBosko";
+// import Colors from "@/constants/Colors";
+// import { Image } from "expo-image";
+// import { useAuth } from "@/context/AuthContext";
 
-const RegisterView = ({ toLogin }: { toLogin: () => void }) => {
-  const { register } = useAuth();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    userName: "",
-    fullName: "",
-  });
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+// export default function OnboardingRegister({
+//   toLogin,
+// }: {
+//   toLogin: () => void;
+// }) {
+//   const { register } = useAuth();
+//   const ref = React.useRef<ICarouselInstance>(null);
+//   const progress = useSharedValue<number>(0);
+//   const [currentIndex, setCurrentIndex] = React.useState(0);
 
-  const handleRegister = async () => {
-    // Validar campos
-    if (
-      !formData.email ||
-      !formData.password ||
-      !formData.userName ||
-      !formData.fullName
-    ) {
-      setError("Por favor completa todos los campos");
-      return;
-    }
+//   type FormField =
+//     | "password"
+//     | "email"
+//     | "firstName"
+//     | "lastName"
+//     | "userName"
+//     | "phone"
+//     | "location";
 
-    setError("");
-    setIsLoading(true);
+//   type RegisterFormData = {
+//     password: string;
+//     email: string;
+//     firstName: string;
+//     lastName: string;
+//     userName: string;
+//     phone: string;
+//     location: string;
+//   };
 
-    try {
-      const response = await register(formData);
-      if (response.data) {
-        // Registro exitoso, redirigir al login
-        router.push("/(tabs)");
-      }
-    } catch (error) {
-      setError("Error al registrar usuario. Por favor intenta nuevamente.");
-      console.error("Register error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+//   const [formData, setFormData] = React.useState<RegisterFormData>({
+//     password: "",
+//     email: "",
+//     firstName: "",
+//     lastName: "",
+//     userName: "",
+//     phone: "",
+//     location: "",
+//   });
 
-  return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        // Dismiss keyboard on press outside of input
-        Keyboard.dismiss();
-      }}
-      style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-    >
-      <View
-        style={{
-          flex: 1,
-          marginTop: 50,
-          gap: 15,
-        }}
-      >
-        <Text style={styles.textPrincipal}>Registro en Bosko</Text>
-        <Image
-          source={require("@/assets/images/bosko-logo.svg")}
-          style={{ width: 150, height: 150 }}
-          contentFit="cover"
-        />
+//   const steps: { label: string; field: FormField }[] = [
+//     { label: "Correo electrónico", field: "email" },
+//     { label: "Contraseña", field: "password" },
+//     { label: "Nombre", field: "firstName" },
+//     { label: "Apellido", field: "lastName" },
+//     { label: "Nombre de usuario", field: "userName" },
+//     { label: "Teléfono", field: "phone" },
+//     { label: "Ubicación", field: "location" },
+//   ];
 
-        <TextInput
-          placeholder="Nombre completo"
-          value={formData.fullName}
-          placeholderTextColor={"gray"}
-          onChangeText={(text) => {
-            setFormData((prev) => ({ ...prev, fullName: text }));
-            setError("Rellena este campo");
-          }}
-          style={styles.input}
-          mode="flat"
-          allowFontScaling
-          autoCapitalize="words"
-          autoCorrect={false}
-          returnKeyType="next"
-          error={!!error}
-          onSubmitEditing={() => {
-            // Focus next input on submit
-            Keyboard.dismiss();
-          }}
-          left={<TextInput.Icon icon="account" color="gray" />}
-        />
+//   const onPressPagination = (index: number) => {
+//     ref.current?.scrollTo({
+//       count: index - progress.value,
+//       animated: true,
+//     });
+//   };
 
-        <TextInput
-          placeholder="Nombre de usuario"
-          value={formData.userName}
-          placeholderTextColor={"gray"}
-          onChangeText={(text) => {
-            setFormData((prev) => ({ ...prev, userName: text }));
-            setError("");
-          }}
-          style={styles.input}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="next"
-          error={!!error}
-          onSubmitEditing={() => {
-            // Focus next input on submit
-            Keyboard.dismiss();
-          }}
-          left={<TextInput.Icon icon="" color="gray" />}
-        />
+//   const handleFinish = async () => {
+//     const response = await register(formData);
 
-        <TextInput
-          placeholder="E-mail"
-          value={formData.email}
-          placeholderTextColor={"gray"}
-          onChangeText={(text) => {
-            setFormData((prev) => ({ ...prev, email: text }));
-            setError("");
-          }}
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="next"
-          error={!!error}
-          onSubmitEditing={() => {
-            // Focus next input on submit
-            Keyboard.dismiss();
-          }}
-          left={<TextInput.Icon icon="email" color="gray" />}
-        />
+//     if (response.data) {
+//       // Registro exitoso, redirigir al login
+//       router.push("/(tabs)");
+//     } else {
+//       console.error("Error al registrar usuario");
+//     }
+//     // router.push("/confirmar-registro");
+//   };
 
-        <TextInput
-          placeholder="Contraseña"
-          value={formData.password}
-          placeholderTextColor={"gray"}
-          onChangeText={(text) => {
-            setFormData((prev) => ({ ...prev, password: text }));
-            setError("");
-          }}
-          style={styles.input}
-          secureTextEntry
-          right={<TextInput.Icon icon="eye" />}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="done"
-          error={!!error}
-          onSubmitEditing={() => {
-            // Dismiss keyboard on submit
-            Keyboard.dismiss();
-          }}
-          left={<TextInput.Icon icon="lock" color="gray" />}
-        />
+//   return (
+//     <TouchableWithoutFeedback
+//       onPress={() => {
+//         // Dismiss keyboard on press outside of input
+//         Keyboard.dismiss();
+//       }}
+//       style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+//     >
+//       <KeyboardAvoidingView
+//         style={styles.container}
+//         behavior={Platform.OS === "ios" ? "padding" : undefined}
+//       >
+//         <Image
+//           source={require("@/assets/images/bosko-logo.png")}
+//           style={{ width: 200, height: 200, marginBottom: 20 }}
+//           contentFit="contain"
+//         />
+//         <Carousel
+//           loop={false}
+//           width={350}
+//           height={300}
+//           autoPlay={false}
+//           ref={ref}
+//           data={steps}
+//           renderItem={({ item }) => (
+//             <View style={styles.stepContainer}>
+//               <Text style={styles.title}>{item.label}</Text>
+//               <TextInput
+//                 style={styles.input}
+//                 placeholder={item.label}
+//                 value={formData[item.field]}
+//                 onChangeText={(text) =>
+//                   setFormData({ ...formData, [item.field]: text })
+//                 }
+//                 keyboardType={
+//                   item.field === "email"
+//                     ? "email-address"
+//                     : item.field === "phone"
+//                     ? "phone-pad"
+//                     : "default"
+//                 }
+//                 autoCapitalize="none"
+//               />
+//             </View>
+//           )}
+//           onProgressChange={(offsetProgress, absoluteProgress) => {
+//             progress.value = absoluteProgress;
+//             setCurrentIndex(Math.round(absoluteProgress));
+//           }}
+//         />
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+//         <Pagination.Basic
+//           progress={progress}
+//           data={steps}
+//           size={20}
+//           dotStyle={{
+//             width: 30,
+//             borderRadius: 30,
+//             backgroundColor: "transparent",
+//           }}
+//           activeDotStyle={{
+//             borderRadius: 20,
+//             overflow: "hidden",
+//             backgroundColor: Colors.colorPrimary,
+//           }}
+//           containerStyle={{ marginBottom: 20 }}
+//           horizontal
+//           onPress={onPressPagination}
+//         />
 
-        <Pressable
-          onPress={handleRegister}
-          disabled={isLoading}
-          style={({ pressed }) => [
-            styles.button,
-            { opacity: pressed || isLoading ? 0.7 : 1 },
-          ]}
-        >
-          <Text style={styles.buttonText}>
-            {isLoading ? "Registrando..." : "Registrarse"}
-          </Text>
-        </Pressable>
-        <Text style={[styles.text, { color: "white" }]}>
-          Ya tienes cuenta?{" "}
-          <Pressable onPress={() => toLogin()}>
-            <Text style={[styles.text]}>Inicia sesion</Text>
-          </Pressable>
-        </Text>
-      </View>
-    </TouchableWithoutFeedback>
-  );
-};
+//         {currentIndex === steps.length - 1 ? (
+//           <ButtonBosko title="Finalizar Registro" onPress={handleFinish} />
+//         ) : (
+//           <ButtonBosko
+//             title="Siguiente"
+//             onPress={() => ref.current?.scrollTo({ count: 1, animated: true })}
+//           />
+//         )}
+//       </KeyboardAvoidingView>
+//     </TouchableWithoutFeedback>
+//   );
+// }
 
-export default RegisterView;
-
-const styles = StyleSheet.create({
-  text: {
-    fontFamily: Fonts.fonts.medium,
-    // fontWeight: "200",
-    fontSize: 18,
-    color: "white",
-    textAlign: "center",
-  },
-  textPrincipal: {
-    fontFamily: Fonts.fonts.medium,
-    fontWeight: "500",
-    fontSize: 30,
-    textAlign: "center",
-  },
-  container: {
-    width: "90%",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    gap: 10,
-  },
-  input: {
-    borderColor: "gray",
-    borderWidth: 1,
-
-    width: 300,
-
-    borderRadius: 10,
-    // padding: 5,
-    marginVertical: 5,
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    minWidth: 200,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  errorText: {
-    color: "#FF3B30",
-    fontSize: 14,
-    textAlign: "center",
-  },
-});
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+//   stepContainer: {
+//     alignItems: "center",
+//     justifyContent: "center",
+//     paddingHorizontal: 20,
+//   },
+//   title: {
+//     fontSize: 22,
+//     fontWeight: "600",
+//     marginBottom: 10,
+//     textAlign: "center",
+//   },
+//   input: {
+//     borderColor: "#ccc",
+//     borderWidth: 1,
+//     borderRadius: 10,
+//     width: "100%",
+//     padding: 15,
+//     fontSize: 16,
+//     backgroundColor: "#fff",
+//   },
+// });

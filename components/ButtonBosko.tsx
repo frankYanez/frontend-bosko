@@ -16,26 +16,27 @@ interface ButtonBoskoProps extends PressableProps {
 
 export default function ButtonBosko({ title, onPress }: ButtonBoskoProps) {
   return (
-    <Pressable onPress={onPress}>
-      <LinearGradient
-        colors={[globalStyles.colorPrimary, globalStyles.colorPrimary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.buttonContainer}
-      >
+    <LinearGradient
+      colors={[globalStyles.colorPrimary, globalStyles.colorPrimary]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.buttonContainer}
+    >
+      <Pressable onPress={onPress}>
         <Text style={styles.buttonText}>{title}</Text>
-      </LinearGradient>
-    </Pressable>
+      </Pressable>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    maxWidth: 200,
+    // maxWidth: 200,
     width: "100%",
 
+    maxWidth: 180,
     borderRadius: 55,
-    padding: 10,
+    padding: 12,
     paddingHorizontal: 40,
     alignItems: "center",
     justifyContent: "center",
