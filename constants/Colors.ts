@@ -23,5 +23,6 @@ export default {
     color: '#000',
     textAlign: 'center',
     marginBottom: 10,
-  }
+  },
+  colorPrimary: '#850221',
 };

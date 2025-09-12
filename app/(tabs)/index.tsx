@@ -1,31 +1,72 @@
-import { StyleSheet } from 'react-native';
+// /screens/Dashboard.tsx
+import { View, FlatList } from "react-native";
+import { NavBar } from "@/components/Navbar";
+import { HeroCarousel } from "@/components/HeroCarousel";
+import { CategoryChips } from "@/components/CategoryChips";
+import { ProfessionalsCarousel } from "@/components/ProfesionalCarousel";
+import { PromoBanner } from "@/components/PromoBanner";
+import { OffersGrid } from "@/components/OffersGrid";
+import { QuickActions } from "@/components/QuickActions";
+import { TOKENS } from "@/theme/tokens";
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+const hero = [
+  {
+    title: "Encontrá profesionales",
+    subtitle: "Cerca tuyo, verificados",
+    cta: "Explorar",
+  },
+  {
+    title: "Ofrecé tu trabajo",
+    subtitle: "Mostrá tu perfil y crecé",
+    cta: "Publicar",
+  },
+];
+const categories = [
+  { id: "1", label: "Plomería" },
+  { id: "2", label: "Electricidad" },
+  { id: "3", label: "Belleza" },
+  { id: "4", label: "Diseño" },
+];
+const pros = [
+  {
+    id: "p1",
+    name: "Pedro García",
+    role: "Plomero",
+    rating: 4.9,
+    avatar: "https://i.pravatar.cc/100?img=1",
+  },
+  {
+    id: "p2",
+    name: "Ana López",
+    role: "Electricista",
+    rating: 4.8,
+    avatar: "https://i.pravatar.cc/100?img=2",
+  },
+];
+const offers = [
+  { id: "o1", title: "Instalación de grifería", price: "$12.000" },
+  { id: "o2", title: "Cambio de luminarias", price: "$9.500" },
+  { id: "o3", title: "Pintura ambiente", price: "$25.000" },
+  { id: "o4", title: "Logo express", price: "$18.000" },
+];
 
-export default function TabOneScreen() {
+export default function Dashboard() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <FlatList
+      data={[]}
+      style={{ backgroundColor: TOKENS.color.bg }}
+      ListHeaderComponent={
+        <View style={{ gap: 20, paddingBottom: 120, paddingHorizontal: 5 }}>
+          <NavBar />
+          <HeroCarousel data={hero} />
+          <CategoryChips items={categories} />
+          <ProfessionalsCarousel data={pros} />
+          <PromoBanner />
+          <OffersGrid data={offers} />
+          <QuickActions onPublish={() => {}} onRequest={() => {}} />
+        </View>
+      }
+      renderItem={null}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
