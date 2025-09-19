@@ -19,6 +19,13 @@ export default function ServicesLayout() {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="provider/[id]"
+        options={{
+          title: "Perfil",
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }

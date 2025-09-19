@@ -1,31 +1,46 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 
 import { SERVICE_CATEGORIES, ServiceCategory } from "@/constants/serviceCategories";
+import { SERVICE_PROVIDERS } from "@/constants/serviceProviders";
 import { TOKENS } from "@/theme/tokens";
+
+type CategoryListItem = ServiceCategory & { servicesCount: number };
 
 export default function ServicesScreen() {
   const router = useRouter();
+
+  const categories = useMemo<CategoryListItem[]>(() => {
+    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>((acc, provider) => {
+      acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return SERVICE_CATEGORIES.map((category) => ({
+      ...category,
+      servicesCount: counts[category.id] ?? 0,
+    }));
+  }, []);
 
   const handleCategoryPress = useCallback(
     (category: ServiceCategory) => {
       router.push({
         pathname: "./category/[id]",
-        params: { id: category.id, title: category.title },
+        params: { id: category.id },
       });
     },
     [router]
   );
 
   const renderCategory = useCallback(
-    ({ item, index }: { item: ServiceCategory; index: number }) => (
+    ({ item, index }: { item: CategoryListItem; index: number }) => (
       <MotiView
-        from={{ opacity: 0, translateY: 16 }}
+        from={{ opacity: 0, translateY: 24 }}
         animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 350, delay: index * 80 }}
+        transition={{ type: "timing", duration: 420, delay: index * 70 }}
         style={styles.cardWrapper}
       >
         <Pressable
@@ -36,14 +51,16 @@ export default function ServicesScreen() {
           style={[styles.card, { backgroundColor: item.accent }]}
           android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
         >
-          <Text style={styles.icon}>{item.icon}</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.icon}>{item.icon}</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{item.servicesCount}</Text>
+              <Text style={styles.countLabel}>servicios</Text>
+            </View>
+          </View>
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>{item.title}</Text>
             <Text style={styles.cardDescription}>{item.description}</Text>
-          </View>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{item.servicesCount}</Text>
-            <Text style={styles.countLabel}>servicios</Text>
           </View>
         </Pressable>
       </MotiView>
@@ -54,7 +71,7 @@ export default function ServicesScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
-        data={SERVICE_CATEGORIES}
+        data={categories}
         keyExtractor={(item) => item.id}
         numColumns={2}
         contentContainerStyle={styles.listContent}
@@ -63,9 +80,9 @@ export default function ServicesScreen() {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Servicios</Text>
+            <Text style={styles.heading}>Categorías sugeridas</Text>
             <Text style={styles.subheading}>
-              Elegí una categoría para explorar profesionales disponibles.
+              Descubrí ofertas destacadas y encontrá profesionales en segundos.
             </Text>
           </View>
         }
@@ -89,11 +106,11 @@ const styles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 8,
+    gap: 6,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "700",
     color: TOKENS.color.text,
   },
@@ -107,17 +124,23 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: TOKENS.radius.lg,
-    padding: 18,
-    minHeight: 180,
+    borderRadius: TOKENS.radius.xl,
+    padding: 20,
+    minHeight: 190,
     justifyContent: "space-between",
     overflow: "hidden",
+    ...TOKENS.shadow.soft,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   icon: {
-    fontSize: 32,
+    fontSize: 36,
   },
   cardContent: {
-    gap: 6,
+    gap: 8,
   },
   cardTitle: {
     fontSize: 18,
@@ -127,14 +150,14 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     color: TOKENS.color.sub,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   countBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: TOKENS.radius.pill,
+    alignItems: "center",
   },
   countText: {
     fontSize: 14,
@@ -142,9 +165,9 @@ const styles = StyleSheet.create({
     color: TOKENS.color.text,
   },
   countLabel: {
-    fontSize: 10,
+    fontSize: 11,
     textTransform: "uppercase",
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
     color: TOKENS.color.sub,
   },
 });
