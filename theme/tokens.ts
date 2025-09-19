@@ -7,7 +7,7 @@ export const TOKENS = {
     text: '#1E1E1E',
     sub: '#6B6B6B'
   },
-  radius: { sm: 10, md: 16, lg: 22, pill: 999 },
+  radius: { sm: 10, md: 16, lg: 22, xl: 28, pill: 999 },
   shadow: {
     soft: { shadowColor:'#000', shadowOpacity:0.08, shadowRadius:12, elevation:3 }
   },
