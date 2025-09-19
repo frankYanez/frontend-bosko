@@ -20,6 +20,7 @@
     "axios": "^1.9.0",
     "bosko": "file:",
     "expo": "~53.0.9",
+    "expo-blur": "~14.1.5",
     "expo-font": "~13.3.1",
     "expo-image": "~2.1.7",
     "expo-linear-gradient": "~14.1.5",
@@ -30,6 +31,7 @@
     "expo-system-ui": "~5.0.7",
     "expo-web-browser": "~14.1.6",
     "lottie-react-native": "7.2.2",
+    "moti": "^0.30.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.2",
@@ -41,8 +43,7 @@
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.11.2",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-web": "~0.20.0",
-    "expo-blur": "~14.1.5"
+    "react-native-web": "~0.20.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
