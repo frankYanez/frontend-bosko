@@ -19,8 +19,16 @@ const hero = [
     title: "Ofrecé tu trabajo",
     subtitle: "Mostrá tu perfil y crecé",
     cta: "Publicar",
+    color: TOKENS.color.primaryDark,
+  },
+  {
+    title: "Promocioná tu negocio",
+    subtitle: "Llega a más clientes",
+    cta: "Anunciar",
+    color: TOKENS.color.primary,
   },
 ];
+
 const categories = [
   { id: "1", label: "Plomería" },
   { id: "2", label: "Electricidad" },
