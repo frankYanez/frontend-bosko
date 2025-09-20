@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
@@ -18,17 +17,9 @@ export default function CategoryServicesScreen() {
   const categoryId = typeof params.id === "string" ? params.id : undefined;
   const category = SERVICE_CATEGORIES.find((item) => item.id === categoryId);
 
-  const [services, setServices] = useState<ServiceProvider[]>([]);
-  const [hasAddedExtra, setHasAddedExtra] = useState(false);
-
-  useEffect(() => {
-    const nextServices = SERVICE_PROVIDERS.filter(
-      (provider) => provider.categoryId === categoryId
-    );
-    setServices(nextServices);
-    setHasAddedExtra(false);
-  }, [categoryId]);
-
+  const services = SERVICE_PROVIDERS.filter(
+    (provider) => provider.categoryId === categoryId
+  );
   const accentColor = category?.accent ?? "#E8ECF2";
 
   function handleBack() {
@@ -42,26 +33,14 @@ export default function CategoryServicesScreen() {
     });
   }
 
-  function handleAddService() {
-    if (hasAddedExtra || !categoryId) {
-      return;
-    }
-
-    const newService: ServiceProvider = {
-      id: `nuevo-${categoryId}`,
-      categoryId,
-      name: "Tu nuevo servicio",
-      headline: "Completá tu perfil para aparecer aquí.",
-      rating: 5,
-      reviews: 0,
-      location: "Tu ciudad",
-      avatar: "➕",
-      bio: "Cargá una descripción atractiva para destacarte en esta categoría.",
-      tags: ["Nuevo", "Destacado"],
-    };
-
-    setServices((current) => [...current, newService]);
-    setHasAddedExtra(true);
+  function formatRate(rate: ServiceProvider["rate"]) {
+    const symbol =
+      rate.currency === "ARS"
+        ? "$"
+        : rate.currency === "USD"
+        ? "US$"
+        : `${rate.currency} `;
+    return `${symbol}${rate.amount} / ${rate.unit}`;
   }
 
   return (
@@ -92,67 +71,52 @@ export default function CategoryServicesScreen() {
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => (
           <MotiView
-            from={{ opacity: 0, translateY: 24 }}
+            from={{ opacity: 0, translateY: 28 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 360, delay: index * 50 }}
+            transition={{ type: "timing", duration: 420, delay: index * 70 }}
             style={styles.serviceWrapper}
           >
             <Pressable
               onPress={() => handleProviderPress(item)}
               style={styles.serviceCard}
+              android_ripple={{ color: "rgba(0,0,0,0.04)" }}
             >
-              <View style={[styles.avatar, { backgroundColor: accentColor }]}>
-                <Text style={styles.avatarText}>{item.avatar}</Text>
-              </View>
+              <Image
+                source={{ uri: item.photo }}
+                style={styles.avatar}
+                resizeMode="cover"
+              />
               <View style={styles.serviceInfo}>
-                <Text style={styles.serviceName}>{item.name}</Text>
-                <Text style={styles.serviceHeadline}>{item.headline}</Text>
-                <Text style={styles.serviceMeta}>
-                  {item.rating.toFixed(1)} ★ · {item.location}
-                </Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.serviceName}>{item.name}</Text>
+                  <Text style={styles.serviceRating}>
+                    ★ {item.rating.toFixed(1)}
+                  </Text>
+                </View>
+                <Text style={styles.serviceHeadline}>{item.title}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.servicePrice}>
+                    Desde {formatRate(item.rate)}
+                  </Text>
+                  <View style={styles.dot} />
+                  <Text style={styles.serviceReviews}>
+                    {item.reviews} reseñas
+                  </Text>
+                </View>
+                <Text style={styles.serviceLocation}>{item.location}</Text>
               </View>
             </Pressable>
           </MotiView>
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Todavía no hay servicios</Text>
+            <Text style={styles.emptyTitle}>Pronto habrá profesionales aquí</Text>
             <Text style={styles.emptySubtitle}>
-              Agregá el primero usando el botón “+”.
+              Estamos sumando especialistas en esta categoría.
             </Text>
           </View>
         }
-        ListFooterComponent={
-          hasAddedExtra ? (
-            <Text style={styles.footerNote}>
-              Solo podés agregar un servicio manual. Editá el listado para
-              cargar más ofertas reales.
-            </Text>
-          ) : null
-        }
       />
-
-      <Pressable
-        onPress={handleAddService}
-        disabled={hasAddedExtra}
-        accessibilityRole="button"
-        accessibilityLabel={
-          hasAddedExtra
-            ? "Ya agregaste un servicio"
-            : "Agregar un nuevo servicio"
-        }
-        style={[
-          styles.addButton,
-          {
-            backgroundColor: hasAddedExtra
-              ? TOKENS.color.sub
-              : TOKENS.color.primary,
-            opacity: hasAddedExtra ? 0.6 : 1,
-          },
-        ]}
-      >
-        <Text style={styles.addButtonIcon}>+</Text>
-      </Pressable>
     </SafeAreaView>
   );
 }
@@ -199,7 +163,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 40,
     gap: 16,
   },
   serviceWrapper: {
@@ -210,35 +174,60 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
     backgroundColor: "#FFFFFF",
-    padding: 16,
+    padding: 18,
     borderRadius: TOKENS.radius.lg,
     ...TOKENS.shadow.soft,
   },
   avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: TOKENS.radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    fontSize: 30,
+    width: 60,
+    height: 60,
+    borderRadius: 18,
   },
   serviceInfo: {
     flex: 1,
     gap: 6,
+  },
+  nameRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   serviceName: {
     fontSize: 16,
     fontWeight: "600",
     color: TOKENS.color.text,
   },
+  serviceRating: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: TOKENS.color.primary,
+  },
   serviceHeadline: {
     fontSize: 14,
     color: TOKENS.color.sub,
   },
-  serviceMeta: {
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  servicePrice: {
     fontSize: 13,
+    fontWeight: "600",
+    color: TOKENS.color.text,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#CBD3DA",
+  },
+  serviceReviews: {
+    fontSize: 12,
+    color: TOKENS.color.sub,
+  },
+  serviceLocation: {
+    fontSize: 12,
     color: TOKENS.color.sub,
   },
   emptyState: {
@@ -256,27 +245,5 @@ const styles = StyleSheet.create({
     color: TOKENS.color.sub,
     textAlign: "center",
     paddingHorizontal: 20,
-  },
-  footerNote: {
-    textAlign: "center",
-    color: TOKENS.color.sub,
-    fontSize: 12,
-    paddingHorizontal: 20,
-  },
-  addButton: {
-    position: "absolute",
-    right: 24,
-    bottom: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    ...TOKENS.shadow.soft,
-  },
-  addButtonIcon: {
-    fontSize: 32,
-    color: "#FFFFFF",
-    lineHeight: 32,
   },
 });

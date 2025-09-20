@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
+import {
+  Image,
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { MotiView } from "moti";
 
 import { SERVICE_CATEGORIES } from "@/constants/serviceCategories";
 import {
@@ -24,6 +33,16 @@ export default function ProviderProfileScreen() {
 
   function handleBack() {
     router.back();
+  }
+
+  function formatRate(rate: ServiceProvider["rate"]) {
+    const symbol =
+      rate.currency === "ARS"
+        ? "$"
+        : rate.currency === "USD"
+        ? "US$"
+        : `${rate.currency} `;
+    return `${symbol}${rate.amount} / ${rate.unit}`;
   }
 
   if (!provider) {
@@ -59,23 +78,37 @@ export default function ProviderProfileScreen() {
           <Pressable onPress={handleBack} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </Pressable>
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerName}>{provider.name}</Text>
-            <Text style={styles.headerCategory}>{category?.title}</Text>
-          </View>
         </View>
 
-        <View style={[styles.hero, { backgroundColor: accentColor }]}>
-          <View style={styles.heroAvatar}>
-            <Text style={styles.heroEmoji}>{provider.avatar}</Text>
-          </View>
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroHeadline}>{provider.headline}</Text>
-            <Text style={styles.heroMeta}>
-              {provider.rating.toFixed(1)} ★ · {provider.reviews} reseñas
-            </Text>
-            <Text style={styles.heroMeta}>{provider.location}</Text>
-          </View>
+        <View style={styles.heroCard}>
+          <ImageBackground
+            source={{ uri: provider.heroImage }}
+            style={styles.heroBackground}
+            imageStyle={styles.heroBackgroundImage}
+          >
+            <View style={styles.heroOverlay} />
+            <View style={styles.heroContent}>
+              <Image
+                source={{ uri: provider.photo }}
+                style={[styles.heroAvatar, { borderColor: accentColor }]}
+              />
+              <Text style={styles.heroName}>{provider.name}</Text>
+              <Text style={styles.heroTitle}>{provider.title}</Text>
+              <Text style={styles.heroSummary}>{provider.summary}</Text>
+              <View style={styles.heroStats}>
+                <Text style={styles.heroRating}>★ {provider.rating.toFixed(1)}</Text>
+                <View style={styles.dot} />
+                <Text style={styles.heroReviews}>{provider.reviews} reseñas</Text>
+              </View>
+              <Text style={styles.heroLocation}>{provider.location}</Text>
+              <View style={styles.heroActions}>
+                <Text style={styles.heroRate}>Desde {formatRate(provider.rate)}</Text>
+                <Pressable style={styles.quoteButton}>
+                  <Text style={styles.quoteButtonText}>Cotizar servicio</Text>
+                </Pressable>
+              </View>
+            </View>
+          </ImageBackground>
         </View>
 
         <View style={styles.section}>
@@ -84,12 +117,33 @@ export default function ProviderProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Etiquetas</Text>
+          <Text style={styles.sectionTitle}>Especialidades</Text>
           <View style={styles.tagsRow}>
             {provider.tags.map((tag) => (
               <View key={tag} style={[styles.tag, { backgroundColor: accentColor }]}>
                 <Text style={styles.tagText}>{tag}</Text>
               </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Trabajos recientes</Text>
+          <View style={styles.worksList}>
+            {provider.recentWorks.map((work, index) => (
+              <MotiView
+                key={work.id}
+                from={{ opacity: 0, translateY: 16 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: "timing", duration: 420, delay: index * 80 }}
+                style={styles.workCard}
+              >
+                <Image source={{ uri: work.image }} style={styles.workImage} />
+                <View style={styles.workInfo}>
+                  <Text style={styles.workTitle}>{work.title}</Text>
+                  <Text style={styles.workTime}>{work.timeAgo}</Text>
+                </View>
+              </MotiView>
             ))}
           </View>
         </View>
@@ -126,49 +180,92 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: TOKENS.color.text,
   },
-  headerInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  headerName: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  headerCategory: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  hero: {
+  heroCard: {
     borderRadius: TOKENS.radius.xl,
-    padding: 20,
-    flexDirection: "row",
+    overflow: "hidden",
+    ...TOKENS.shadow.soft,
+  },
+  heroBackground: {
+    padding: 24,
+  },
+  heroBackgroundImage: {
+    borderRadius: TOKENS.radius.xl,
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+  },
+  heroContent: {
     alignItems: "center",
-    gap: 18,
+    gap: 10,
   },
   heroAvatar: {
-    width: 68,
-    height: 68,
-    borderRadius: TOKENS.radius.lg,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 4,
     backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  heroEmoji: {
-    fontSize: 36,
+  heroName: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
-  heroCopy: {
-    flex: 1,
-    gap: 6,
-  },
-  heroHeadline: {
+  heroTitle: {
     fontSize: 16,
+    color: "#F5F7FA",
+  },
+  heroSummary: {
+    fontSize: 14,
+    color: "#E1E6EC",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  heroStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  heroRating: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFE082",
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.6)",
+  },
+  heroReviews: {
+    fontSize: 13,
+    color: "#F1F5F9",
+  },
+  heroLocation: {
+    fontSize: 13,
+    color: "#F1F5F9",
+  },
+  heroActions: {
+    marginTop: 4,
+    alignItems: "center",
+    gap: 8,
+  },
+  heroRate: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  quoteButton: {
+    marginTop: 4,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    paddingHorizontal: 26,
+    borderRadius: TOKENS.radius.pill,
+  },
+  quoteButtonText: {
+    fontSize: 15,
     fontWeight: "600",
     color: TOKENS.color.text,
-  },
-  heroMeta: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
   },
   section: {
     backgroundColor: "#FFFFFF",
@@ -200,6 +297,32 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: TOKENS.color.text,
+  },
+  worksList: {
+    gap: 12,
+  },
+  workCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  workImage: {
+    width: 72,
+    height: 72,
+    borderRadius: TOKENS.radius.lg,
+  },
+  workInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  workTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: TOKENS.color.text,
+  },
+  workTime: {
+    fontSize: 12,
+    color: TOKENS.color.sub,
   },
   emptyState: {
     flex: 1,

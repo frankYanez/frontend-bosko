@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
@@ -32,6 +32,16 @@ const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
 
 export default function ServicesScreen() {
   const router = useRouter();
+
+  function formatRate(rate: ServiceProvider["rate"]) {
+    const symbol =
+      rate.currency === "ARS"
+        ? "$"
+        : rate.currency === "USD"
+        ? "US$"
+        : `${rate.currency} `;
+    return `${symbol}${rate.amount} / ${rate.unit}`;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -93,14 +103,22 @@ export default function ServicesScreen() {
                 }
                 style={styles.serviceCard}
               >
-                <View style={styles.serviceAvatar}>
-                  <Text style={styles.serviceAvatarText}>{service.avatar}</Text>
-                </View>
+                <Image
+                  source={{ uri: service.photo }}
+                  style={styles.serviceAvatar}
+                />
                 <View style={styles.serviceInfo}>
                   <Text style={styles.serviceName}>{service.name}</Text>
-                  <Text style={styles.serviceHeadline}>{service.headline}</Text>
-                  <Text style={styles.serviceMeta}>
-                    {service.rating.toFixed(1)} ★ · {service.location}
+                  <Text style={styles.serviceHeadline}>{service.title}</Text>
+                  <View style={styles.serviceMetaRow}>
+                    <Text style={styles.serviceMetaHighlight}>
+                      {service.rating.toFixed(1)} ★
+                    </Text>
+                    <View style={styles.metaDot} />
+                    <Text style={styles.serviceMeta}>{service.location}</Text>
+                  </View>
+                  <Text style={styles.serviceRate}>
+                    Desde {formatRate(service.rate)}
                   </Text>
                 </View>
               </Pressable>
@@ -194,15 +212,9 @@ const styles = StyleSheet.create({
     ...TOKENS.shadow.soft,
   },
   serviceAvatar: {
-    width: 48,
-    height: 48,
+    width: 54,
+    height: 54,
     borderRadius: TOKENS.radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: TOKENS.color.bg,
-  },
-  serviceAvatarText: {
-    fontSize: 26,
   },
   serviceInfo: {
     flex: 1,
@@ -217,8 +229,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: TOKENS.color.sub,
   },
+  serviceMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  serviceMetaHighlight: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: TOKENS.color.primary,
+  },
+  metaDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#CBD3DA",
+  },
   serviceMeta: {
     fontSize: 13,
+    color: TOKENS.color.sub,
+  },
+  serviceRate: {
+    fontSize: 12,
     color: TOKENS.color.sub,
   },
 });
