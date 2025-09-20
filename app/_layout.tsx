@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 export default function _layout() {
   return (
     <AuthProvider>
+      <Redirect href="/(tabs)" />
       <Tabs
         screenOptions={{
           headerShown: false,

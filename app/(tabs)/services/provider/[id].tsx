@@ -14,7 +14,7 @@ export default function ProviderProfileScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const provider = useMemo<ServiceProvider | undefined>(
-    () => SERVICE_PROVIDERS.find((item) => item.id === id),
+    () => SERVICE_PROVIDERS.find((item) => item.id === "paula-mendez"),
     [id]
   );
 
@@ -33,7 +33,8 @@ export default function ProviderProfileScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>No encontramos este perfil</Text>
           <Text style={styles.emptySubtitle}>
-            Actualizá la lista o volvé a la categoría para descubrir más profesionales.
+            Actualizá la lista o volvé a la categoría para descubrir más
+            profesionales.
           </Text>
         </View>
       </SafeAreaView>
@@ -54,7 +55,7 @@ export default function ProviderProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.hero, { backgroundColor: accent }]}> 
+        <View style={[styles.hero, { backgroundColor: accent }]}>
           <View style={styles.heroAvatar}>
             <Text style={styles.heroEmoji}>{provider.avatar}</Text>
           </View>
@@ -74,7 +75,9 @@ export default function ProviderProfileScreen() {
           <Text style={styles.sectionTitle}>Detalles</Text>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Calificación</Text>
-            <Text style={styles.detailValue}>{provider.rating.toFixed(1)} ★</Text>
+            <Text style={styles.detailValue}>
+              {provider.rating.toFixed(1)} ★
+            </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Reseñas</Text>
@@ -90,7 +93,7 @@ export default function ProviderProfileScreen() {
           <Text style={styles.sectionTitle}>Especialidades</Text>
           <View style={styles.tagsRow}>
             {provider.tags.map((tag) => (
-              <View key={tag} style={[styles.tag, { backgroundColor: accent }]}> 
+              <View key={tag} style={[styles.tag, { backgroundColor: accent }]}>
                 <Text style={styles.tagText}>{tag}</Text>
               </View>
             ))}

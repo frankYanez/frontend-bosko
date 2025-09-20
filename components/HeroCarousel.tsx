@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { TOKENS } from "@/theme/tokens";
+import { Image } from "expo-image";
 const { width } = Dimensions.get("window");
 
 export function HeroCarousel({
@@ -19,7 +20,7 @@ export function HeroCarousel({
   return (
     <Carousel
       width={width}
-      height={180}
+      height={200}
       data={data}
       pagingEnabled
       renderItem={({ item }) => (
@@ -36,16 +37,20 @@ export function HeroCarousel({
 }
 const styles = StyleSheet.create({
   card: {
+    height: 200,
     marginHorizontal: 16,
     borderRadius: 20,
     overflow: "hidden",
     padding: 16,
-    backgroundColor: TOKENS.glass.bg,
+    backgroundColor: TOKENS.color.primary,
     ...TOKENS.shadow.soft,
   },
   title: { fontSize: 18, fontWeight: "800", color: TOKENS.color.text },
   sub: { color: TOKENS.color.sub, marginTop: 6 },
   btn: {
+    width: 120,
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 12,
     backgroundColor: TOKENS.color.primary,
     paddingVertical: 10,
