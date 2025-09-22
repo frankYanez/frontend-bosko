@@ -27,7 +27,9 @@ export default function ProviderProfileScreen() {
 
   useEffect(() => {
     const providerId = typeof params.id === "string" ? params.id : undefined;
-    const foundProvider = SERVICE_PROVIDERS.find((item) => item.id === providerId);
+    const foundProvider = SERVICE_PROVIDERS.find(
+      (item) => item.id === providerId
+    );
     setProvider(foundProvider);
   }, [params.id]);
 
@@ -96,13 +98,19 @@ export default function ProviderProfileScreen() {
               <Text style={styles.heroTitle}>{provider.title}</Text>
               <Text style={styles.heroSummary}>{provider.summary}</Text>
               <View style={styles.heroStats}>
-                <Text style={styles.heroRating}>★ {provider.rating.toFixed(1)}</Text>
+                <Text style={styles.heroRating}>
+                  ★ {provider.rating.toFixed(1)}
+                </Text>
                 <View style={styles.dot} />
-                <Text style={styles.heroReviews}>{provider.reviews} reseñas</Text>
+                <Text style={styles.heroReviews}>
+                  {provider.reviews} reseñas
+                </Text>
               </View>
               <Text style={styles.heroLocation}>{provider.location}</Text>
               <View style={styles.heroActions}>
-                <Text style={styles.heroRate}>Desde {formatRate(provider.rate)}</Text>
+                <Text style={styles.heroRate}>
+                  Desde {formatRate(provider.rate)}
+                </Text>
                 <Pressable style={styles.quoteButton}>
                   <Text style={styles.quoteButtonText}>Cotizar servicio</Text>
                 </Pressable>
@@ -120,7 +128,10 @@ export default function ProviderProfileScreen() {
           <Text style={styles.sectionTitle}>Especialidades</Text>
           <View style={styles.tagsRow}>
             {provider.tags.map((tag) => (
-              <View key={tag} style={[styles.tag, { backgroundColor: accentColor }]}>
+              <View
+                key={tag}
+                style={[styles.tag, { backgroundColor: accentColor }]}
+              >
                 <Text style={styles.tagText}>{tag}</Text>
               </View>
             ))}
@@ -135,7 +146,11 @@ export default function ProviderProfileScreen() {
                 key={work.id}
                 from={{ opacity: 0, translateY: 16 }}
                 animate={{ opacity: 1, translateY: 0 }}
-                transition={{ type: "timing", duration: 420, delay: index * 80 }}
+                transition={{
+                  type: "timing",
+                  duration: 420,
+                  delay: index * 80,
+                }}
                 style={styles.workCard}
               >
                 <Image source={{ uri: work.image }} style={styles.workImage} />
