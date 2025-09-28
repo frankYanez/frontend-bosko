@@ -26,7 +26,7 @@ export default function TabsLayout() {
           tabBarInactiveTintColor: "#9A9AA0",
         }}
       >
-        {/* <Tabs.Screen
+        <Tabs.Screen
           name="home/index"
           options={{ title: "Inicio", tabBarIcon: () => <Text>🏠</Text> }}
         />
@@ -45,7 +45,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile/index"
           options={{ title: "Perfil", tabBarIcon: () => <Text>👤</Text> }}
-        /> */}
+        />
       </Tabs>
 
       {/* FAB central
