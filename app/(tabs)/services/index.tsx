@@ -34,7 +34,7 @@ export default function ServicesScreen() {
   const handleCategoryPress = useCallback(
     (category: ServiceCategory) => {
       router.push({
-        pathname: "./category/[id]",
+        pathname: "/services/category/[id]",
         params: { id: category.id },
       });
     },

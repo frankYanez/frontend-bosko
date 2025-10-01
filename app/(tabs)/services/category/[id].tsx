@@ -15,6 +15,8 @@ export default function CategoryServicesScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
 
+  console.log("id", id);
+
   const category = useMemo(
     () => SERVICE_CATEGORIES.find((item) => item.id === id),
     [id]
@@ -66,7 +68,10 @@ export default function CategoryServicesScreen() {
             </View>
             <View style={styles.tagsRow}>
               {item.tags.map((tag) => (
-                <View key={tag} style={[styles.tag, { backgroundColor: accent }]}>
+                <View
+                  key={tag}
+                  style={[styles.tag, { backgroundColor: accent }]}
+                >
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
               ))}
@@ -96,16 +101,21 @@ export default function CategoryServicesScreen() {
           <View style={[styles.hero, { backgroundColor: accent }]}>
             <Text style={styles.heroIcon}>{category?.icon ?? "✨"}</Text>
             <View style={styles.heroCopy}>
-              <Text style={styles.heroTitle}>{category?.title ?? "Servicios"}</Text>
+              <Text style={styles.heroTitle}>
+                {category?.title ?? "Servicios"}
+              </Text>
               <Text style={styles.heroSubtitle}>
-                {category?.description ?? "Descubrí profesionales destacados listos para ayudarte."}
+                {category?.description ??
+                  "Descubrí profesionales destacados listos para ayudarte."}
               </Text>
             </View>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Pronto habrá profesionales aquí</Text>
+            <Text style={styles.emptyTitle}>
+              Pronto habrá profesionales aquí
+            </Text>
             <Text style={styles.emptySubtitle}>
               Estamos sumando nuevos servicios para esta categoría.
             </Text>
