@@ -4,42 +4,72 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useMemo,
+  useCallback,
 } from "react";
+import { fetchAllServices, fetchServiceById } from "../services/services";
 import {
-  fetchAllServices,
-  fetchServiceById,
-  createService,
-  updateService,
-  deleteService,
+  getMyServices,
+  createService as createMyService,
+  updateService as updateMyService,
+  deleteService as deleteMyService,
   Service,
-} from "../services/services";
-
-/**
- * ServicesContext
- *
- * Holds and manages the list of services available to the current user.
- * It exposes functions to refresh the list, as well as CRUD operations
- * that are synced with the backend. Components consuming this context
- * will automatically re-render when the services state changes.
- */
+  ServicePayload,
+  PlanType,
+} from "../services/service";
+import { useAuth } from "./AuthContext";
 
 interface ServicesState {
   services: Service[];
+  myServices: Service[];
   loading: boolean;
+  myServicesLoading: boolean;
+  currentPlan: PlanType;
   loadServices: (filters?: Record<string, any>) => Promise<void>;
+  loadMyServices: () => Promise<void>;
   getService: (id: string) => Promise<Service | undefined>;
-  addService: (service: Service) => Promise<Service>;
-  editService: (id: string, updates: Partial<Service>) => Promise<Service>;
+  addService: (service: ServicePayload) => Promise<Service>;
+  editService: (
+    id: string,
+    updates: Partial<ServicePayload>
+  ) => Promise<Service>;
   removeService: (id: string) => Promise<void>;
 }
 
 const ServicesContext = createContext<ServicesState | undefined>(undefined);
 
-export const ServicesProvider = ({ children }: { children: ReactNode }) => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+function normalizePlan(plan: unknown): PlanType {
+  if (!plan || typeof plan !== "string") {
+    return "FREE";
+  }
 
-  const loadServices = async (filters?: Record<string, any>) => {
+  const value = plan.toLowerCase();
+  if (value.includes("plus") || value.includes("premium") || value === "pro") {
+    return "PLUS";
+  }
+
+  return "FREE";
+}
+
+export const ServicesProvider = ({ children }: { children: ReactNode }) => {
+  const { authState } = useAuth();
+  const [services, setServices] = useState<Service[]>([]);
+  const [myServices, setMyServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [myServicesLoading, setMyServicesLoading] = useState<boolean>(false);
+
+  const currentPlan = useMemo<PlanType>(() => {
+    const userPlan =
+      authState?.user?.plan ??
+      authState?.user?.subscriptionPlan ??
+      authState?.user?.subscription?.plan ??
+      authState?.user?.membership?.name ??
+      authState?.user?.planType;
+
+    return normalizePlan(userPlan);
+  }, [authState?.user]);
+
+  const loadServices = useCallback(async (filters?: Record<string, any>) => {
     setLoading(true);
     try {
       const data = await fetchAllServices(filters);
@@ -47,9 +77,19 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getService = async (id: string) => {
+  const loadMyServices = useCallback(async () => {
+    setMyServicesLoading(true);
+    try {
+      const data = await getMyServices();
+      setMyServices(data);
+    } finally {
+      setMyServicesLoading(false);
+    }
+  }, []);
+
+  const getService = useCallback(async (id: string) => {
     try {
       const service = await fetchServiceById(id);
       return service;
@@ -57,34 +97,48 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to fetch service", err);
       return undefined;
     }
-  };
+  }, []);
 
-  const addService = async (service: Service) => {
-    const newService = await createService(service);
-    setServices((prev) => [...prev, newService]);
-    return newService;
-  };
+  const addService = useCallback(
+    async (service: ServicePayload) => {
+      if (currentPlan === "FREE" && myServices.length >= 1) {
+        const error = new Error("PLAN_LIMIT_REACHED");
+        throw error;
+      }
 
-  const editService = async (id: string, updates: Partial<Service>) => {
-    const updated = await updateService(id, updates);
-    setServices((prev) => prev.map((s) => (s.id === id ? updated : s)));
-    return updated;
-  };
+      const newService = await createMyService(service);
+      setMyServices((prev) => [...prev, newService]);
+      return newService;
+    },
+    [currentPlan, myServices.length]
+  );
 
-  const removeService = async (id: string) => {
-    await deleteService(id);
-    setServices((prev) => prev.filter((s) => s.id !== id));
-  };
+  const editService = useCallback(
+    async (id: string, updates: Partial<ServicePayload>) => {
+      const updated = await updateMyService(id, updates);
+      setMyServices((prev) => prev.map((s) => (s.id === id ? updated : s)));
+      return updated;
+    },
+    []
+  );
 
-  // Initial load of services when provider mounts
-  // useEffect(() => {
-  //   loadServices().catch((err) => console.error(err));
-  // }, []);
+  const removeService = useCallback(async (id: string) => {
+    await deleteMyService(id);
+    setMyServices((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
+  useEffect(() => {
+    loadMyServices().catch((err) => console.error(err));
+  }, [loadMyServices]);
 
   const value: ServicesState = {
     services,
+    myServices,
     loading,
+    myServicesLoading,
+    currentPlan,
     loadServices,
+    loadMyServices,
     getService,
     addService,
     editService,

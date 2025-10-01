@@ -1,9 +1,20 @@
 import { login, register } from "@/services/auth";
-import { refreshTokenService, validateTokenService } from "@/services/auth";
+import { refreshTokenService } from "@/services/auth";
 import { router } from "expo-router";
 import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
-import { Alert } from "react-native";
+
+export interface AuthUser {
+  id?: string;
+  name?: string;
+  email: string;
+  avatarUrl?: string;
+  plan?: string;
+  subscriptionPlan?: string;
+  subscription?: { plan?: string } | null;
+  membership?: { name?: string } | null;
+  planType?: string;
+}
 
 interface AuthContextType {
   login: (credentials: { email: string; password: string }) => Promise<any>;
@@ -17,7 +28,10 @@ interface AuthContextType {
     token: string | null;
     refreshToken: string | null;
     userEmail: string | null;
+    user: AuthUser | null;
   };
+  user: AuthUser | null;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -30,6 +44,19 @@ export const useAuth = () => {
   return context;
 };
 
+const parseUser = (raw: string | null): AuthUser | null => {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as AuthUser;
+  } catch (error) {
+    console.warn("Could not parse stored user", error);
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +67,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     token: string | null;
     refreshToken: string | null;
     userEmail: string | null;
+    user: AuthUser | null;
   }>({
     token: null,
     refreshToken: null,
     userEmail: null,
+    user: null,
   });
+
+  const persistUser = async (user: AuthUser | null) => {
+    if (user) {
+      await setItemAsync("user", JSON.stringify(user));
+    } else {
+      await deleteItemAsync("user");
+    }
+  };
 
   const loginFn = async ({
     email,
@@ -62,9 +99,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAccessToken(response.accessToken);
         setRefreshToken(response.refreshToken);
 
+        const user = response.user ?? null;
+
         await setItemAsync("token", response.accessToken);
         await setItemAsync("refreshToken", response.refreshToken);
         await setItemAsync("userEmail", email);
+        await persistUser(user);
+
+        setAuthState({
+          token: response.accessToken,
+          refreshToken: response.refreshToken,
+          userEmail: email,
+          user,
+        });
       }
       return response;
     } catch (error: any) {
@@ -93,9 +140,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setAccessToken(response.accessToken);
         setRefreshToken(response.refreshToken);
 
+        const user = response.user ?? null;
+
         await setItemAsync("token", response.accessToken);
         await setItemAsync("refreshToken", response.refreshToken);
         await setItemAsync("userEmail", payload.email);
+        await persistUser(user);
+
+        setAuthState({
+          token: response.accessToken,
+          refreshToken: response.refreshToken,
+          userEmail: payload.email,
+          user,
+        });
       }
       return response;
     } catch (error: any) {
@@ -112,7 +169,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await deleteItemAsync("token");
     await deleteItemAsync("refreshToken");
     await deleteItemAsync("userEmail");
-    setAuthState({ token: null, refreshToken: null, userEmail: null });
+    await deleteItemAsync("user");
+    setAuthState({ token: null, refreshToken: null, userEmail: null, user: null });
     setAccessToken(null);
     setRefreshToken(null);
   };
@@ -123,6 +181,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const savedToken = await getItemAsync("token");
         const savedRefreshToken = await getItemAsync("refreshToken");
         const savedUserEmail = await getItemAsync("userEmail");
+        const savedUserRaw = await getItemAsync("user");
+        const savedUser = parseUser(savedUserRaw);
 
         if (!savedToken || !savedRefreshToken || !savedUserEmail) {
           router.push("/login");
@@ -134,15 +194,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           token: savedToken,
           refreshToken: savedRefreshToken,
           userEmail: savedUserEmail,
+          user: savedUser,
         });
-
-        //NO ESTA ESTE ENDPOINT
-        // const validation = await validateTokenService();
-
-        // if (validation === 200) {
-        //   setAuthLoaded(true);
-        //   return;
-        // }
 
         setAuthLoaded(true);
 
@@ -154,6 +207,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             token: refreshed,
             refreshToken: savedRefreshToken,
             userEmail: savedUserEmail,
+            user: savedUser,
           });
         } else {
           console.warn("No se pudo refrescar el token.");
@@ -181,6 +235,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         refreshToken,
         authLoaded,
         authState,
+        user: authState.user,
+        logout,
       }}
     >
       {children}

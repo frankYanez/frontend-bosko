@@ -1,10 +1,6 @@
-import { View, Text } from "react-native";
 import React from "react";
+import ServiceFormScreen from "@/screens/ServiceFormScreen";
 
 export default function AddServices() {
-  return (
-    <View>
-      <Text>AddServices</Text>
-    </View>
-  );
+  return <ServiceFormScreen />;
 }
