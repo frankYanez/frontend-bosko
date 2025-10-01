@@ -1,10 +1,6 @@
-import { View, Text } from "react-native";
 import React from "react";
+import MyServiceScreen from "@/screens/MyServiceScreen";
 
 export default function Services() {
-  return (
-    <View>
-      <Text>Services</Text>
-    </View>
-  );
+  return <MyServiceScreen />;
 }

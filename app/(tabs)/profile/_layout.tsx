@@ -1,11 +1,25 @@
-import { View, Text } from "react-native";
 import React from "react";
-import { Slot, Stack } from "expo-router";
+import { Stack } from "expo-router";
 
-export default function _layout() {
+export default function ProfileLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ headerTitle: "Perfil" }} />
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Services"
+        options={{
+          title: "Mis servicios",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="AddServices"
+        options={{
+          title: "Gestionar servicio",
+          headerShown: true,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }
