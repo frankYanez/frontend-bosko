@@ -71,7 +71,12 @@ export default function ProviderProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Stack.Screen options={{ headerShown: false }} />
+      {/* <Stack.Screen
+        options={{
+          title: provider.name,
+          headerLargeTitle: false,
+        }}
+      /> */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}

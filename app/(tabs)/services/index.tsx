@@ -1,4 +1,11 @@
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
@@ -12,6 +19,7 @@ import {
   ServiceProvider,
 } from "@/constants/serviceProviders";
 import { TOKENS } from "@/theme/tokens";
+import { useCallback, useMemo } from "react";
 
 type CategoryWithCount = ServiceCategory & { servicesCount: number };
 
@@ -33,15 +41,63 @@ const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
 export default function ServicesScreen() {
   const router = useRouter();
 
-  function formatRate(rate: ServiceProvider["rate"]) {
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
-  }
+  const categories = useMemo<CategoryListItem[]>(() => {
+    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>(
+      (acc, provider) => {
+        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
+        return acc;
+      },
+      {}
+    );
+
+    return SERVICE_CATEGORIES.map((category) => ({
+      ...category,
+      servicesCount: counts[category.id] ?? 0,
+    }));
+  }, []);
+
+  const handleCategoryPress = useCallback(
+    (category: ServiceCategory) => {
+      router.push({
+        pathname: "/services/category/[id]",
+        params: { id: category.id },
+      });
+    },
+    [router]
+  );
+
+  const renderCategory = useCallback(
+    ({ item, index }: { item: CategoryListItem; index: number }) => (
+      <MotiView
+        from={{ opacity: 0, translateY: 24 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: "timing", duration: 420, delay: index * 70 }}
+        style={styles.cardWrapper}
+      >
+        <Pressable
+          onPress={() => handleCategoryPress(item)}
+          accessibilityRole="button"
+          accessibilityLabel={item.title}
+          accessibilityHint={`Abrir categoría ${item.title}`}
+          style={[styles.card, { backgroundColor: item.accent }]}
+          android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+        >
+          <View style={styles.cardHeader}>
+            <Text style={styles.icon}>{item.icon}</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{item.servicesCount}</Text>
+              <Text style={styles.countLabel}>servicios</Text>
+            </View>
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardDescription}>{item.description}</Text>
+          </View>
+        </Pressable>
+      </MotiView>
+    ),
+    [handleCategoryPress]
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -74,7 +130,9 @@ export default function ServicesScreen() {
                 <Text style={styles.cardTitle}>{item.title}</Text>
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
-              <Text style={styles.cardCount}>{item.servicesCount} servicios</Text>
+              <Text style={styles.cardCount}>
+                {item.servicesCount} servicios
+              </Text>
             </Pressable>
           </MotiView>
         )}

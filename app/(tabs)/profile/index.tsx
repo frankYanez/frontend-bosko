@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import React from "react";
 import ProfileHeader from "@/components/profileComponentes/ProfileHeader";
 import ProfileSection from "@/components/profileComponentes/ProfileSection";
-import { router } from "expo-router";
+import { RelativePathString, router } from "expo-router";
 
 export default function ProfileScreen() {
   return (
@@ -27,20 +27,30 @@ export default function ProfileScreen() {
         title="Configuración"
         options={[
           {
-            label: "Editar perfil",
-            onPress: () => router.push("/(tabs)/profile/EditProfile"),
+            label: "Editar nombre de usuario",
+            onPress: () =>
+              router.push(
+                `/(tabs)/profile/edit/username` as RelativePathString
+              ),
           },
           {
             label: "Cambiar contraseña",
-            onPress: () => router.push("/(tabs)/profile/ChangePassword"),
+            onPress: () =>
+              router.push(
+                `/(tabs)/profile/edit/password` as RelativePathString
+              ),
           },
           {
-            label: "Notificaciones",
-            onPress: () => router.push("/(tabs)/profile/Notifications"),
+            label: "Actualizar foto de perfil",
+            onPress: () =>
+              router.push(`/(tabs)/profile/edit/photo` as RelativePathString),
           },
           {
             label: "Métodos de pago",
-            onPress: () => router.push("/(tabs)/profile/Payments"),
+            onPress: () =>
+              router.push(
+                "/(tabs)/profile/edit/payments" as RelativePathString
+              ),
           },
         ]}
       />

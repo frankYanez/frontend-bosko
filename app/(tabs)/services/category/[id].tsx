@@ -274,6 +274,8 @@ export default function CategoryServicesScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
 
+  console.log("id", id);
+
   const category = useMemo(
     () => SERVICE_CATEGORIES.find((item) => item.id === id),
     [id]

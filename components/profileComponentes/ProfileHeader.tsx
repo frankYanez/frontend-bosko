@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import React from "react";
+import { RelativePathString, router } from "expo-router";
 
 const user = {
   name: "Leo Gómez",
@@ -13,7 +14,12 @@ export default function ProfileHeader() {
       <Image source={{ uri: user.avatar }} style={styles.avatar} />
       <Text style={styles.name}>{user.name}</Text>
       <Text style={styles.email}>{user.email}</Text>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        onPress={() =>
+          router.push("/(tabs)/profile/edit/photo" as RelativePathString)
+        }
+        style={styles.button}
+      >
         <Text style={styles.buttonText}>Editar foto</Text>
       </TouchableOpacity>
     </View>
