@@ -1,29 +1,7 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Dimensions,
-  Pressable,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
+import { View } from "react-native";
 import React from "react";
-import { Image } from "expo-image";
-import Fonts from "@/constants/Fonts";
-import Styles from "@/constants/Components";
-import Carousel, {
-  ICarouselInstance,
-  Pagination,
-} from "react-native-reanimated-carousel";
-import { useSharedValue } from "react-native-reanimated";
-import { PaginationItem } from "react-native-reanimated-carousel/lib/typescript/components/Pagination/Basic/PaginationItem";
-import { useAuth } from "@/context/AuthContext";
-import { TextInput } from "react-native-gesture-handler";
-import { Redirect, router } from "expo-router";
-import RegisterView from "@/components/RegisterView";
-import { globalStyles } from "@/styles/global-styles";
 import LogInView from "./LogInView";
+import RegisterView from "./RegisterView";
 
 export default function Index() {
   const [toLogin, setToLogin] = React.useState(false);

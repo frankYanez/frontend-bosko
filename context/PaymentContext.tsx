@@ -79,9 +79,9 @@ export const PaymentsProvider = ({ children }: { children: ReactNode }) => {
     return result;
   };
 
-  useEffect(() => {
-    loadMethods().catch((err) => console.error(err));
-  }, []);
+  // useEffect(() => {
+  //   loadMethods().catch((err) => console.error(err));
+  // }, []);
 
   const value: PaymentsState = {
     methods,

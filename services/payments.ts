@@ -1,4 +1,4 @@
-import axios from "axios";
+
 
 /**
  * Payment and subscription related API calls.
@@ -9,6 +9,8 @@ import axios from "axios";
  * with a payment provider (e.g. Stripe) which often returns a
  * client secret or URL to a checkout session.
  */
+
+import api from "@/axiosinstance";
 
 export interface PaymentMethod {
   id?: string;
@@ -26,7 +28,7 @@ export interface PaymentMethod {
  * Retrieve saved payment methods for the current user.
  */
 export async function fetchPaymentMethods(): Promise<PaymentMethod[]> {
-  const { data } = await axios.get<PaymentMethod[]>('/payments/methods');
+  const { data } = await api.get<PaymentMethod[]>('/payments/methods');
   return data;
 }
 
@@ -40,7 +42,7 @@ export async function fetchPaymentMethods(): Promise<PaymentMethod[]> {
  * a generic object. Adjust the type as necessary.
  */
 export async function addPaymentMethod(payload: any): Promise<PaymentMethod> {
-  const { data } = await axios.post<PaymentMethod>('/payments/methods', payload);
+  const { data } = await api.post<PaymentMethod>('/payments/methods', payload);
   return data;
 }
 
@@ -50,7 +52,7 @@ export async function addPaymentMethod(payload: any): Promise<PaymentMethod> {
  * DELETE `/payments/methods/{id}`
  */
 export async function removePaymentMethod(id: string): Promise<{ message: string }> {
-  const { data } = await axios.delete(`/payments/methods/${id}`);
+  const { data } = await api.delete(`/payments/methods/${id}`);
   return data;
 }
 
@@ -64,7 +66,7 @@ export async function removePaymentMethod(id: string): Promise<{ message: string
  * confirmation or client secret.
  */
 export async function subscribeToPro(): Promise<{ status: string; clientSecret?: string }> {
-  const { data } = await axios.post('/payments/subscribe');
+  const { data } = await api.post('/payments/subscribe');
   return data;
 }
 
@@ -77,6 +79,6 @@ export async function subscribeToPro(): Promise<{ status: string; clientSecret?:
  * screen.
  */
 export async function fetchInvoices(): Promise<any[]> {
-  const { data } = await axios.get<any[]>('/payments/invoices');
+  const { data } = await api.get<any[]>('/payments/invoices');
   return data;
 }

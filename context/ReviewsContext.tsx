@@ -57,9 +57,9 @@ export const ReviewsProvider = ({
     return newReview;
   };
 
-  useEffect(() => {
-    loadReviews().catch((err) => console.error(err));
-  }, [serviceId]);
+  // useEffect(() => {
+  //   loadReviews().catch((err) => console.error(err));
+  // }, [serviceId]);
 
   const value: ReviewsState = {
     reviews,

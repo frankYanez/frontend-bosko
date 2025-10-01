@@ -1,4 +1,3 @@
-import axios from "axios";
 
 /**
  * Reviews (ratings and comments) related API calls.
@@ -8,6 +7,8 @@ import axios from "axios";
  * service card. These endpoints allow fetching reviews for a
  * service and posting new reviews.
  */
+
+import api from "@/axiosinstance";
 
 export interface Review {
   id?: string;
@@ -26,7 +27,7 @@ export interface Review {
  * Retrieve all reviews for a specific service.
  */
 export async function fetchReviewsByService(serviceId: string): Promise<Review[]> {
-  const { data } = await axios.get<Review[]>(`/services/${serviceId}/reviews`);
+  const { data } = await api.get<Review[]>(`/services/${serviceId}/reviews`);
   return data;
 }
 
@@ -39,6 +40,6 @@ export async function fetchReviewsByService(serviceId: string): Promise<Review[]
  * current user ID from the auth token.
  */
 export async function createReview(serviceId: string, payload: Omit<Review, 'id' | 'serviceId' | 'userId' | 'createdAt'>): Promise<Review> {
-  const { data } = await axios.post<Review>(`/services/${serviceId}/reviews`, payload);
+  const { data } = await api.post<Review>(`/services/${serviceId}/reviews`, payload);
   return data;
 }

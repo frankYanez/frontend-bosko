@@ -1,4 +1,3 @@
-import axios from "axios";
 
 /**
  * Posts (work feed) related API calls.
@@ -7,6 +6,8 @@ import axios from "axios";
  * descriptions. Clients can like and comment on these posts, and
  * this content appears on the service detail page.
  */
+
+import api from "@/axiosinstance";
 
 export interface Post {
   id?: string;
@@ -26,7 +27,7 @@ export interface Post {
  * Retrieve all feed posts for a particular service.
  */
 export async function fetchPostsByService(serviceId: string): Promise<Post[]> {
-  const { data } = await axios.get<Post[]>(`/services/${serviceId}/posts`);
+  const { data } = await api.get<Post[]>(`/services/${serviceId}/posts`);
   return data;
 }
 
@@ -39,7 +40,7 @@ export async function fetchPostsByService(serviceId: string): Promise<Post[]> {
  * an uploaded image and an optional description.
  */
 export async function createPost(serviceId: string, payload: Omit<Post, 'id' | 'serviceId' | 'likes' | 'commentsCount' | 'createdAt'>): Promise<Post> {
-  const { data } = await axios.post<Post>(`/services/${serviceId}/posts`, payload);
+  const { data } = await api.post<Post>(`/services/${serviceId}/posts`, payload);
   return data;
 }
 
@@ -51,7 +52,7 @@ export async function createPost(serviceId: string, payload: Omit<Post, 'id' | '
  * Register a like on a post. Returns the updated like count.
  */
 export async function likePost(postId: string): Promise<{ likes: number }> {
-  const { data } = await axios.post<{ likes: number }>(`/posts/${postId}/like`);
+  const { data } = await api.post<{ likes: number }>(`/posts/${postId}/like`);
   return data;
 }
 
@@ -65,6 +66,6 @@ export async function likePost(postId: string): Promise<{ likes: number }> {
  * comments count or the new comment, depending on implementation.
  */
 export async function commentOnPost(postId: string, comment: string): Promise<{ commentsCount: number }> {
-  const { data } = await axios.post<{ commentsCount: number }>(`/posts/${postId}/comments`, { comment });
+  const { data } = await api.post<{ commentsCount: number }>(`/posts/${postId}/comments`, { comment });
   return data;
 }

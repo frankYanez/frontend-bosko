@@ -7,6 +7,15 @@ import { PostsProvider } from "@/context/PostsContext";
 import { ReviewsProvider } from "@/context/ReviewsContext";
 import { ServicesProvider } from "@/context/ServicesContext";
 import { UserProvider } from "@/context/UserContext";
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 
 export default function _layout() {
   return (
@@ -17,7 +26,7 @@ export default function _layout() {
             <PostsProvider serviceId="global">
               <ReviewsProvider serviceId="global">
                 <ServicesProvider>
-                  <Redirect href="/(tabs)" />
+                  {/* <Redirect href="/login" /> */}
                   <Tabs
                     screenOptions={{
                       headerShown: false,

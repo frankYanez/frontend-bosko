@@ -11,7 +11,6 @@ import EditEmail from "@/components/profileComponentes/edit/EditMail";
 
 export default function EditGeneric() {
   const { type } = useLocalSearchParams<{ type: string }>();
-  console.log("type:", type);
 
   const renderComponent = () => {
     switch (type) {

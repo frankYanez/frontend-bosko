@@ -35,7 +35,8 @@ export default function LogInView({ toLogin }: { toLogin: () => void }) {
     setIsLoading(true);
 
     try {
-      // const response = await login(formData);
+      const response = await login(formData);
+
       // response.data = 1;
       // if (response.data) {
       //   // Registro exitoso, redirigir al login

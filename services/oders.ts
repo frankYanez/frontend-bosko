@@ -1,4 +1,3 @@
-import axios from 'axios';
 
 /**
  * Order related API calls.
@@ -9,6 +8,8 @@ import axios from 'axios';
  * on your backend design, orders may also include status changes
  * such as cancelled or completed.
  */
+
+import api from "@/axiosinstance";
 
 export interface Order {
   id?: string;
@@ -31,20 +32,20 @@ export interface Order {
  * such as by user ID or status. When the user is a pro, you
  * probably want to fetch orders where they are the assigned pro.
  */
-export async function fetchOrders(params?: Record<string, any>): Promise<Order[]> {
-  const { data } = await axios.get<Order[]>('/orders', { params });
-  return data;
-}
+// export async function fetchOrders(params?: Record<string, any>): Promise<Order[]> {
+//   const { data } = await api.get<Order[]>('/orders', { params });
+//   return data;
+// }
 
 /**
  * fetchOrderById
  *
  * GET `/orders/{id}`
  */
-export async function fetchOrderById(id: string): Promise<Order> {
-  const { data } = await axios.get<Order>(`/orders/${id}`);
-  return data;
-}
+// export async function fetchOrderById(id: string): Promise<Order> {
+//   const { data } = await api.get<Order>(`/orders/${id}`);
+//   return data;
+// }
 
 /**
  * createOrder
@@ -56,7 +57,7 @@ export async function fetchOrderById(id: string): Promise<Order> {
  * assign a status of 'pending' until a pro accepts the job.
  */
 export async function createOrder(payload: Omit<Order, 'id' | 'status'>): Promise<Order> {
-  const { data } = await axios.post<Order>('/orders', payload);
+  const { data } = await api.post<Order>('/orders', payload);
   return data;
 }
 
@@ -69,7 +70,7 @@ export async function createOrder(payload: Omit<Order, 'id' | 'status'>): Promis
  * partial updates are required so the payload is partial.
  */
 export async function updateOrder(id: string, payload: Partial<Order>): Promise<Order> {
-  const { data } = await axios.put<Order>(`/orders/${id}`, payload);
+  const { data } = await api.put<Order>(`/orders/${id}`, payload);
   return data;
 }
 
@@ -82,6 +83,6 @@ export async function updateOrder(id: string, payload: Partial<Order>): Promise<
  * response or a message indicating success. Adjust as needed.
  */
 export async function deleteOrder(id: string): Promise<{ message: string }> {
-  const { data } = await axios.delete(`/orders/${id}`);
+  const { data } = await api.delete(`/orders/${id}`);
   return data;
 }

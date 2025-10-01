@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
 import React from "react";
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import Carousel, {
   ICarouselInstance,
   Pagination,
@@ -9,10 +9,12 @@ import OnBoardingSlide from "@/components/OnBoardingSlide";
 import { useSharedValue } from "react-native-reanimated";
 import { globalStyles } from "@/styles/global-styles";
 import ButtonBosko from "@/components/ButtonBosko";
+import { useAuth } from "@/context/AuthContext";
 
 export default function OnBoarding() {
   const progress = useSharedValue<number>(0);
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const { authLoaded, authState } = useAuth();
 
   const ref = React.useRef<ICarouselInstance>(null);
 
@@ -57,6 +59,10 @@ export default function OnBoarding() {
       image: require("@/assets/lotties/register2.json"),
     },
   ];
+  if (authLoaded && authState.token) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return (
     <View style={{ flex: 1, alignItems: "center", top: 50 }}>
       <Carousel

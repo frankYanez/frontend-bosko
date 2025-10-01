@@ -1,13 +1,5 @@
-import axios from 'axios';
-
-/**
- * Authentication related API calls.
- *
- * These functions wrap the raw HTTP requests to the backend endpoints
- * responsible for user authentication. Keeping them here decouples
- * network logic from the rest of the application and makes it easy to
- * swap implementations or update endpoints in one place.
- */
+import api from "@/axiosinstance";
+import { getItemAsync, setItemAsync } from "expo-secure-store";
 
 export interface Credentials {
   email: string;
@@ -19,59 +11,85 @@ export interface RegisterPayload extends Credentials {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: any;
+  accessToken: string;
+  refreshToken: string;
+  user?: any;
 }
 
 /**
- * login
- *
- * POST `/auth/login`
- *
- * @param credentials - email and password
- * @returns AuthResponse containing user and JWT token
+ * LOGIN
  */
 export async function login(credentials: Credentials): Promise<AuthResponse> {
-  const { data } = await axios.post<AuthResponse>('/auth/login', credentials);
+  const { data } = await api.post<AuthResponse>("/auth/login", credentials);
+
   return data;
 }
 
 /**
- * register
- *
- * POST `/auth/register`
- *
- * @param payload - name, email and password
- * @returns AuthResponse containing user and JWT token
+ * REGISTER
  */
-export async function register(payload: RegisterPayload): Promise<AuthResponse> {
-  const { data } = await axios.post<AuthResponse>('/auth/register', payload);
+export async function register(
+  payload: RegisterPayload
+): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>("/auth/register", payload);
+  
   return data;
 }
 
 /**
- * fetchProfile
- *
- * GET `/auth/profile`
- *
- * Fetch the current authenticated user's profile using the token
- * stored in localStorage or added via the interceptor in client.ts.
+ * VALIDATE TOKEN
  */
-export async function fetchProfile(): Promise<any> {
-  const { data } = await axios.get('/auth/profile');
-  return data;
-}
+export const validateTokenService = async (): Promise<number | null> => {
+  try {
+    const token = await getItemAsync("token");
+    if (!token) return null;
+
+    const response = await api.post(
+      "/auth/validate",
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+
+    return response.status;
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      return null;
+    }
+    console.error("Error inesperado validando token:", error);
+    return null;
+  }
+};
 
 /**
- * refreshToken
- *
- * POST `/auth/refresh`
- *
- * Requests a new token. Some backends issue short-lived tokens that
- * require a refresh. This call should be invoked when you detect
- * your token is about to expire.
+ * REFRESH TOKEN
  */
-export async function refreshToken(): Promise<{ token: string }> {
-  const { data } = await axios.post('/auth/refresh');
-  return data;
-}
+export const refreshTokenService = async (
+  oldRefreshToken: string | null
+): Promise<string | null> => {
+  try {
+  
+
+    const { data, status } = await api.post("/auth/refresh", {
+      refreshToken: oldRefreshToken,
+    });
+
+   
+
+    if (status === 200) {
+      const { accessToken, refreshToken } = data;
+
+      
+        await setItemAsync("token", accessToken);
+        await setItemAsync("refreshToken", refreshToken);
+        return accessToken;
+      
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    return null;
+  }
+  return null;
+};

@@ -1,5 +1,9 @@
-import { loginHandler, registerHandler } from "@/Functions/Login";
-import { createContext, useContext, useState } from "react";
+import { login, register } from "@/services/auth";
+import { refreshTokenService, validateTokenService } from "@/services/auth";
+import { router } from "expo-router";
+import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
+import { createContext, useContext, useEffect, useState } from "react";
+import { Alert } from "react-native";
 
 interface AuthContextType {
   login: (credentials: { email: string; password: string }) => Promise<any>;
@@ -8,18 +12,12 @@ interface AuthContextType {
   error: string | null;
   accessToken: string | null;
   refreshToken: string | null;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  userName: string;
-  fullName: string;
-  firstName: string;
-  lastName: string;
-  bio: string;
-  phone: string;
-  location: string;
+  authLoaded: boolean;
+  authState: {
+    token: string | null;
+    refreshToken: string | null;
+    userEmail: string | null;
+  };
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -37,8 +35,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+  const [authState, setAuthState] = useState<{
+    token: string | null;
+    refreshToken: string | null;
+    userEmail: string | null;
+  }>({
+    token: null,
+    refreshToken: null,
+    userEmail: null,
+  });
 
-  const login = async ({
+  const loginFn = async ({
     email,
     password,
   }: {
@@ -48,10 +56,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await loginHandler(email, password);
-      if (response.data?.accessToken) {
-        setAccessToken(response.data.accessToken);
-        setRefreshToken(response.data.refreshToken);
+      const response = await login({ email, password });
+
+      if (response.accessToken) {
+        setAccessToken(response.accessToken);
+        setRefreshToken(response.refreshToken);
+
+        await setItemAsync("token", response.accessToken);
+        await setItemAsync("refreshToken", response.refreshToken);
+        await setItemAsync("userEmail", email);
       }
       return response;
     } catch (error: any) {
@@ -64,16 +77,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const register = async (data: FormData) => {
+  const registerFn = async (data: FormData) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await registerHandler(data);
-      console.log("Register response:", response.data);
+      const payload = {
+        name: data.get("name") as string,
+        email: data.get("email") as string,
+        password: data.get("password") as string,
+      };
 
-      if (response.data?.accessToken) {
-        setAccessToken(response.data.accessToken);
-        setRefreshToken(response.data.refreshToken);
+      const response = await register(payload);
+
+      if (response.accessToken) {
+        setAccessToken(response.accessToken);
+        setRefreshToken(response.refreshToken);
+
+        await setItemAsync("token", response.accessToken);
+        await setItemAsync("refreshToken", response.refreshToken);
+        await setItemAsync("userEmail", payload.email);
       }
       return response;
     } catch (error: any) {
@@ -86,9 +108,80 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const logout = async () => {
+    await deleteItemAsync("token");
+    await deleteItemAsync("refreshToken");
+    await deleteItemAsync("userEmail");
+    setAuthState({ token: null, refreshToken: null, userEmail: null });
+    setAccessToken(null);
+    setRefreshToken(null);
+  };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const savedToken = await getItemAsync("token");
+        const savedRefreshToken = await getItemAsync("refreshToken");
+        const savedUserEmail = await getItemAsync("userEmail");
+
+        if (!savedToken || !savedRefreshToken || !savedUserEmail) {
+          router.push("/login");
+          await logout();
+          return;
+        }
+
+        setAuthState({
+          token: savedToken,
+          refreshToken: savedRefreshToken,
+          userEmail: savedUserEmail,
+        });
+
+        //NO ESTA ESTE ENDPOINT
+        // const validation = await validateTokenService();
+
+        // if (validation === 200) {
+        //   setAuthLoaded(true);
+        //   return;
+        // }
+
+        setAuthLoaded(true);
+
+        const refreshed = await refreshTokenService(savedRefreshToken);
+
+        if (refreshed) {
+          await setItemAsync("token", refreshed);
+          setAuthState({
+            token: refreshed,
+            refreshToken: savedRefreshToken,
+            userEmail: savedUserEmail,
+          });
+        } else {
+          console.warn("No se pudo refrescar el token.");
+          await logout();
+        }
+      } catch (error) {
+        console.error("Error en checkAuth:", error);
+        await logout();
+      } finally {
+        setAuthLoaded(true);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ login, register, isLoading, error, accessToken, refreshToken }}
+      value={{
+        login: loginFn,
+        register: registerFn,
+        isLoading,
+        error,
+        accessToken,
+        refreshToken,
+        authLoaded,
+        authState,
+      }}
     >
       {children}
     </AuthContext.Provider>

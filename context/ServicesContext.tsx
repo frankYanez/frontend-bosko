@@ -77,9 +77,9 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Initial load of services when provider mounts
-  useEffect(() => {
-    loadServices().catch((err) => console.error(err));
-  }, []);
+  // useEffect(() => {
+  //   loadServices().catch((err) => console.error(err));
+  // }, []);
 
   const value: ServicesState = {
     services,
