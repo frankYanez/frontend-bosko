@@ -75,9 +75,9 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     setOrders((prev) => prev.filter((o) => o.id !== id));
   };
 
-  useEffect(() => {
-    loadOrders().catch((err) => console.error(err));
-  }, []);
+  // useEffect(() => {
+  //   loadOrders().catch((err) => console.error(err));
+  // }, []);
 
   const value: OrdersState = {
     orders,

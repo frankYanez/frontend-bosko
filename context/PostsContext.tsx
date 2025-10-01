@@ -79,9 +79,9 @@ export const PostsProvider = ({
     );
   };
 
-  useEffect(() => {
-    loadPosts().catch((err) => console.error(err));
-  }, [serviceId]);
+  // useEffect(() => {
+  //   loadPosts().catch((err) => console.error(err));
+  // }, [serviceId]);
 
   const value: PostsState = {
     posts,

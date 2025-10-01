@@ -10,10 +10,12 @@ export default function SlideLeft({ children }: { children: React.ReactNode }) {
   const translateX = useSharedValue(80);
   const opacity = useSharedValue(0);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    opacity: opacity.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+      transform: [{ translateX: translateX.value }],
+    };
+  });
 
   useEffect(() => {
     translateX.value = withTiming(0, { duration: 500 });

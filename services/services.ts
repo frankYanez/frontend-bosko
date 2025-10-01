@@ -1,4 +1,3 @@
-import axios from 'axios';
 
 /**
  * Service related API calls.
@@ -8,6 +7,8 @@ import axios from 'axios';
  * fetch available services, create new ones, update existing
  * services and remove those no longer offered.
  */
+
+import api from "@/axiosinstance";
 
 export interface Service {
   id?: string;
@@ -31,7 +32,7 @@ export interface Service {
  * when you know the exact shape of the Swagger definition.
  */
 export async function fetchAllServices(params?: Record<string, any>): Promise<Service[]> {
-  const { data } = await axios.get<Service[]>('/services', { params });
+  const { data } = await api.get<Service[]>('/services', { params });
   return data;
 }
 
@@ -43,7 +44,7 @@ export async function fetchAllServices(params?: Record<string, any>): Promise<Se
  * Retrieve detailed information about a single service by its ID.
  */
 export async function fetchServiceById(id: string): Promise<Service> {
-  const { data } = await axios.get<Service>(`/services/${id}`);
+  const { data } = await api.get<Service>(`/services/${id}`);
   return data;
 }
 
@@ -56,7 +57,7 @@ export async function fetchServiceById(id: string): Promise<Service> {
  * newly created service including its generated ID.
  */
 export async function createService(payload: Service): Promise<Service> {
-  const { data } = await axios.post<Service>('/services', payload);
+  const { data } = await api.post<Service>('/services', payload);
   return data;
 }
 
@@ -69,7 +70,7 @@ export async function createService(payload: Service): Promise<Service> {
  * updated service object.
  */
 export async function updateService(id: string, payload: Partial<Service>): Promise<Service> {
-  const { data } = await axios.put<Service>(`/services/${id}`, payload);
+  const { data } = await api.put<Service>(`/services/${id}`, payload);
   return data;
 }
 
@@ -83,6 +84,6 @@ export async function updateService(id: string, payload: Partial<Service>): Prom
  * swagger dictates.
  */
 export async function deleteService(id: string): Promise<{ message: string }> {
-  const { data } = await axios.delete(`/services/${id}`);
+  const { data } = await api.delete(`/services/${id}`);
   return data;
 }

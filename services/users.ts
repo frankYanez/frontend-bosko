@@ -1,6 +1,4 @@
 
-import axios from "axios";
-
 /**
  * User related API calls.
  *
@@ -8,6 +6,8 @@ import axios from "axios";
  * may need endpoints to fetch other users (e.g. for chat) or to
  * update profile details independent of the authentication flow.
  */
+
+import api from "@/axiosinstance";
 
 export interface User {
   id?: string;
@@ -28,7 +28,7 @@ export interface User {
  * as role or search term.
  */
 export async function fetchUsers(params?: Record<string, any>): Promise<User[]> {
-  const { data } = await axios.get<User[]>('/users', { params });
+  const { data } = await api.get<User[]>('/users', { params });
   return data;
 }
 
@@ -38,7 +38,7 @@ export async function fetchUsers(params?: Record<string, any>): Promise<User[]> 
  * GET `/users/{id}`
  */
 export async function fetchUserById(id: string): Promise<User> {
-  const { data } = await axios.get<User>(`/users/${id}`);
+  const { data } = await api.get<User>(`/users/${id}`);
   return data;
 }
 
@@ -52,6 +52,6 @@ export async function fetchUserById(id: string): Promise<User> {
  * changed.
  */
 export async function updateUser(id: string, payload: Partial<User>): Promise<User> {
-  const { data } = await axios.put<User>(`/users/${id}`, payload);
+  const { data } = await api.put<User>(`/users/${id}`, payload);
   return data;
 }

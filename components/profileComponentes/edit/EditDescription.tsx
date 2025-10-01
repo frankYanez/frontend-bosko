@@ -5,7 +5,6 @@ export default function EditDescription() {
   const [desc, setDesc] = useState("Descripción actual");
 
   const save = () => {
-    console.log("Nueva descripción:", desc);
     // acá llamás al backend
   };
 

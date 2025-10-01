@@ -4,7 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import { SERVICE_CATEGORIES, ServiceCategory } from "@/constants/serviceCategories";
+import {
+  SERVICE_CATEGORIES,
+  ServiceCategory,
+} from "@/constants/serviceCategories";
 import { SERVICE_PROVIDERS } from "@/constants/serviceProviders";
 import { TOKENS } from "@/theme/tokens";
 
@@ -14,10 +17,13 @@ export default function ServicesScreen() {
   const router = useRouter();
 
   const categories = useMemo<CategoryListItem[]>(() => {
-    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>((acc, provider) => {
-      acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
-      return acc;
-    }, {});
+    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>(
+      (acc, provider) => {
+        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
+        return acc;
+      },
+      {}
+    );
 
     return SERVICE_CATEGORIES.map((category) => ({
       ...category,

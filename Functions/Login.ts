@@ -1,6 +1,8 @@
-import axios from "axios";
+// import api from "@/apiinstance";
 
-export const API_URL = 'http://50.16.93.238:3000'
+import api from "@/axiosinstance";
+
+
 
 interface RegisterData {
     email: string;
@@ -10,16 +12,18 @@ interface RegisterData {
 }
 
 export const loginHandler = async (email: string, password: string) => {
-    console.log(email,password);
+  
     
     try {
-        const response = await axios.post(API_URL + '/auth/login', {
+        const response = await api.post( '/auth/login', {
             email,
             password
         });
-        console.log(response);
+
         
-        return response;
+        
+      
+        return response.data;
     } catch (error) {
         console.error('Error en loginHandler:', error);
         throw error;
@@ -27,11 +31,32 @@ export const loginHandler = async (email: string, password: string) => {
 }
 
 export const registerHandler = async (data: FormData) => {
+
+   const dataFake = {
+    email: "elpulguero@gmail.com",
+    firstName: "El",
+    lastName: "Pulguero",
+    bio: "Bio del usuario",
+    phone: "123456789",
+    location: "Ubicación del usuario",
+    password: "123456",
+    userName: "elpulguero",
+    fullName: "El Pulguero"
+   }
     
     
     try {
-        const response = await axios.post(API_URL + '/auth/register', data, );
-        return response;
+        const response = await api.post( '/auth/register',{
+            email: dataFake.email,
+            password: dataFake.password,
+            userName: dataFake.userName,
+            firstName: dataFake.firstName,
+            lastName: dataFake.lastName,
+            bio: dataFake.bio,
+            phone: dataFake.phone,
+            location: dataFake.location
+        } );
+        return response.data;
     } catch (error) {
         console.error('Error en registerHandler:', error);
         throw error;

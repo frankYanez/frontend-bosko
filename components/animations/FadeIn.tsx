@@ -9,9 +9,11 @@ import Animated, {
 export default function FadeIn({ children }: { children: React.ReactNode }) {
   const opacity = useSharedValue(0);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  });
 
   useEffect(() => {
     opacity.value = withTiming(1, { duration: 600 });
