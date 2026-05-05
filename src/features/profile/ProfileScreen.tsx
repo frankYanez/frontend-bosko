@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -15,14 +15,22 @@ import { ProfileInfo } from "./components/ProfileInfo";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { EditProfileModal } from "./components/EditProfileModal";
 import { useProfile } from "./state/ProfileContext";
-import { UpdateProfilePayload } from "../servicesUser/services/profile";
+import { UpdateProfilePayload, getUserStats, UserStats } from "../servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
 
 export const ProfileScreen: React.FC = () => {
   const { profile, isLoading, refreshProfile, updateProfile } = useProfile();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [stats, setStats] = useState<UserStats | null>(null);
 
-  console.log(profile);
+  // Cargar estadísticas del perfil desde la API
+  useEffect(() => {
+    if (profile) {
+      getUserStats()
+        .then(setStats)
+        .catch(() => {}); // Si falla, queda en null (muestra 0)
+    }
+  }, [profile?.id]);
 
   const handleSaveProfile = async (data: UpdateProfilePayload) => {
     await updateProfile(data);
@@ -92,10 +100,10 @@ export const ProfileScreen: React.FC = () => {
         />
 
         <ProfileStats
-          servicesCount={0}
-          reviewsCount={0}
-          rating={0}
-          completedOrders={0}
+          servicesCount={stats?.servicesCount ?? 0}
+          reviewsCount={stats?.reviewsCount ?? 0}
+          rating={stats?.averageRating ?? 0}
+          completedOrders={stats?.completedOrders ?? 0}
         />
 
         <ProfileInfo

@@ -30,19 +30,8 @@ export interface UpdateProfilePayload {
  * GET /auth/me
  */
 export async function getCurrentUserProfile(): Promise<UserProfile> {
-    console.log("🌐 [ProfileService] Fetching current user profile from /auth/me");
-    try {
-        const { data } = await api.get<UserProfile>("/auth/me");
-        console.log("✅ [ProfileService] Profile fetched successfully:", data);
-        return data;
-    } catch (error: any) {
-        console.error("❌ [ProfileService] Error fetching profile:", {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        throw error;
-    }
+    const { data } = await api.get<UserProfile>("/users/me");
+    return data;
 }
 
 /**
@@ -52,19 +41,30 @@ export async function getCurrentUserProfile(): Promise<UserProfile> {
 export async function updateUserProfile(
     payload: UpdateProfilePayload
 ): Promise<UserProfile> {
-    const { data } = await api.put<UserProfile>("/user", payload);
+    const { data } = await api.patch<UserProfile>("/users/me", payload);
     return data;
 }
 
-/**
- * Upload user avatar
- * POST /user/avatar
- */
-export async function uploadAvatar(file: FormData): Promise<{ avatarUrl: string }> {
-    const { data } = await api.post<{ avatarUrl: string }>("/user/avatar", file, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
+/** Subir avatar — POST /users/me/avatar */
+export async function uploadAvatar(fileUri: string): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append('avatar', { uri: fileUri, type: 'image/jpeg', name: 'avatar.jpg' } as any);
+
+    const { data } = await api.post<{ avatarUrl: string }>("/users/me/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
     });
+    return data;
+}
+
+/** Obtener estadísticas del perfil — GET /users/me/stats */
+export interface UserStats {
+    servicesCount: number;
+    reviewsCount: number;
+    averageRating: number;
+    completedOrders: number;
+}
+
+export async function getUserStats(): Promise<UserStats> {
+    const { data } = await api.get<UserStats>("/users/me/stats");
     return data;
 }

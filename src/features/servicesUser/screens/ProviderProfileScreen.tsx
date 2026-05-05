@@ -187,7 +187,17 @@ export default function ProviderProfileScreen() {
                 <Text style={styles.heroRate}>
                   Desde {formatRate(provider.rate)}
                 </Text>
-                <Pressable style={styles.quoteButton}>
+                <Pressable
+                  style={styles.quoteButton}
+                  onPress={() => router.push({
+                    pathname: '/(tabs)/orders/quote',
+                    params: {
+                      serviceId: services[0]?.id || '',
+                      providerName: provider.name,
+                      serviceTitle: services[0]?.title || provider.title,
+                    },
+                  })}
+                >
                   <Text style={styles.quoteButtonText}>Cotizar servicio</Text>
                 </Pressable>
               </View>

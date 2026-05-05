@@ -2,7 +2,6 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
 import { MaterialIcons } from "@expo/vector-icons";
-import Animated, { FadeInUp } from "react-native-reanimated";
 import Colors from "@/core/design-system/Colors";
 
 interface InfoRowProps {

@@ -1,19 +1,6 @@
-/**
- * OnBoardingSlide - Componente individual de cada slide del carrusel de onboarding
- * Muestra el título, animación Lottie y subtítulo de cada pantalla de bienvenida
- * Con animaciones de entrada suaves usando react-native-reanimated
- */
-
-import { View, Text, StyleSheet } from "react-native";
-import React, { useEffect } from "react";
+import React, { useRef, useEffect } from "react";
+import { View, Text, StyleSheet, Animated } from "react-native";
 import LottieView from "lottie-react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
-import { globalStyles } from "@/core/design-system/global-styles";
 import Colors from "@/core/design-system/Colors";
 
 interface OnBoardingSlideProps {
@@ -25,34 +12,24 @@ interface OnBoardingSlideProps {
 }
 
 export default function OnBoardingSlide({ item }: OnBoardingSlideProps) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 600 });
-    translateY.value = withSpring(0, { damping: 15 });
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, damping: 15, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
+    <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }]}>
       <Text style={styles.title}>{item.title}</Text>
-
       {item.image && (
         <View style={styles.lottieContainer}>
-          <LottieView
-            source={item.image}
-            autoPlay
-            loop
-            style={styles.lottie}
-          />
+          <LottieView source={item.image} autoPlay loop style={styles.lottie} />
         </View>
       )}
-
       <Text style={styles.subtitle}>{item.subtitle}</Text>
     </Animated.View>
   );

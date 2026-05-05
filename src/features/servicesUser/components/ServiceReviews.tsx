@@ -12,10 +12,10 @@ import {
   View,
 } from "react-native";
 
-import { useServices } from "@/context/ServicesContext";
-import { useAuth } from "@/context/AuthContext";
+import { useServices } from "@/features/servicesUser/state/ServicesContext";
+import { useAuth } from "@/features/auth/state/AuthContext";
 import type { Review } from "@/types/services";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 import { StarRating } from "./StarRating";
 
 interface ServiceReviewsProps {

@@ -9,9 +9,9 @@ import {
   View,
 } from "react-native";
 
-import { useServices } from "@/context/ServicesContext";
+import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Rate } from "@/types/services";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 import { PremiumButton } from "@/src/components/PremiumButton";
 
 const formatRate = (rate: Rate) => {

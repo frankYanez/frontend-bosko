@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import Svg, { Path } from 'react-native-svg';
 import Colors from '@/core/design-system/Colors';
 import { PremiumButton } from '@/src/components/PremiumButton';
@@ -11,9 +10,18 @@ const { width } = Dimensions.get('window');
 const CURVE_HEIGHT = 60;
 
 export const ProviderCTA = () => {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(50)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+            Animated.timing(translateY, { toValue: 0, duration: 800, useNativeDriver: true }),
+        ]).start();
+    }, []);
+
     return (
         <View style={styles.wrapper}>
-            {/* Curved SVG Top */}
             <View style={styles.svgContainer}>
                 <Svg
                     height={CURVE_HEIGHT}
@@ -23,17 +31,12 @@ export const ProviderCTA = () => {
                 >
                     <Path
                         d={`M0,${CURVE_HEIGHT} L0,0 C${width * 0.3},${CURVE_HEIGHT * 0.8} ${width * 0.5},${CURVE_HEIGHT} ${width},0 L${width},${CURVE_HEIGHT} Z`}
-                        fill="#1a0505" // Matches the gradient start
+                        fill="#1a0505"
                     />
                 </Svg>
             </View>
 
-            <MotiView
-                from={{ opacity: 0, translateY: 50 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ type: 'timing', duration: 800 }}
-                style={styles.container}
-            >
+            <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }]}>
                 <LinearGradient
                     colors={['#1a0505', '#2d0a0a']}
                     style={styles.contentContainer}
@@ -75,7 +78,7 @@ export const ProviderCTA = () => {
                         style={styles.ctaButton}
                     />
                 </LinearGradient>
-            </MotiView>
+            </Animated.View>
         </View>
     );
 };

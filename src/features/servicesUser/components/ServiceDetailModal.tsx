@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
     View,
     Text,
@@ -8,10 +8,10 @@ import {
     ScrollView,
     Image,
     Dimensions,
+    Animated,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import Animated, { SlideInDown } from "react-native-reanimated";
 import { ServiceSummary } from "@/types/services";
 import Colors from "@/core/design-system/Colors";
 import { TOKENS } from "@/core/design-system/tokens";
@@ -30,6 +30,16 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
     onClose,
     service,
 }) => {
+    const slideAnim = useRef(new Animated.Value(600)).current;
+
+    useEffect(() => {
+        if (visible) {
+            Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+        } else {
+            slideAnim.setValue(600);
+        }
+    }, [visible]);
+
     if (!service) return null;
 
     const formatRate = (rate: ServiceSummary["rate"]) => {
@@ -55,8 +65,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
             <View style={styles.overlay}>
                 <Pressable style={styles.backdrop} onPress={onClose} />
                 <Animated.View
-                    entering={SlideInDown.springify()}
-                    style={styles.modalContainer}
+                    style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
                 >
                     <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
                         <View style={styles.header}>

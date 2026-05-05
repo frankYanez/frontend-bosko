@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   View,
   Text,
@@ -6,14 +6,10 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  Animated,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
 
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { Category } from "@/src/interfaces/category";
@@ -34,13 +30,9 @@ const VideoCategoryCard: React.FC<VideoCategoryCardProps> = ({
   onPress,
 }) => {
   const video = useRef<Video>(null);
-  const scale = useSharedValue(1);
+  const scale = useRef(new Animated.Value(1)).current;
 
-  // Placeholder videos - ideally these come from the backend/category data
-  // Using a few different nature/tech abstract loops for demo
   const videoSources = [
-    // Using "uc?export=download" to try and get a direct stream from Google Drive
-    // Note: Google Drive is not recommended for video streaming in production due to quotas and performance.
     "https://www.pexels.com/es-es/download/video/6755152/",
     "https://www.pexels.com/es-es/download/video/6755152/",
     "https://www.pexels.com/es-es/download/video/6755152/",
@@ -51,19 +43,20 @@ const VideoCategoryCard: React.FC<VideoCategoryCardProps> = ({
     uri: category.video || videoSources[index % videoSources.length],
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const handlePressIn = () => {
+    Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+  };
 
   return (
-    <Animated.View style={[styles.cardContainer, animatedStyle]}>
+    <Animated.View style={[styles.cardContainer, { transform: [{ scale }] }]}>
       <Pressable
-        onPress={() => {
-          scale.value = withSpring(0.95, {}, () => {
-            scale.value = withSpring(1);
-          });
-          onPress(category);
-        }}
+        onPress={() => onPress(category)}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         style={styles.pressable}
       >
         <View style={styles.videoWrapper}>
@@ -97,9 +90,6 @@ export const CategoryVideoCarousel = ({
 }) => {
   const { categories } = useCategories();
 
-  console.log(categories);
-
-  // Limit to first 6 for performance in carousel
   const displayCategories = categories.slice(0, 6);
 
   return (
@@ -157,7 +147,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 20,
-    backgroundColor: Colors.premium.card, // Required for shadow/elevation on Android
+    backgroundColor: Colors.premium.card,
     ...Colors.premium.shadows.global,
   },
   pressable: {

@@ -1,23 +1,12 @@
-// animations/FadeIn.tsx
-import React, { useEffect } from "react";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
+import React, { useEffect, useRef } from "react";
+import { Animated } from "react-native";
 
 export default function FadeIn({ children }: { children: React.ReactNode }) {
-  const opacity = useSharedValue(0);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 600 });
+    Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }).start();
   }, []);
 
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+  return <Animated.View style={{ opacity }}>{children}</Animated.View>;
 }

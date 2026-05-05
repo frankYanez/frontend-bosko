@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
-import Animated, { SlideInDown, FadeIn } from "react-native-reanimated";
 import { UpdateProfilePayload } from "@/features/servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
 
@@ -38,6 +38,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const slideAnim = useRef(new Animated.Value(600)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+    } else {
+      slideAnim.setValue(600);
+    }
+  }, [visible]);
 
   const handleChange = (field: keyof UpdateProfilePayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -84,8 +93,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         <Pressable style={styles.backdrop} onPress={handleClose} />
         {/* Full screen feel modal */}
         <Animated.View
-          entering={SlideInDown.springify()}
-          style={styles.modalContainer}
+          style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
         >
           <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
             <KeyboardAvoidingView

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import {
   Image,
   Pressable,
@@ -7,8 +7,8 @@ import {
   Text,
   View,
   ViewStyle,
+  Animated,
 } from "react-native";
-import { MotiView } from "moti";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { Rate, ServiceSummary } from "@/types/services";
@@ -51,17 +51,22 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     return getProviderRating(service.providerId);
   }, [getProviderRating, service]);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   if (!service) {
     return null;
   }
 
   return (
-    <MotiView
-      from={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "timing", duration: 500 }}
-      style={[styles.container, style]}
-    >
+    <Animated.View style={[styles.container, style, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}
@@ -151,7 +156,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </View>
         </View>
       </Pressable>
-    </MotiView>
+    </Animated.View>
   );
 };
 

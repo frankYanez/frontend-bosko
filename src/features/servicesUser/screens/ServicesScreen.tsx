@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Pressable,
   StyleSheet,
@@ -8,8 +9,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { MotiView } from "moti";
-import { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import ServiceCard from "@/features/servicesUser/components/ServiceCard";
 
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
@@ -21,6 +22,43 @@ type CategoryWithCount = Category & { servicesCount: number };
 type CategoryListItem = CategoryWithCount;
 
 const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
+
+function CategoryCard({ item, index, onPress }: { item: CategoryListItem; index: number; onPress: (item: CategoryListItem) => void }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 400,
+      delay: index * 60,
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 400,
+      delay: index * 60,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View style={[styles.cardWrapper, { opacity: fadeAnim, transform: [{ translateY }] }]}>
+      <Pressable
+        onPress={() => onPress(item)}
+        style={[styles.card, { backgroundColor: item.accent }]}
+        android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+      >
+        <Text style={styles.icon}>{item.icon}</Text>
+        <View>
+          <Text style={styles.cardTitle}>{item.name}</Text>
+          <Text style={styles.cardDescription}>{item.description}</Text>
+        </View>
+        <Text style={styles.cardCount}>{item.servicesCount ?? 0} servicios</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function ServicesScreen() {
   const router = useRouter();
@@ -131,27 +169,7 @@ export default function ServicesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={listEmpty}
         renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateY: 24 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 400, delay: index * 60 }}
-            style={styles.cardWrapper}
-          >
-            <Pressable
-              onPress={() => handleCategoryPress(item)}
-              style={[styles.card, { backgroundColor: item.accent }]}
-              android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
-            >
-              <Text style={styles.icon}>{item.icon}</Text>
-              <View>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardDescription}>{item.description}</Text>
-              </View>
-              <Text style={styles.cardCount}>
-                {item.servicesCount ?? 0} servicios
-              </Text>
-            </Pressable>
-          </MotiView>
+          <CategoryCard item={item} index={index} onPress={handleCategoryPress} />
         )}
         ListHeaderComponent={
           <View style={styles.header}>

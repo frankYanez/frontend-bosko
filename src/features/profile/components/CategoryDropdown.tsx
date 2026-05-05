@@ -1,13 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  interpolate,
-  Extrapolate,
-} from "react-native-reanimated";
+import React, { useState, useRef } from "react";
+import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { Category } from "@/types/services";
@@ -27,8 +19,8 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
   error,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const rotation = useSharedValue(0);
-  const height = useSharedValue(0);
+  const rotation = useRef(new Animated.Value(0)).current;
+  const dropdownHeight = useRef(new Animated.Value(0)).current;
 
   const apiToIconMap: Record<string, keyof typeof MaterialIcons.glyphMap> = {
     Limpieza: "cleaning-services",
@@ -61,8 +53,10 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
   const toggleDropdown = () => {
     const nextState = !isOpen;
     setIsOpen(nextState);
-    rotation.value = withSpring(nextState ? 180 : 0);
-    height.value = withTiming(nextState ? 200 : 0, { duration: 300 }); // Max height of dropdown
+    Animated.parallel([
+      Animated.spring(rotation, { toValue: nextState ? 1 : 0, useNativeDriver: true }),
+      Animated.timing(dropdownHeight, { toValue: nextState ? 200 : 0, duration: 300, useNativeDriver: false }),
+    ]).start();
   };
 
   const handleSelect = (id: string) => {
@@ -70,14 +64,16 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
     toggleDropdown();
   };
 
-  const arrowStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
+  const arrowStyle = {
+    transform: [{
+      rotate: rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] }),
+    }],
+  };
 
-  const listStyle = useAnimatedStyle(() => ({
-    height: height.value,
-    opacity: interpolate(height.value, [0, 20], [0, 1], Extrapolate.CLAMP),
-  }));
+  const listStyle = {
+    height: dropdownHeight,
+    opacity: dropdownHeight.interpolate({ inputRange: [0, 20], outputRange: [0, 1], extrapolate: 'clamp' }),
+  };
 
   return (
     <View style={styles.container}>

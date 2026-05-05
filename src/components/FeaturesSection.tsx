@@ -1,8 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView } from 'moti';
 import Colors from '@/core/design-system/Colors';
 
 
@@ -29,31 +28,37 @@ const features = [
     }
 ];
 
+function FeatureCard({ item, index }: { item: typeof features[0]; index: number }) {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(20)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(opacity, { toValue: 1, duration: 600, delay: index * 200, useNativeDriver: true }),
+            Animated.timing(translateY, { toValue: 0, duration: 600, delay: index * 200, useNativeDriver: true }),
+        ]).start();
+    }, []);
+
+    return (
+        <Animated.View style={[styles.cardWrapper, { opacity, transform: [{ translateY }] }]}>
+            <LinearGradient colors={[Colors.premium.card, '#1a1a1a']} style={styles.card}>
+                <View style={styles.iconContainer}>
+                    <MaterialIcons name={item.icon as any} size={28} color={Colors.premium.gold} />
+                </View>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.description}>{item.description}</Text>
+            </LinearGradient>
+        </Animated.View>
+    );
+}
+
 export const FeaturesSection = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>La Experiencia Bosko</Text>
-
             <View style={styles.grid}>
                 {features.map((item, index) => (
-                    <MotiView
-                        key={item.id}
-                        from={{ opacity: 0, translateY: 20 }}
-                        animate={{ opacity: 1, translateY: 0 }}
-                        transition={{ delay: index * 200, type: 'timing', duration: 600 }}
-                        style={styles.cardWrapper}
-                    >
-                        <LinearGradient
-                            colors={[Colors.premium.card, '#1a1a1a']}
-                            style={styles.card}
-                        >
-                            <View style={styles.iconContainer}>
-                                <MaterialIcons name={item.icon as any} size={28} color={Colors.premium.gold} />
-                            </View>
-                            <Text style={styles.title}>{item.title}</Text>
-                            <Text style={styles.description}>{item.description}</Text>
-                        </LinearGradient>
-                    </MotiView>
+                    <FeatureCard key={item.id} item={item} index={index} />
                 ))}
             </View>
         </View>

@@ -635,8 +635,8 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
         id: `temp-${Date.now()}`,
         serviceId,
         userId,
-        userName: authState.user?.name ?? "Usuario",
-        userAvatar: authState.user?.avatarUrl ?? undefined,
+        userName: authState.user?.username ?? "Usuario",
+        userAvatar: undefined,
         rating,
         comment,
         createdAt: new Date().toISOString(),
@@ -695,8 +695,7 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
     },
     [
       applyReviewAggregates,
-      authState.user?.avatarUrl,
-      authState.user?.name,
+      authState.user?.username,
       ensureCanReviewService,
       state.reviewsByService,
     ]

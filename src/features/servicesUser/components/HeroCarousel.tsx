@@ -1,18 +1,9 @@
-// /components/HeroCarousel.tsx
-import Carousel from "react-native-reanimated-carousel";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from "react-native";
-import { BlurView } from "expo-blur";
+import React from "react";
+import { FlatList, View, Text, StyleSheet, Dimensions } from "react-native";
 import { TOKENS } from "@/core/design-system/tokens";
-import { Image } from "expo-image";
-import ButtonBosko from "@/shared/components/ButtonBosko";
-import { router } from "expo-router";
 import { PremiumButton } from "@/components/PremiumButton";
+import { router } from "expo-router";
+
 const { width } = Dimensions.get("window");
 
 export function HeroCarousel({
@@ -21,16 +12,16 @@ export function HeroCarousel({
   data: { title: string; subtitle: string; cta: string }[];
 }) {
   return (
-    <Carousel
-      width={width}
-      height={200}
+    <FlatList
       data={data}
+      horizontal
       pagingEnabled
+      showsHorizontalScrollIndicator={false}
+      keyExtractor={(_, i) => String(i)}
       renderItem={({ item }) => (
         <View style={styles.card}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.sub}>{item.subtitle}</Text>
-
           <PremiumButton
             title="Explorar"
             onPress={() => router.push("/(tabs)/services")}
@@ -40,15 +31,16 @@ export function HeroCarousel({
     />
   );
 }
+
 const styles = StyleSheet.create({
   card: {
-    height: 200,
+    width: width - 32,
     marginHorizontal: 16,
+    height: 200,
     borderRadius: 20,
     overflow: "hidden",
     padding: 16,
     backgroundColor: "transparent",
-    // ...TOKENS.shadow.soft,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -57,14 +49,4 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 22, fontWeight: "800", color: TOKENS.color.text },
   sub: { color: TOKENS.color.sub, marginTop: 6 },
-  btn: {
-    width: 120,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    backgroundColor: TOKENS.color.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-  },
 });

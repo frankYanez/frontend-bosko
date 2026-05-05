@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(wmic logicaldisk *)",
+      "Bash(powershell -Command \"Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free\")",
+      "Bash(powershell *)",
+      "PowerShell(New-Item *)",
+      "Bash(npx expo *)",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies.expo\\)\")",
+      "Bash(node -e \"const v = require\\('./package-lock.json'\\).packages['node_modules/@expo/metro-runtime']; if \\(v\\) console.log\\(v.version\\); else console.log\\('not found'\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@expo/metro-runtime/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies['expo-router']\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/expo-router/package.json'\\); console.log\\('version:', p.version\\); const deps = p.dependencies || {}; const peerDeps = p.peerDependencies || {}; if \\(deps['@expo/metro-runtime']\\) console.log\\('dep:', deps['@expo/metro-runtime']\\); if \\(peerDeps['@expo/metro-runtime']\\) console.log\\('peer:', peerDeps['@expo/metro-runtime']\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies['@expo/metro-runtime']\\)\")",
+      "Bash(npm view *)",
+      "Bash(node -e \"const v=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); const arr = Array.isArray\\(v\\) ? v : [v]; const f = arr.filter\\(x => x.startsWith\\('55'\\)\\); console.log\\(f.join\\('\\\\n'\\)\\);\")",
+      "Bash(node -e \"console.log\\('metro-runtime:', require\\('./node_modules/@expo/metro-runtime/package.json'\\).version\\); console.log\\('expo-router:', require\\('./node_modules/expo-router/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\('reanimated:', require\\('./node_modules/react-native-reanimated/package.json'\\).version\\)\")",
+      "Bash(node -e \"const d = require\\('./node_modules/react-native-reanimated/package.json'\\).peerDependencies || {}; Object.entries\\(d\\).forEach\\(\\([k,v]\\) => console.log\\(k, v\\)\\)\")",
+      "Bash(npx -y expo export --platform web --output-dir /tmp/expo-test)",
+      "Bash(npx.cmd expo *)",
+      "Bash(npx.cmd react-native *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); if \\(p.moduleNameMapper\\) console.log\\(JSON.stringify\\(p.moduleNameMapper, null, 2\\)\\);\")",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(find src *)",
+      "Bash(ls src/components/)",
+      "Bash(ls types/)",
+      "Bash(ls src/types/)",
+      "Bash(ls context/)",
+      "Bash(ls src/context/)"
+    ]
+  }
+}

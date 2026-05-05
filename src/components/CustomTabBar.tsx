@@ -5,16 +5,11 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  Animated,
 } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -85,18 +80,20 @@ const TabIcon = ({
   isFocused: boolean;
   isCenter?: boolean;
 }) => {
-  const scale = useSharedValue(isCenter ? 1 : isFocused ? 1.2 : 1);
-  const opacity = useSharedValue(isFocused ? 1 : 0.6);
+  const scale = React.useRef(new Animated.Value(isCenter ? 1 : isFocused ? 1.2 : 1)).current;
+  const opacity = React.useRef(new Animated.Value(isFocused ? 1 : 0.6)).current;
 
   React.useEffect(() => {
-    scale.value = withSpring(isCenter ? 1 : isFocused ? 1.2 : 1);
-    opacity.value = withTiming(isFocused ? 1 : 0.6);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: isCenter ? 1 : isFocused ? 1.2 : 1, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: isFocused ? 1 : 0.6, duration: 200, useNativeDriver: true }),
+    ]).start();
   }, [isFocused, isCenter]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: isCenter ? 1 : opacity.value, // Center icon always full opacity
-  }));
+  const animatedStyle = {
+    transform: [{ scale }],
+    opacity: isCenter ? 1 : opacity,
+  };
 
   if (isCenter) {
     return (
