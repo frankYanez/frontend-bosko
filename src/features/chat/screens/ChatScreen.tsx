@@ -1,7 +1,7 @@
 /**
  * ChatScreen — Chat individual ligado a una orden.
- * Mensajes en tiempo real (polling cada 5s) hasta que WebSocket esté disponible.
- * Muestra mensajes del sistema (cambios de estado) diferenciados visualmente.
+ * WebSocket en tiempo real con fallback a polling REST cada 5s.
+ * Muestra indicador de escritura y mensajes del sistema.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,23 +16,28 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   fetchConversationByOrder,
   fetchMessages,
-  sendMessage,
+  sendMessage as sendMsgRest,
+  sendMedia,
   markAsRead,
   Message,
   Conversation,
 } from '../services/chat.service';
+import { socketService } from '../services/socket.service';
+import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
 
-const POLL_INTERVAL = 5000; // Polling cada 5 segundos
+const POLL_INTERVAL = 5000;
+const TYPING_THROTTLE = 2000; // ms entre emits de typing
 
 // Burbuja de mensaje individual
 function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
@@ -74,89 +79,232 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { profile } = useProfile();
+  const { authState } = useAuth();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false); // el otro está escribiendo
+  const [socketReady, setSocketReady] = useState(false);
 
   const listRef = useRef<FlatList>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingEmitRef = useRef(0);
+  const convIdRef = useRef<string>('');
 
   const loadConversation = useCallback(async () => {
     if (!params.id) return;
     try {
-      // El id puede ser orderId o conversationId — intentamos como orderId primero
       const conv = await fetchConversationByOrder(params.id);
       setConversation(conv);
       return conv.id;
     } catch {
-      // Si falla, el id podría ser directamente el conversationId
       return params.id;
     }
   }, [params.id]);
 
   const loadMessages = useCallback(async (convId: string) => {
-    const data = await fetchMessages(convId);
-    setMessages(prev => {
-      // Evitar re-renders si no cambiaron los mensajes
-      if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) {
-        return prev;
-      }
-      return data;
-    });
-    await markAsRead(convId).catch(() => {}); // Marcar como leído sin bloquear
+    try {
+      const data = await fetchMessages(convId);
+      setMessages(prev => {
+        if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) {
+          return prev;
+        }
+        return data;
+      });
+      await markAsRead(convId).catch(() => {});
+    } catch (err) {
+      console.error('Error loading messages:', err);
+    }
   }, []);
 
+  // ── WebSocket setup ──────────────────────────────────────────────
   useEffect(() => {
-    let convId: string;
+    const token = authState.token;
+    if (!token) return;
+
+    socketService.connect(token);
+
+    const unsubConnection = socketService.onConnectionChange(setSocketReady);
+    return () => unsubConnection();
+  }, [authState.token]);
+
+  // Join conversation room when we have convId
+  useEffect(() => {
+    const id = convIdRef.current;
+    if (!id || !socketReady) return;
+
+    socketService.joinConversation(id);
+
+    return () => {
+      socketService.leaveConversation(id);
+    };
+  }, [socketReady, convIdRef.current]);
+
+  // Listen for incoming messages via socket
+  useEffect(() => {
+    const unsubMsg = socketService.onMessageReceived((msg) => {
+      // Only accept messages for current conversation
+      if (msg.conversationId !== convIdRef.current) return;
+      setMessages(prev => {
+        // Avoid dupes
+        if (prev.some(m => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+    });
+
+    return () => unsubMsg();
+  }, []);
+
+  // ── Init: load conversation + start polling fallback ────────────
+  useEffect(() => {
+    let active = true;
 
     const init = async () => {
       setLoading(true);
       const id = await loadConversation();
-      if (!id) { setLoading(false); return; }
-      convId = id;
-      await loadMessages(convId);
+      if (!id || !active) { setLoading(false); return; }
+      convIdRef.current = id;
+      await loadMessages(id);
+      if (!active) return;
       setLoading(false);
 
-      // Iniciar polling para nuevos mensajes
-      pollRef.current = setInterval(() => loadMessages(convId), POLL_INTERVAL);
+      // Polling fallback (only when socket not ready)
+      pollRef.current = setInterval(() => {
+        if (!socketService.isConnected) {
+          loadMessages(id);
+        }
+      }, POLL_INTERVAL);
     };
 
     init();
 
     return () => {
+      active = false;
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [loadConversation, loadMessages]);
 
-  // Hacer scroll al último mensaje cuando llegan nuevos
+  // Auto-scroll on new messages
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages.length]);
 
+  // ── Send media ──────────────────────────────────────────────────
+  const handlePickMedia = useCallback(async () => {
+    if (!conversation) return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+      allowsEditing: false,
+    });
+
+    if (result.canceled || !result.assets[0]) return;
+
+    const uri = result.assets[0].uri;
+    setSending(true);
+    try {
+      const newMsg = await sendMedia(conversation.id, uri);
+      setMessages(prev => [...prev, newMsg]);
+    } catch (err) {
+      console.error('Error sending media:', err);
+    } finally {
+      setSending(false);
+    }
+  }, [conversation]);
+
+  // ── Send message ─────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim();
     if (!text || !conversation) return;
 
     setInput('');
     setSending(true);
+    cancelTyping();
 
     try {
-      const newMsg = await sendMessage(conversation.id, text);
-      setMessages(prev => [...prev, newMsg]);
+      if (socketService.isConnected) {
+        socketService.sendMessage(conversation.id, text);
+        // Optimistically add message — socket will confirm
+        const optimistic: Message = {
+          id: `temp-${Date.now()}`,
+          conversationId: conversation.id,
+          senderId: profile?.id || '',
+          content: text,
+          messageType: 'text',
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, optimistic]);
+      } else {
+        const newMsg = await sendMsgRest(conversation.id, text);
+        setMessages(prev => [...prev, newMsg]);
+      }
     } catch (err) {
-      setInput(text); // Restaurar el texto si falla
-      console.error('Error al enviar mensaje:', err);
+      setInput(text);
+      console.error('Error sending message:', err);
     } finally {
       setSending(false);
     }
   };
 
-  // Header: nombre de la otra parte
+  // ── Typing indicator ─────────────────────────────────────────────
+  const cancelTyping = useCallback(() => {
+    socketService.emitTyping(convIdRef.current, false);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = null;
+    lastTypingEmitRef.current = 0;
+  }, []);
+
+  const handleInputChange = useCallback((text: string) => {
+    setInput(text);
+
+    if (!socketService.isConnected || !convIdRef.current) return;
+
+    const now = Date.now();
+    if (text.trim() && now - lastTypingEmitRef.current > TYPING_THROTTLE) {
+      socketService.emitTyping(convIdRef.current, true);
+      lastTypingEmitRef.current = now;
+
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        socketService.emitTyping(convIdRef.current, false);
+      }, TYPING_THROTTLE);
+    }
+
+    if (!text.trim()) {
+      cancelTyping();
+    }
+  }, [cancelTyping]);
+
+  // Listen for typing indicator from other user
+  useEffect(() => {
+    const unsubTyping = socketService.onTypingIndicator((data) => {
+      if (data.userId === profile?.id) return;
+      setIsTyping(data.isTyping);
+    });
+    return () => unsubTyping();
+  }, [profile?.id]);
+
+  // Cleanup typing timer on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
+  }, []);
+
+  // Derive header info
   const myId   = profile?.id;
   const other  = myId === conversation?.clientId ? conversation?.provider : conversation?.client;
   const otherName = other ? `${other.firstName} ${other.lastName || ''}`.trim() : 'Chat';
@@ -235,13 +383,27 @@ export default function ChatScreen() {
         style={styles.messagesList}
       />
 
+      {/* Typing indicator */}
+      {isTyping && (
+        <View style={styles.typingBar}>
+          <Text style={styles.typingText}>{otherName} está escribiendo...</Text>
+        </View>
+      )}
+
       {/* Input */}
       <BlurView intensity={25} tint="light" style={styles.inputBar}>
         <View style={styles.inputWrapper}>
+          <Pressable
+            onPress={handlePickMedia}
+            hitSlop={8}
+            style={({ pressed }) => [styles.mediaBtn, pressed && { opacity: 0.6 }]}
+          >
+            <MaterialIcons name="add-photo-alternate" size={22} color={TOKENS.color.sub} />
+          </Pressable>
           <TextInput
             style={styles.input}
             value={input}
-            onChangeText={setInput}
+            onChangeText={handleInputChange}
             placeholder="Escribí un mensaje..."
             placeholderTextColor={TOKENS.color.sub}
             multiline
@@ -434,6 +596,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mediaBtn: {
+    padding: 6,
+    marginBottom: 2,
+  },
   sendButtonDisabled: {
     backgroundColor: '#ccc',
   },
@@ -453,5 +619,15 @@ const styles = StyleSheet.create({
   emptyChatSubtext: {
     fontSize: 14,
     color: TOKENS.color.sub,
+  },
+  // Typing indicator
+  typingBar: {
+    paddingHorizontal: 24,
+    paddingVertical: 6,
+  },
+  typingText: {
+    fontSize: 12,
+    color: TOKENS.color.sub,
+    fontStyle: 'italic',
   },
 });

@@ -18,6 +18,7 @@ import type {
   Service,
   ServicePayload,
 } from "@/features/servicesUser/services/service";
+import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { fetchServiceById } from "../services/services";
 
@@ -72,6 +73,8 @@ export default function ServiceFormScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | undefined>();
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const isEditing = useMemo(() => !!selectedService, [selectedService]);
 
@@ -322,6 +325,76 @@ export default function ServiceFormScreen() {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
+      {/* ── Multi-image gallery (solo edición) ── */}
+      {isEditing && selectedService?.id ? (
+        <View style={styles.gallerySection}>
+          <Text style={styles.label}>Galería de imágenes</Text>
+          <Text style={styles.helper}>Subí hasta 5 fotos de tu trabajo</Text>
+
+          <View style={styles.galleryGrid}>
+            {galleryImages.map((uri, i) => (
+              <View key={i} style={styles.galleryThumbWrap}>
+                <Image source={{ uri }} style={styles.galleryThumb} />
+                <Pressable
+                  style={styles.galleryRemove}
+                  onPress={() => setGalleryImages(prev => prev.filter((_, idx) => idx !== i))}
+                >
+                  <Text style={styles.galleryRemoveText}>✕</Text>
+                </Pressable>
+              </View>
+            ))}
+            {galleryImages.length < 5 && (
+              <Pressable
+                style={styles.galleryAdd}
+                onPress={async () => {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ['images'],
+                    quality: 0.7,
+                    allowsMultipleSelection: true,
+                    selectionLimit: 5 - galleryImages.length,
+                  });
+                  if (!result.canceled) {
+                    const uris = result.assets.map(a => a.uri);
+                    setGalleryImages(prev => [...prev, ...uris].slice(0, 5));
+                  }
+                }}
+              >
+                <Text style={styles.galleryAddIcon}>+</Text>
+                <Text style={styles.galleryAddText}>Agregar</Text>
+              </Pressable>
+            )}
+          </View>
+
+          {galleryImages.length > 0 && (
+            <Pressable
+              style={[styles.secondaryButton, uploadingImages && { opacity: 0.5 }]}
+              onPress={async () => {
+                if (!selectedService?.id || uploadingImages) return;
+                setUploadingImages(true);
+                try {
+                  await uploadServiceImages(selectedService.id, galleryImages);
+                  Alert.alert('Imágenes subidas', 'Las fotos se agregaron al servicio.');
+                  setGalleryImages([]);
+                } catch (err: any) {
+                  Alert.alert('Error', err?.response?.data?.message || 'No se pudieron subir las imágenes');
+                } finally {
+                  setUploadingImages(false);
+                }
+              }}
+              disabled={uploadingImages}
+            >
+              {uploadingImages ? (
+                <ActivityIndicator color="#850021" size="small" />
+              ) : (
+                <Text style={styles.secondaryButtonText}>
+                  Subir {galleryImages.length} imagen{galleryImages.length !== 1 ? 'es' : ''}
+                </Text>
+              )}
+            </Pressable>
+          )}
+        </View>
+      ) : null}
+
       <Pressable
         style={[
           styles.submitButton,
@@ -456,6 +529,65 @@ const styles = StyleSheet.create({
   error: {
     color: "#DC2626",
     textAlign: "center",
+  },
+  // Gallery
+  gallerySection: {
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  galleryThumbWrap: {
+    position: 'relative',
+  },
+  galleryThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    backgroundColor: '#E5E7EB',
+  },
+  galleryRemove: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  galleryRemoveText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  galleryAdd: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F9FAFB',
+    gap: 2,
+  },
+  galleryAddIcon: {
+    fontSize: 24,
+    color: '#6B7280',
+    lineHeight: 28,
+  },
+  galleryAddText: {
+    fontSize: 10,
+    color: '#6B7280',
+    fontWeight: '600',
   },
   loader: {
     marginTop: 16,

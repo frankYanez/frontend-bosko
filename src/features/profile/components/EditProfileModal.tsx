@@ -11,11 +11,11 @@ import {
   ActivityIndicator,
   Animated,
 } from "react-native";
-import { BlurView } from "expo-blur";
 import { TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { UpdateProfilePayload } from "@/features/servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
+import { BlurView } from "expo-blur";
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -95,7 +95,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         <Animated.View
           style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
         >
-          <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
+          <BlurView
+            intensity={40}
+            tint="dark"
+            style={styles.modalBlur}
+          >
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
               style={{ flex: 1 }}
@@ -268,7 +272,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     overflow: "hidden",
   },
-  modalBlur: { flex: 1 },
+  modalBlur: { flex: 1, backgroundColor: Colors.premium.background },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

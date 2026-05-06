@@ -1,298 +1,293 @@
-import React from "react";
-import {
-  View,
-  Pressable,
-  StyleSheet,
-  Dimensions,
-  Platform,
-  Animated,
-} from "react-native";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { BlurView } from "expo-blur";
-import { Ionicons } from "@expo/vector-icons";
-import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/core/design-system/Colors";
-
-const { width } = Dimensions.get("window");
-const TAB_HEIGHT = 60;
-const CURVE_WIDTH = 80;
-const CURVE_DEPTH = 35; // How deep the curve goes
-const CENTER = width / 2;
-const SIDE_MARGIN = 20; // Margin from screen edges
-const RADIUS = 35; // Corner radius for the pill
-
-const TabBarBackground = () => {
-  // Path: Rounded Pill with top-center curve
-  // Drawing area: from (SIDE_MARGIN) to (width - SIDE_MARGIN)
-  const START_X = SIDE_MARGIN;
-  const END_X = width - SIDE_MARGIN;
-
-  const path = `
-        M ${START_X + RADIUS} 0
-        L ${CENTER - CURVE_WIDTH / 2} 0
-        C ${CENTER - CURVE_WIDTH / 4} 0, ${
-    CENTER - CURVE_WIDTH / 4
-  } ${CURVE_DEPTH}, ${CENTER} ${CURVE_DEPTH}
-        C ${CENTER + CURVE_WIDTH / 4} ${CURVE_DEPTH}, ${
-    CENTER + CURVE_WIDTH / 4
-  } 0, ${CENTER + CURVE_WIDTH / 2} 0
-        L ${END_X - RADIUS} 0
-        Q ${END_X} 0, ${END_X} ${RADIUS}
-        L ${END_X} ${TAB_HEIGHT - RADIUS}
-        Q ${END_X} ${TAB_HEIGHT}, ${END_X - RADIUS} ${TAB_HEIGHT}
-        L ${START_X + RADIUS} ${TAB_HEIGHT}
-        Q ${START_X} ${TAB_HEIGHT}, ${START_X} ${TAB_HEIGHT - RADIUS}
-        L ${START_X} ${RADIUS}
-        Q ${START_X} 0, ${START_X + RADIUS} 0
-        Z
-    `;
-
-  return (
-    <Svg width={width} height={TAB_HEIGHT} style={styles.svg}>
-      <Defs>
-        <LinearGradient id="grad" x1="0.5" y1="0" x2="0.5" y2="1">
-          <Stop offset="0" stopColor="#3d0a0f" stopOpacity="1" />
-          <Stop offset="0.5" stopColor={Colors.colorPrimary} stopOpacity="1" />
-          <Stop offset="1" stopColor="#3d0a0f" stopOpacity="1" />
-        </LinearGradient>
-      </Defs>
-      {/* Shadow path (rendered slightly offset if needed, or rely on container shadow) */}
-
-      {/* Main Path */}
-      <Path
-        d={path}
-        fill="url(#grad)"
-        stroke="rgba(0, 0, 0, 0.2)" // Gold border
-        strokeWidth="1"
-      />
-    </Svg>
-  );
+const COLORS = {
+  bordo:     '#850021',
+  bordoDark: '#3D000F',
+  bordoMid:  '#6B001A',
+  white:     '#FFFFFF',
 };
 
-const TabIcon = ({
-  name,
-  isFocused,
-  isCenter,
-}: {
-  name: any;
-  isFocused: boolean;
-  isCenter?: boolean;
-}) => {
-  const scale = React.useRef(new Animated.Value(isCenter ? 1 : isFocused ? 1.2 : 1)).current;
-  const opacity = React.useRef(new Animated.Value(isFocused ? 1 : 0.6)).current;
+const BAR_H  = 68;
+const PILL_W = 62;
+const PILL_H = 38;
 
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scale, { toValue: isCenter ? 1 : isFocused ? 1.2 : 1, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: isFocused ? 1 : 0.6, duration: 200, useNativeDriver: true }),
-    ]).start();
-  }, [isFocused, isCenter]);
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-  const animatedStyle = {
-    transform: [{ scale }],
-    opacity: isCenter ? 1 : opacity,
-  };
+const ICONS: Record<string, { icon: IconName; activeIcon?: IconName; label: string }> = {
+  index:    { icon: 'home-outline',               activeIcon: 'home',               label: 'Inicio'    },
+  services: { icon: 'grid-outline',               activeIcon: 'grid',               label: 'Servicios' },
+  reels:    { icon: 'play-circle-outline',        activeIcon: 'play-circle',        label: 'Reels'     },
+  profile:  { icon: 'person-outline',             activeIcon: 'person',             label: 'Perfil'    },
+  chat:     { icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses', label: 'Mensajes'  },
+};
 
-  if (isCenter) {
-    return (
-      <View style={styles.centerButtonContainer}>
-        <View
+function getRouteConfig(routeName: string) {
+  return ICONS[routeName] ?? { icon: 'ellipse-outline' as IconName, activeIcon: 'ellipse' as IconName, label: routeName };
+}
+
+// ── Tab bar ───────────────────────────────────────────────────────────────────
+export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+  const insets   = useSafeAreaInsets();
+  const [barWidth, setBarWidth] = useState<number>(Dimensions.get('window').width - 32);
+
+  const tabCount = state.routes.length;
+  const tabWidth = barWidth / Math.max(1, tabCount);
+
+  // Pill slides to center of active tab
+  const pillX = useRef(
+    new Animated.Value(state.index * tabWidth + (tabWidth - PILL_W) / 2)
+  ).current;
+
+  useEffect(() => {
+    Animated.spring(pillX, {
+      toValue: state.index * tabWidth + (tabWidth - PILL_W) / 2,
+      damping: 20,
+      stiffness: 260,
+      mass: 0.6,
+      useNativeDriver: true,
+    }).start();
+  }, [state.index, tabWidth]);
+
+  const onTabPress = useCallback(
+    (routeIndex: number) => {
+      const route = state.routes[routeIndex];
+      if (!route) return;
+      const isFocused = state.index === routeIndex;
+      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+    },
+    [navigation, state.index, state.routes],
+  );
+
+  const onTabLongPress = useCallback(
+    (routeIndex: number) => {
+      const route = state.routes[routeIndex];
+      if (!route) return;
+      navigation.emit({ type: 'tabLongPress', target: route.key });
+    },
+    [navigation, state.routes],
+  );
+
+  const routes = useMemo(() => state.routes, [state.routes]);
+
+  return (
+    <View
+      pointerEvents="box-none"
+      style={[styles.wrapper, { bottom: Math.max(insets.bottom, 14) }]}
+    >
+      <View
+        onLayout={e => setBarWidth(e.nativeEvent.layout.width)}
+        style={styles.shell}
+      >
+        {/* ── Main background gradient ─────────────────────────────────── */}
+        <LinearGradient
+          colors={[COLORS.bordoDark, COLORS.bordoMid, COLORS.bordo, COLORS.bordoMid, COLORS.bordoDark]}
+          locations={[0, 0.25, 0.5, 0.75, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* ── Subtle top edge glow ─────────────────────────────────────── */}
+        <View style={styles.topGlow} />
+
+        {/* ── Bottom depth shadow line ─────────────────────────────────── */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[StyleSheet.absoluteFill, { opacity: 0.4 }]}
+        />
+
+        {/* ── Sliding pill indicator ───────────────────────────────────── */}
+        <Animated.View
+          pointerEvents="none"
           style={[
-            styles.centerButton,
-            {
-              // Gold glow for center button
-              ...Colors.premium.shadows.global,
-            },
+            styles.pill,
+            { transform: [{ translateX: pillX }] },
           ]}
         >
-          <Ionicons name="add" size={32} color="#FFF" />
-        </View>
-      </View>
-    );
-  }
+          {/* Glass shine inside pill */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0.10)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 13 }]}
+          />
+        </Animated.View>
 
-  return (
-    <Animated.View style={[styles.iconContainer, animatedStyle]}>
-      <Ionicons
-        name={name}
-        size={24}
-        color={isFocused ? Colors.premium.gold : Colors.premium.textPrimary}
-      />
-      {isFocused && <View style={styles.indicator} />}
-    </Animated.View>
-  );
-};
-
-export const CustomTabBar = ({
-  state,
-  descriptors,
-  navigation,
-}: BottomTabBarProps) => {
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View style={[styles.container, { paddingBottom: 0 }]}>
-      {/* Background Container with Shadow */}
-      <View style={styles.backgroundContainer}>
-        {/*  We use a dedicated View for the overall drop shadow behind the SVG */}
-        <View style={styles.shadowTarget}>
-          <TabBarBackground />
-        </View>
-      </View>
-
-      <View style={styles.contentContainer}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key] as { options: any };
-          // console.log(options); // Removed console.log as per instructions
-
-          // Skip hidden tabs or tabs explicitly excluded
-          if (options.href === null) return null;
-
-          // Removed label logic as it's not used in the new structure for icons
-
-          const isFocused = state.index === index;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          // Map route names to icons
-          let iconName: any = "square";
-          if (route.name === "index")
-            iconName = isFocused ? "home" : "home-outline";
-          if (route.name === "services")
-            iconName = isFocused ? "grid" : "grid-outline";
-          // Center item usually
-          if (route.name === "reels") iconName = "add"; // We treat this as the + button visually
-          if (route.name === "profile")
-            iconName = isFocused ? "person" : "person-outline";
-          if (route.name === "chat")
-            iconName = isFocused ? "chatbubble" : "chatbubble-outline";
-
-          // Center button logic: Middle index (2) in a zero-indexed 5-item list
-          const isCenter = index === 2;
-
-          return (
-            <Pressable
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
-              onPress={onPress}
-              style={[styles.tabItem, isCenter && styles.centerTabItem]}
-            >
-              <TabIcon
-                name={iconName}
+        {/* ── Tabs ─────────────────────────────────────────────────────── */}
+        <View style={styles.row}>
+          {routes.map((route, idx) => {
+            const cfg       = getRouteConfig(route.name);
+            const isFocused = idx === state.index;
+            return (
+              <TabButton
+                key={route.key}
+                label={cfg.label}
+                icon={cfg.icon}
+                activeIcon={cfg.activeIcon}
                 isFocused={isFocused}
-                isCenter={isCenter}
+                onPress={() => onTabPress(idx)}
+                onLongPress={() => onTabLongPress(idx)}
               />
-            </Pressable>
-          );
-        })}
+            );
+          })}
+        </View>
       </View>
     </View>
   );
-};
+}
 
+// ── Tab button ────────────────────────────────────────────────────────────────
+function TabButton({
+  label, icon, activeIcon, isFocused, onPress, onLongPress,
+}: {
+  label: string;
+  icon: IconName;
+  activeIcon?: IconName;
+  isFocused: boolean;
+  onPress: () => void;
+  onLongPress: () => void;
+}) {
+  const progress = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(progress, {
+      toValue: isFocused ? 1 : 0,
+      damping: 18,
+      stiffness: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [isFocused]);
+
+  // Icon: scales up + lifts slightly when active
+  const iconScale     = progress.interpolate({ inputRange: [0, 1], outputRange: [1,    1.15] });
+  const iconTranslateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0,   -2] });
+  const iconOpacity   = progress.interpolate({ inputRange: [0, 1], outputRange: [0.42, 1] });
+
+  // Label: fades + slides in
+  const labelOpacity   = progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0, 1] });
+  const labelTranslateY = progress.interpolate({ inputRange: [0, 1],    outputRange: [5, 0] });
+  const labelScale     = progress.interpolate({ inputRange: [0, 1],     outputRange: [0.8, 1] });
+
+  return (
+    <Pressable
+      style={styles.tab}
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      hitSlop={8}
+    >
+      <Animated.View
+        style={[
+          styles.iconWrap,
+          {
+            opacity:   iconOpacity,
+            transform: [{ scale: iconScale }, { translateY: iconTranslateY }],
+          },
+        ]}
+      >
+        <Ionicons
+          name={isFocused ? activeIcon ?? icon : icon}
+          size={22}
+          color={COLORS.white}
+        />
+      </Animated.View>
+
+      <Animated.Text
+        numberOfLines={1}
+        style={[
+          styles.label,
+          {
+            opacity:   labelOpacity,
+            transform: [{ translateY: labelTranslateY }, { scale: labelScale }],
+          },
+        ]}
+      >
+        {label}
+      </Animated.Text>
+    </Pressable>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    bottom: 30,
-    left: 0,
-    right: 0,
-    height: TAB_HEIGHT, // Reserve space
-    alignItems: "center",
-    justifyContent: "center",
-    // Removed width 80% and margin hacks to ensure full width container for SVG
+  wrapper: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 999,
+    elevation: 999,
+    // Outer glow / shadow
+    shadowColor: COLORS.bordo,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
   },
-  backgroundContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: TAB_HEIGHT,
-    alignItems: "center",
-  },
-  shadowTarget: {
-    // Apply global shadow to the SVG container
-    shadowColor: Colors.premium.shadows.global.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 20,
-    backgroundColor: "transparent", // Important for shadow to wrap shape? No, usually shadow needs a bg.
-    // Note: Generic View shadow on SVG works on iOS, Android might just shadow the box.
-    // For Android exact shape shadow, one would need a duplicate dark SVG layer behind.
-    // For now, let's rely on standard elevation which might box-shadow.
-  },
-  svg: {
-    // backgroundColor: 'transparent'
-  },
-  contentContainer: {
-    flexDirection: "row",
-    height: TAB_HEIGHT,
-    alignItems: "center",
-    paddingHorizontal: 20, // Match the visual margin of the bar
-    paddingBottom: 10, // Adjust for icon alignment
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    marginTop: 10, // Push icons down a bit into the bar
-  },
-  centerTabItem: {
-    marginTop: -25, // Pull center item up
-    justifyContent: "flex-start",
-  },
-  iconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    // Optional: Add subtle drop shadow to icons for floating effect inside the "cave"
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-  },
-  centerButtonContainer: {
-    width: 60,
-    height: 60,
-    // Removed manual margins
-    // No explicit bg here, the round button has it
-  },
-  centerButton: {
-    width: 60,
-    height: 60,
+  shell: {
+    height: BAR_H,
     borderRadius: 30,
-    backgroundColor: Colors.colorPrimary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: Colors.premium.gold,
-    left: 30,
-    top: -15,
+    overflow: 'hidden',
+    // Hard shadow for depth on Android
+    elevation: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  indicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.premium.gold,
-    marginTop: 4,
-    shadowColor: Colors.premium.gold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
+
+  // Top 1px bright line — looks like light hitting the top edge
+  topGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderRadius: 1,
+  },
+
+  // Compact pill — doesn't span full tab width
+  pill: {
+    position: 'absolute',
+    top: (BAR_H - PILL_H) / 2,
+    left: 0,
+    width: PILL_W,
+    height: PILL_H,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.20)',
+    overflow: 'hidden',
+  },
+
+  row: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingVertical: 6,
+  },
+  iconWrap: {
+    width: 36,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    color: COLORS.white,
   },
 });

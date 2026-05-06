@@ -7,12 +7,12 @@ import { PaymentsProvider } from "@/features/payments/state/PaymentContext";
 import { PostsProvider } from "@/features/servicesUser/state/PostsContext";
 import { ReviewsProvider } from "@/features/servicesUser/state/ReviewsContext";
 import { ServicesProvider } from "@/features/servicesUser/state/ServicesContext";
-import { UserProvider } from "@/features/users/state/UserContext";
 import { UsersProvider } from "@/contexts/UsersContext";
 import { CategoriesProvider } from "@/contexts/CategoriesContext";
 import { ProvidersProvider } from "@/contexts/ProvidersContext";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { KYCProvider } from "@/features/kyc/state/KYCContext";
+import { NotificationsProvider } from "@/features/notifications/state/NotificationsContext";
 
 function RootLayoutNav() {
   return (
@@ -40,7 +40,9 @@ export default function _layout() {
                       <PostsProvider serviceId="global">
                         <ReviewsProvider serviceId="global">
                           <KYCProvider>
-                            <RootLayoutNav />
+                            <NotificationsProvider>
+                              <RootLayoutNav />
+                            </NotificationsProvider>
                           </KYCProvider>
                         </ReviewsProvider>
                       </PostsProvider>

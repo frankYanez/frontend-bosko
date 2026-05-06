@@ -75,6 +75,11 @@ export const SettingsMenu: React.FC = () => {
               onPress={() => router.push("/(tabs)/profile/Services")}
             />
             <MenuItem
+              icon="star"
+              label="Mis Reseñas"
+              onPress={() => router.push("/(tabs)/profile/my-reviews")}
+            />
+            <MenuItem
               icon="receipt-long"
               label="Mis Órdenes"
               onPress={() => router.push("/(tabs)/orders")}
@@ -83,6 +88,11 @@ export const SettingsMenu: React.FC = () => {
               icon="verified-user"
               label="Verificación de Identidad"
               onPress={() => router.push("/(tabs)/profile/kyc")}
+            />
+            <MenuItem
+              icon="workspace-premium"
+              label="Planes"
+              onPress={() => router.push("/(tabs)/profile/plans")}
             />
             <MenuItem
               icon="payment"

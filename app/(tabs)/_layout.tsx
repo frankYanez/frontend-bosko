@@ -8,13 +8,14 @@
 
 import { Redirect, Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TOKENS } from '@/core/design-system/tokens';
-import { CustomTabBar } from '@/src/components/CustomTabBar';
+import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
 export default function TabsLayout() {
   const { authLoaded, isAuthenticated } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Mientras carga no mostrar nada (evita el flash de la tab bar sin datos)
   if (!authLoaded) return null;
@@ -25,20 +26,28 @@ export default function TabsLayout() {
   return (
     <SafeAreaView
       style={styles.container}
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right',]}
     >
       <Tabs
-        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
           tabBarHideOnKeyboard: true,
         }}
+        tabBar={(props) => (
+          <CustomTabBar
+            {...props}
+          // Hack: cuando se abre el teclado, empujar la tab bar hacia arriba
+          // style={{
+          //   marginBottom: props.keyboardHeight || 0,
+          // }}
+          />
+        )}
       >
-        <Tabs.Screen name="index"   options={{ title: 'Inicio' }} />
+        <Tabs.Screen name="index" options={{ title: 'Inicio' }} />
         <Tabs.Screen name="services" options={{ title: 'Servicios' }} />
-        <Tabs.Screen name="reels"   options={{ title: 'Reels' }} />
+        <Tabs.Screen name="reels" options={{ title: 'Reels' }} />
         <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
-        <Tabs.Screen name="chat"    options={{ title: 'Mensajes' }} />
+        <Tabs.Screen name="chat" options={{ title: 'Mensajes' }} />
       </Tabs>
     </SafeAreaView>
   );

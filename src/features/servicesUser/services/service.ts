@@ -43,3 +43,25 @@ export async function updateService(
 export async function deleteService(id: string): Promise<void> {
   await api.delete(`/services/${id}`);
 }
+
+/** Subir imágenes a un servicio — POST /services/:id/images (multipart, max 5) */
+export async function uploadServiceImages(
+  serviceId: string,
+  imageUris: string[],
+): Promise<{ images: string[] }> {
+  const formData = new FormData();
+  imageUris.forEach((uri, i) => {
+    formData.append('images', {
+      uri,
+      type: 'image/jpeg',
+      name: `service-image-${i}.jpg`,
+    } as any);
+  });
+
+  const { data } = await api.post<{ images: string[] }>(
+    `/services/${serviceId}/images`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  );
+  return data;
+}

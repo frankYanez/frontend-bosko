@@ -22,6 +22,7 @@ import { MotiView } from 'moti';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
+import { usePayments } from '@/features/payments/state/PaymentContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
 
@@ -95,6 +96,7 @@ export default function OrderDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { getOrder, acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
   const { profile } = useProfile();
+  const { initiate: initiatePayment } = usePayments();
 
   const [order, setOrder] = useState<Order | undefined>();
   const [loading, setLoading] = useState(true);
@@ -112,6 +114,23 @@ export default function OrderDetailScreen() {
   // Determinar si el usuario autenticado es el cliente o el proveedor
   const isClient   = profile?.id === order?.clientId;
   const isProvider = profile?.id === order?.providerId;
+
+  const paymentPending = order?.paymentStatus === 'pending' || order?.paymentStatus === undefined;
+  const needsPayment = isClient && paymentPending && ['accepted', 'in_progress', 'completed'].includes(order?.status || '');
+
+  const handlePay = async () => {
+    if (!order?.id) return;
+    setActionLoading('Pagar');
+    try {
+      await initiatePayment(order.id);
+      Alert.alert('Pago iniciado', 'El pago está siendo procesado.');
+      loadOrder();
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'No se pudo procesar el pago');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const runAction = async (label: string, action: () => Promise<void>) => {
     setActionLoading(label);
@@ -317,6 +336,35 @@ export default function OrderDetailScreen() {
                 'Ingresá el motivo de la cancelación',
                 reason => cancelOrder(order.id, { reason }),
               )}
+            />
+          )}
+
+          {/* CLIENTE: pagar si hay saldo pendiente */}
+          {needsPayment && (
+            <ActionButton
+              label="Pagar orden"
+              icon="payment"
+              color="#16a34a"
+              loading={actionLoading === 'Pagar'}
+              onPress={handlePay}
+            />
+          )}
+
+          {/* CLIENTE: calificar si completado */}
+          {isClient && order.status === 'completed' && (
+            <ActionButton
+              label="Calificar servicio"
+              icon="star"
+              color="#FFD700"
+              loading={false}
+              onPress={() => router.push({
+                pathname: '/(tabs)/orders/review',
+                params: {
+                  orderId: order.id,
+                  providerName: order.provider ? `${order.provider.firstName} ${order.provider.lastName || ''}`.trim() : undefined,
+                  serviceName: order.service?.title,
+                },
+              })}
             />
           )}
 

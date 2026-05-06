@@ -1,23 +1,221 @@
+import React, { useEffect, useRef } from 'react';
 import {
-  FlatList,
-  Image,
+  Animated,
+  Dimensions,
   Pressable,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MotiView } from "moti";
-import { TOKENS } from "@/core/design-system/tokens";
-import { ServiceProvider } from "@/types";
-import Colors from "@/core/design-system/Colors";
-import { useEffect } from "react";
-import { useServices } from "../state/ServicesContext";
+} from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useServices } from '../state/ServicesContext';
+import type { ServiceSummary } from '@/types/services';
+
+const { width: W } = Dimensions.get('window');
+
+const C = {
+  bg:      '#F7F7FA',
+  card:    '#FFFFFF',
+  text:    '#1A1A1A',
+  sub:     '#6B7280',
+  border:  '#EDEDF0',
+  amber:   '#F59E0B',
+  primary: '#850021',
+};
+
+// ── Curated gradients — must match ServicesScreen ────────────────────────────
+const GRADIENTS: [string, string, string][] = [
+  ['#0f0c29', '#302b63', '#24243e'],
+  ['#134e5e', '#71b280', '#134e5e'],
+  ['#4a0f20', '#850021', '#c0002f'],
+  ['#0d0d0d', '#2c3e50', '#4ca1af'],
+  ['#1a1a2e', '#16213e', '#0f3460'],
+  ['#2d1b69', '#553c9a', '#6d28d9'],
+  ['#065f46', '#047857', '#059669'],
+  ['#7c2d12', '#c2410c', '#ea580c'],
+  ['#831843', '#9d174d', '#be185d'],
+  ['#78350f', '#b45309', '#d97706'],
+];
+
+// ── Shimmer skeleton ──────────────────────────────────────────────────────────
+function Shimmer({ width, height, radius = 12 }: { width: number | string; height: number; radius?: number }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(anim, { toValue: 1, duration: 1100, useNativeDriver: true })
+    ).start();
+  }, []);
+  const tx = anim.interpolate({ inputRange: [0, 1], outputRange: [-300, 300] });
+  return (
+    <View style={{ width, height, borderRadius: radius, backgroundColor: '#E2E6EC', overflow: 'hidden' }}>
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: tx }] }]}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <View style={{ paddingHorizontal: 16, gap: 12, paddingTop: 4 }}>
+      {[0, 1, 2, 3].map(i => (
+        <View key={i} style={[sk.card, { opacity: 1 - i * 0.15 }]}>
+          <Shimmer width={64} height={64} radius={18} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <Shimmer width="75%" height={14} radius={7} />
+            <Shimmer width="50%" height={11} radius={6} />
+            <Shimmer width="40%" height={11} radius={6} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+const sk = StyleSheet.create({
+  card: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 18, padding: 16 },
+});
+
+// ── Price formatter ───────────────────────────────────────────────────────────
+function formatRate(rate?: ServiceSummary['rate']) {
+  if (!rate) return 'Consultar';
+  const sym = rate.currency === 'ARS' ? '$' : rate.currency === 'USD' ? 'US$' : `${rate.currency} `;
+  return `${sym}${rate.amount.toLocaleString('es-AR')} / ${rate.unit}`;
+}
+
+// ── Service card ──────────────────────────────────────────────────────────────
+function ServiceCard({
+  item,
+  index,
+  onPress,
+}: {
+  item: ServiceSummary;
+  index: number;
+  onPress: () => void;
+}) {
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(32)).current;
+  const scaleA    = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const delay = index * 65;
+    Animated.parallel([
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 380, delay, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, delay, tension: 80, friction: 10, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const pressIn  = () => Animated.spring(scaleA, { toValue: 0.97, useNativeDriver: true, tension: 200, friction: 10 }).start();
+  const pressOut = () => Animated.spring(scaleA, { toValue: 1,    useNativeDriver: true, tension: 200, friction: 10 }).start();
+
+  return (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }, { scale: scaleA }],
+      }}
+    >
+      <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={s.serviceCard}>
+        {/* Avatar */}
+        {item.thumbnail ? (
+          <Image source={{ uri: item.thumbnail }} style={s.avatar} contentFit="cover" />
+        ) : (
+          <LinearGradient colors={['#e8ecf2', '#d0d7e2']} style={s.avatarFallback}>
+            <Ionicons name="person-outline" size={24} color="#9CA3AF" />
+          </LinearGradient>
+        )}
+
+        {/* Info */}
+        <View style={s.info}>
+          <Text style={s.name} numberOfLines={1}>{item.name}</Text>
+          <Text style={s.headline} numberOfLines={1}>{item.title}</Text>
+
+          <View style={s.metaRow}>
+            <View style={s.ratingChip}>
+              <Ionicons name="star" size={11} color={C.amber} />
+              <Text style={s.ratingText}>{item.averageRating?.toFixed(1) ?? '—'}</Text>
+              <Text style={s.reviewCount}>({item.reviewsCount ?? 0})</Text>
+            </View>
+            <View style={s.dot} />
+            <Text style={s.location} numberOfLines={1}>{item.location}</Text>
+          </View>
+
+          <Text style={s.price}>Desde {formatRate(item.rate)}</Text>
+        </View>
+
+        {/* Chevron */}
+        <Ionicons name="chevron-forward" size={18} color={C.border} />
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ── Hero header ───────────────────────────────────────────────────────────────
+function Hero({
+  category,
+  gradientIndex,
+  onBack,
+}: {
+  category: { name: string; description: string; icon: string } | undefined;
+  gradientIndex: number;
+  onBack: () => void;
+}) {
+  const gradient = GRADIENTS[gradientIndex % GRADIENTS.length];
+  const scaleA   = useRef(new Animated.Value(0.9)).current;
+  const fadeA    = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleA, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }),
+      Animated.timing(fadeA,  { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[s.hero, { opacity: fadeA, transform: [{ scale: scaleA }] }]}>
+      <LinearGradient
+        colors={gradient}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
+      />
+      {/* Blobs */}
+      <View style={[s.blob, { width: 200, height: 200, top: -60, right: -40, opacity: 0.10 }]} />
+      <View style={[s.blob, { width: 120, height: 120, bottom: -30, right: 80, opacity: 0.07 }]} />
+
+      {/* Back button */}
+      <Pressable onPress={onBack} style={s.backBtn}>
+        <Ionicons name="arrow-back" size={18} color="#1A1A1A" />
+      </Pressable>
+
+      {/* Content */}
+      <View style={s.heroContent}>
+        <View style={s.heroIconWrap}>
+          <Text style={s.heroIcon}>{category?.icon ?? '🔧'}</Text>
+        </View>
+        <Text style={s.heroTitle}>{category?.name ?? 'Servicios'}</Text>
+        {category?.description ? (
+          <Text style={s.heroDesc} numberOfLines={2}>{category.description}</Text>
+        ) : null}
+      </View>
+    </Animated.View>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function CategoryServicesScreen() {
-  const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const {
     fetchServicesByCategory,
     getServicesForCategory,
@@ -25,278 +223,264 @@ export default function CategoryServicesScreen() {
     servicesStatus,
   } = useServices();
 
-  const categoryId = typeof params.id === "string" ? params.id : undefined;
-
-  // Retrieve category info from loaded categories
-  const category = categories.find((c) => c.id === categoryId);
-  const services = categoryId ? getServicesForCategory(categoryId) : [];
-  const status = categoryId ? servicesStatus[categoryId] : undefined;
-
-  const isLoading = status?.loading && !services.length;
+  const categoryId = typeof params.id === 'string' ? params.id : undefined;
+  const category   = categories.find(c => c.id === categoryId);
+  const catIndex   = categories.findIndex(c => c.id === categoryId);
+  const services   = categoryId ? getServicesForCategory(categoryId) : [];
+  const status     = categoryId ? servicesStatus[categoryId] : undefined;
+  const isLoading  = Boolean(status?.loading && services.length === 0);
 
   useEffect(() => {
-    // Load services for the given category
-    if (categoryId) {
-      fetchServicesByCategory(categoryId).catch((err) => console.error(err));
-    }
-  }, []);
+    if (categoryId) fetchServicesByCategory(categoryId).catch(() => {});
+  }, [categoryId]);
 
-  function handleBack() {
-    router.back();
-  }
-
-  function handleProviderPress(provider: ServiceProvider) {
+  const handleProviderPress = (item: ServiceSummary) => {
     router.push({
-      pathname: "/(tabs)/services/provider/[id]",
-      params: { id: provider.id },
+      pathname: '/(tabs)/services/provider/[id]',
+      params: { id: item.providerId ?? item.id },
     });
-  }
-
-  function formatRate(rate: ServiceProvider["rate"]) {
-    if (!rate) return "Consultar";
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-          ? "US$"
-          : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
-  }
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[s.root, { paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
-      <View style={[styles.hero, { backgroundColor: Colors.colorPrimary }]}>
-        <Pressable
-          onPress={handleBack}
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-          style={styles.backButton}
-        >
-          <Text style={styles.backIcon}>←</Text>
-        </Pressable>
-        <View style={styles.heroCopy}>
-          <Text style={styles.heroTitle}>{category?.name ?? "Servicios"}</Text>
-          <Text style={styles.heroSubtitle}>
-            {category?.description ?? "Descubrí profesionales disponibles."}
-          </Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 100 }]}
+      >
+        {/* Hero */}
+        <View style={s.heroPad}>
+          <Hero
+            category={category as any}
+            gradientIndex={catIndex >= 0 ? catIndex : 2}
+            onBack={() => router.back()}
+          />
         </View>
-      </View>
-      {isLoading ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <MotiView
-            from={{ opacity: 0.5, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              type: "timing",
-              duration: 800,
-              loop: true,
-            }}
-          >
-            <Text style={{ color: TOKENS.color.primary, fontWeight: "600" }}>
-              Cargando servicios...
+
+        {/* Section header */}
+        {!isLoading && (
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>
+              {services.length > 0
+                ? `${services.length} profesional${services.length !== 1 ? 'es' : ''}`
+                : 'Profesionales'}
             </Text>
-          </MotiView>
-        </View>
-      ) : (
-        <FlatList
-          data={services}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => {
-            const service = item as any;
-            return (
-              <MotiView
-                from={{ opacity: 0, translateY: 28 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: "timing",
-                  duration: 420,
-                  delay: index * 70,
-                }}
-                style={styles.serviceWrapper}
-              >
-                <Pressable
-                  onPress={() =>
-                    handleProviderPress({
-                      ...service,
-                      id: service.providerId || service.id,
-                    })
-                  }
-                  style={styles.serviceCard}
-                  android_ripple={{ color: "rgba(0,0,0,0.04)" }}
-                >
-                  <Image
-                    source={{ uri: service.photo }}
-                    style={styles.avatar}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.serviceInfo}>
-                    <View style={styles.nameRow}>
-                      <Text style={styles.serviceName}>{service.name}</Text>
-                      <Text style={styles.serviceRating}>
-                        ★ {service.rating ? service.rating.toFixed(1) : "N/D"}
-                      </Text>
-                    </View>
-                    <Text style={styles.serviceHeadline}>{service.title}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.servicePrice}>
-                        Desde {formatRate(service.rate)}
-                      </Text>
-                      <View style={styles.dot} />
-                      <Text style={styles.serviceReviews}>
-                        {service.reviews} reseñas
-                      </Text>
-                    </View>
-                    <Text style={styles.serviceLocation}>
-                      {service.location}
-                    </Text>
-                  </View>
-                </Pressable>
-              </MotiView>
-            );
-          }}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>
-                Pronto habrá profesionales aquí
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                Estamos sumando especialistas en esta categoría.
-              </Text>
-            </View>
-          }
-        />
-      )}
-    </SafeAreaView>
+            <Text style={s.sectionSub}>Tocá uno para ver su perfil completo</Text>
+          </View>
+        )}
+
+        {/* Content */}
+        {isLoading ? (
+          <SkeletonList />
+        ) : services.length === 0 ? (
+          <View style={s.empty}>
+            <Text style={s.emptyIcon}>🔍</Text>
+            <Text style={s.emptyTitle}>Próximamente hay más</Text>
+            <Text style={s.emptySub}>Estamos sumando especialistas en esta categoría.</Text>
+          </View>
+        ) : (
+          <View style={s.list}>
+            {services.map((item, index) => (
+              <ServiceCard
+                key={item.id}
+                item={item}
+                index={index}
+                onPress={() => handleProviderPress(item)}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
+// ── Styles ────────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: C.bg,
+  },
+  scroll: {
+    paddingTop: 4,
+  },
+
+  // Hero
+  heroPad: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
   },
   hero: {
-    margin: 20,
-    borderRadius: TOKENS.radius.xl,
-    padding: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
+    borderRadius: 24,
+    padding: 22,
+    minHeight: 180,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: TOKENS.radius.lg,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    ...TOKENS.shadow.soft,
+  blob: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
   },
-  backIcon: {
-    fontSize: 20,
-    color: TOKENS.color.text,
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  heroCopy: {
-    flex: 1,
-    gap: 6,
+  heroContent: {
+    gap: 8,
+    marginTop: 12,
+  },
+  heroIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroIcon: {
+    fontSize: 28,
   },
   heroTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: TOKENS.color.text,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.4,
   },
-  heroSubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    lineHeight: 20,
+  heroDesc: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
+    lineHeight: 19,
   },
-  listContent: {
+
+  // Section header
+  sectionHeader: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
-    gap: 16,
+    paddingTop: 20,
+    paddingBottom: 10,
+    gap: 2,
   },
-  serviceWrapper: {
-    width: "100%",
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.text,
+    letterSpacing: -0.2,
   },
+  sectionSub: {
+    fontSize: 13,
+    color: C.sub,
+  },
+
+  // List
+  list: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+
+  // Service card
   serviceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    backgroundColor: "#FFFFFF",
-    padding: 18,
-    borderRadius: TOKENS.radius.lg,
-    ...TOKENS.shadow.soft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: C.card,
+    borderRadius: 18,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
   },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 64,
+    height: 64,
     borderRadius: 18,
+    flexShrink: 0,
   },
-  serviceInfo: {
+  avatarFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  info: {
     flex: 1,
-    gap: 6,
+    gap: 4,
   },
-  nameRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  name: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.text,
   },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  serviceRating: {
+  headline: {
     fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.primary,
-  },
-  serviceHeadline: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
+    color: C.sub,
   },
   metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  servicePrice: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.text,
+  ratingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: C.amber,
+  },
+  reviewCount: {
+    fontSize: 11,
+    color: C.sub,
   },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CBD3DA",
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: C.border,
   },
-  serviceReviews: {
+  location: {
     fontSize: 12,
-    color: TOKENS.color.sub,
+    color: C.sub,
+    flex: 1,
   },
-  serviceLocation: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
+  price: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.primary,
   },
-  emptyState: {
-    paddingVertical: 80,
-    alignItems: "center",
-    gap: 8,
+
+  // Empty
+  empty: {
+    paddingTop: 60,
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 40,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
+  emptyIcon: { fontSize: 48 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: C.text },
+  emptySub: { fontSize: 14, color: C.sub, textAlign: 'center', lineHeight: 20 },
 });

@@ -11,12 +11,12 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
-import { useDebouncedValue } from "@/src/shared/hooks/useDebouncedValue";
-import { useSearch } from "@/src/contexts/SearchContext";
-import { SearchBar } from "@/src/shared/ui/SearchBar";
-import { Category } from "@/src/interfaces/category";
-import { Provider } from "@/src/interfaces/provider";
-import { Service } from "@/src/interfaces/service";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import { useSearch } from "@/contexts/SearchContext";
+import { SearchBar } from "@/shared/ui/SearchBar";
+import { Category } from "@/interfaces/category";
+import { Provider } from "@/interfaces/provider";
+import { Service } from "@/interfaces/service";
 import { TOKENS } from "@/core/design-system/tokens";
 
 type ResultItem =
