@@ -23,8 +23,8 @@ export interface ServicePayload {
 }
 
 export async function getMyServices(): Promise<Service[]> {
-  const { data } = await api.get<Service[]>("/services/my");
-  return data;
+  const { data } = await api.get<{ data: Service[] }>("/services/me");
+  return data.data;
 }
 
 export async function createService(payload: ServicePayload): Promise<Service> {
@@ -36,7 +36,7 @@ export async function updateService(
   id: string,
   payload: Partial<ServicePayload>
 ): Promise<Service> {
-  const { data } = await api.put<Service>(`/services/${id}`, payload);
+  const { data } = await api.patch<Service>(`/services/${id}`, payload);
   return data;
 }
 

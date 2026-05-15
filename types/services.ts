@@ -63,16 +63,8 @@ export type Review = {
   createdAt: string;
 };
 
-export type Purchase = {
-  id: string;
-  serviceId: string;
-  userId: string;
-  completedAt: string;
-};
-
 export type AddReviewPayload = {
-  serviceId: string;
-  userId: string;
+  orderId: string;
   rating: number;
   comment: string;
 };

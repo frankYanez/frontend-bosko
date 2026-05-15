@@ -38,7 +38,7 @@ export default function _layout() {
                   <PaymentsProvider>
                     <OrdersProvider>
                       <PostsProvider serviceId="global">
-                        <ReviewsProvider serviceId="global">
+                        <ReviewsProvider providerId="global">
                           <KYCProvider>
                             <NotificationsProvider>
                               <RootLayoutNav />

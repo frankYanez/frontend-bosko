@@ -1,4 +1,4 @@
-import type { Purchase, Review } from "@/types/services";
+import type { Review } from "@/types/services";
 
 export const MOCK_REVIEWS: Review[] = [
   {
@@ -48,38 +48,5 @@ export const MOCK_REVIEWS: Review[] = [
     rating: 5,
     comment: "Duplicó los leads en dos semanas. Seguiremos trabajando juntos.",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-  },
-];
-
-export const MOCK_PURCHASES: Purchase[] = [
-  {
-    id: "purchase-1",
-    serviceId: "ana-rivera",
-    userId: "user-001",
-    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-  },
-  {
-    id: "purchase-2",
-    serviceId: "ana-rivera",
-    userId: "user-002",
-    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(),
-  },
-  {
-    id: "purchase-3",
-    serviceId: "martin-costa",
-    userId: "user-003",
-    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-  },
-  {
-    id: "purchase-4",
-    serviceId: "lucia-ortega",
-    userId: "user-001",
-    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 22).toISOString(),
-  },
-  {
-    id: "purchase-5",
-    serviceId: "federica-suarez",
-    userId: "user-004",
-    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString(),
   },
 ];

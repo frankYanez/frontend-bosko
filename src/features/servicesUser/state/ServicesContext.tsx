@@ -25,13 +25,12 @@ import {
 } from "../services/service";
 import { fetchAllServices, fetchServiceById } from "../services/services";
 import {
-  addReviewService,
   fetchCategoriesService,
   fetchProviderProfileService,
   fetchServiceReviewsService,
   fetchServicesByCategoryService,
-  fetchUserPurchasesService,
 } from "../services/catalog";
+import { createReview } from "@/features/reviews/services/review.service";
 
 interface ResourceState {
   loading: boolean;
@@ -342,11 +341,6 @@ interface ServicesContextValue {
     reviewsCount: number;
   };
   getReviewsForService: (serviceId: string) => Review[];
-  canReviewService: (serviceId: string, userId: string) => boolean | undefined;
-  ensureCanReviewService: (
-    serviceId: string,
-    userId: string
-  ) => Promise<boolean>;
 }
 
 const ServicesContext = createContext<ServicesContextValue | undefined>(
@@ -554,7 +548,8 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
         payload: { serviceId, status: { loading: true, error: null } },
       });
       try {
-        const data = await fetchServiceReviewsService(serviceId);
+        const providerId = state.servicesById[serviceId]?.providerId ?? serviceId;
+        const data = await fetchServiceReviewsService(providerId);
         dispatch({
           type: "SET_REVIEWS",
           payload: { serviceId, reviews: data },
@@ -583,122 +578,15 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
     [applyReviewAggregates, state.reviewsByService, state.reviewsStatus]
   );
 
-  const ensureCanReviewService = useCallback(
-    async (serviceId: string, userId: string) => {
-      const eligibility = state.eligibility[serviceId]?.[userId];
-      if (typeof eligibility === "boolean") {
-        return eligibility;
-      }
-
-      try {
-        const purchases = await fetchUserPurchasesService(userId, serviceId);
-        const purchasedServiceIds = purchases.map(
-          (purchase) => purchase.serviceId
-        );
-        dispatch({
-          type: "SET_USER_PURCHASES",
-          payload: { userId, serviceIds: purchasedServiceIds },
-        });
-        const canReview = purchasedServiceIds.includes(serviceId);
-        dispatch({
-          type: "SET_REVIEW_ELIGIBILITY",
-          payload: { serviceId, userId, canReview },
-        });
-        return canReview;
-      } catch (error) {
-        dispatch({
-          type: "SET_REVIEW_ELIGIBILITY",
-          payload: { serviceId, userId, canReview: false },
-        });
-        throw error;
-      }
-    },
-    [state.eligibility]
-  );
-
   const addReviewWithRating = useCallback(
     async (payload: AddReviewPayload) => {
-      const { serviceId, userId, rating, comment } = payload;
+      const { orderId, rating, comment } = payload;
       if (rating < 1 || rating > 5) {
         throw new Error("La calificación debe estar entre 1 y 5");
       }
-
-      const canReview = await ensureCanReviewService(serviceId, userId);
-      if (!canReview) {
-        throw new Error(
-          "Solo quienes contrataron el servicio pueden dejar una reseña"
-        );
-      }
-
-      const previousReviews = state.reviewsByService[serviceId] ?? [];
-      const optimisticReview: Review = {
-        id: `temp-${Date.now()}`,
-        serviceId,
-        userId,
-        userName: authState.user?.username ?? "Usuario",
-        userAvatar: undefined,
-        rating,
-        comment,
-        createdAt: new Date().toISOString(),
-      };
-
-      const optimisticList = [...previousReviews, optimisticReview];
-      dispatch({
-        type: "SET_REVIEWS_STATUS",
-        payload: { serviceId, status: { loading: true, error: null } },
-      });
-      dispatch({
-        type: "SET_REVIEWS",
-        payload: { serviceId, reviews: optimisticList },
-      });
-      applyReviewAggregates(serviceId, optimisticList);
-
-      try {
-        const created = await addReviewService({
-          ...payload,
-          userName: optimisticReview.userName,
-          userAvatar: optimisticReview.userAvatar,
-        });
-        const confirmed = optimisticList.map((review) =>
-          review.id === optimisticReview.id ? created : review
-        );
-        dispatch({
-          type: "SET_REVIEWS",
-          payload: { serviceId, reviews: confirmed },
-        });
-        dispatch({
-          type: "SET_REVIEWS_STATUS",
-          payload: {
-            serviceId,
-            status: { loading: false, loaded: true, error: null },
-          },
-        });
-        applyReviewAggregates(serviceId, confirmed);
-      } catch (error) {
-        dispatch({
-          type: "SET_REVIEWS",
-          payload: { serviceId, reviews: previousReviews },
-        });
-        dispatch({
-          type: "SET_REVIEWS_STATUS",
-          payload: {
-            serviceId,
-            status: {
-              loading: false,
-              error: getErrorMessage(error, "No se pudo enviar la reseña"),
-            },
-          },
-        });
-        applyReviewAggregates(serviceId, previousReviews);
-        throw error;
-      }
+      await createReview({ orderId, rating, comment });
     },
-    [
-      applyReviewAggregates,
-      authState.user?.username,
-      ensureCanReviewService,
-      state.reviewsByService,
-    ]
+    []
   );
 
   const loadServices = useCallback(
@@ -819,12 +707,6 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
     [state.reviewsByService]
   );
 
-  const canReviewService = useCallback(
-    (serviceId: string, userId: string) =>
-      state.eligibility[serviceId]?.[userId],
-    [state.eligibility]
-  );
-
   const value = useMemo<ServicesContextValue>(
     () => ({
       services,
@@ -854,16 +736,12 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       getProviderById,
       getProviderRating,
       getReviewsForService,
-      canReviewService,
-      ensureCanReviewService,
     }),
     [
       addReviewWithRating,
       addService,
-      canReviewService,
       currentPlan,
       editService,
-      ensureCanReviewService,
       fetchCategories,
       fetchProviderProfile,
       fetchServiceReviews,
