@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Colors from "@/core/design-system/Colors";

@@ -10,7 +10,7 @@ import {
     Dimensions,
     Animated,
 } from "react-native";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { ServiceSummary } from "@/types/services";
 import Colors from "@/core/design-system/Colors";

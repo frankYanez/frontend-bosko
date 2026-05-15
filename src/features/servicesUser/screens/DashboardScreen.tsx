@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useServices } from '@/features/servicesUser/state/ServicesContext';
+import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
 
 const { width: W } = Dimensions.get('window');
@@ -178,8 +179,8 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
         onPress={() => {}}
         style={s.serviceCard}
       >
-        {item.thumbnail ? (
-          <Image source={{ uri: item.thumbnail }} style={s.serviceThumb} contentFit="cover" />
+        {(item.thumbnail || item.images?.[0]) ? (
+          <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={s.serviceThumb} contentFit="cover" />
         ) : (
           <LinearGradient colors={['#f5f5f5', '#ebebeb']} style={s.serviceThumb}>
             <Ionicons name="image-outline" size={28} color={C.sub} />
@@ -253,7 +254,6 @@ export default function DashboardScreen() {
     categories,
     categoriesStatus,
     fetchCategories,
-    fetchServicesByCategory,
     getServicesForCategory,
   } = useServices();
 
@@ -310,12 +310,10 @@ export default function DashboardScreen() {
   }, []);
 
   useEffect(() => {
-    if (!categories.length) return;
-    const firstCat = categories[0];
-    fetchServicesByCategory(firstCat.id)
+    fetchFeaturedServices()
       .then(services => setFeaturedServices(services.slice(0, 6)))
       .catch(() => {});
-  }, [categories]);
+  }, []);
 
   // ── Datos derivados ───────────────────────────────────────────────────────
   const displayName = profile?.firstName

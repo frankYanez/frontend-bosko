@@ -39,3 +39,8 @@ export async function fetchServiceById(id: string): Promise<Service> {
   const { data } = await api.get<Service>(`/services/${id}`);
   return data;
 }
+
+export async function fetchFeaturedServices(): Promise<Service[]> {
+  const { data } = await api.get<Service[]>('/services/featured');
+  return data;
+}

@@ -19,7 +19,7 @@ import {
   Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import {

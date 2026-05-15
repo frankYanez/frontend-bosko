@@ -4,9 +4,17 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+
+let Notifications: any = null;
+let Device: any = null;
+
+if (Platform.OS === 'ios') {
+  try {
+    Notifications = require('expo-notifications');
+    Device = require('expo-device');
+  } catch {}
+}
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -52,7 +60,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   const registerDevicePushToken = async () => {
-    if (!Device.isDevice) return;
+    if (!Notifications || !Device || !Device.isDevice) return;
 
     const { status: existing } = await Notifications.getPermissionsAsync();
     let finalStatus = existing;

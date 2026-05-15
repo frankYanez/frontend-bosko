@@ -15,9 +15,9 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
+import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import api from '@/core/api/axiosinstance';

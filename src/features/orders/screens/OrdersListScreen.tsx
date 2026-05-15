@@ -3,8 +3,9 @@
  * Muestra tabs "Como cliente" y "Como proveedor" con sus órdenes respectivas.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   View,
   Text,
   StyleSheet,
@@ -14,9 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
@@ -48,13 +47,13 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
   const date = new Date(order.createdAt).toLocaleDateString('es-AR', {
     day: '2-digit', month: 'short', year: 'numeric',
   });
+  const anim = useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    Animated.timing(anim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+  }, []);
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 12 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 350 }}
-    >
+    <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}>
       <Pressable
         style={({ pressed }) => [styles.orderCard, pressed && styles.orderCardPressed]}
         onPress={onPress}
@@ -85,7 +84,7 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
           </View>
         </View>
       </Pressable>
-    </MotiView>
+    </Animated.View>
   );
 }
 
@@ -151,7 +150,7 @@ export default function OrdersListScreen() {
       </View>
 
       {/* Tabs */}
-      <BlurView intensity={20} tint="light" style={styles.tabBar}>
+      <View style={styles.tabBar}>
         {(['client', 'provider'] as TabType[]).map(tab => (
           <Pressable
             key={tab}
@@ -168,7 +167,7 @@ export default function OrdersListScreen() {
             </Text>
           </Pressable>
         ))}
-      </BlurView>
+      </View>
 
       {loading && !refreshing && orders.length === 0 ? (
         <ActivityIndicator

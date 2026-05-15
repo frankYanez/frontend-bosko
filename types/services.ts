@@ -21,7 +21,8 @@ export type ServiceSummary = {
   name: string;
   title: string;
   summary: string;
-  thumbnail: string;
+  thumbnail?: string;
+  images?: string[];
   location: string;
   rate: Rate;
   averageRating: number;

@@ -15,7 +15,7 @@ import { TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { UpdateProfilePayload } from "@/features/servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@/core/components/BlurView";
 
 interface EditProfileModalProps {
   visible: boolean;

@@ -14,10 +14,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
-import { MotiView } from 'moti';
+import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
 import { KYCStatus } from '../types/kyc.types';

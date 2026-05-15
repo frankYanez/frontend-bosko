@@ -16,7 +16,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Animated } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
