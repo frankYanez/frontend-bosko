@@ -13,15 +13,17 @@
       "backgroundColor": "red"
     },
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
+      "package": "com.boskoapp.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.boskoapp.mobile",
+      "supportsTablet": true
     },
     "web": {
       "bundler": "metro",
