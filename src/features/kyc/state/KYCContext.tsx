@@ -1,25 +1,26 @@
-/**
- * KYCContext
- *
- * Estado global para la verificación de identidad.
- * Se carga automáticamente al iniciar sesión y se actualiza cuando el usuario
- * completa o reintenta el proceso de KYC.
- */
-
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { getKYCStatus, submitKYC, retryKYC } from '../services/kyc.service';
-import { KYCVerification, SubmitKYCPayload } from '../types/kyc.types';
+import * as WebBrowser from 'expo-web-browser';
+import { getKYCStatus, startVerification, retryVerification } from '../services/kyc.service';
+import { DocumentType, KYCVerification } from '../types/kyc.types';
 import { useAuth } from '@/features/auth/state/AuthContext';
+
+interface SubmitDocumentsPayload {
+  documentType: DocumentType;
+  documentFront: string;
+  documentBack: string;
+  selfie: string;
+}
 
 interface KYCContextValue {
   verification: KYCVerification | null;
+  kyc: KYCVerification | null;
   loading: boolean;
   error: string | null;
-  isVerified: boolean;           // Shortcut: status === 'approved'
-  needsKYC: boolean;             // Para mostrar CTA en el perfil
+  isVerified: boolean;
   refresh: () => Promise<void>;
-  submit: (payload: SubmitKYCPayload) => Promise<void>;
+  start: () => Promise<void>;
   retry: () => Promise<void>;
+  submit: (payload: SubmitDocumentsPayload) => Promise<void>;
   clearError: () => void;
 }
 
@@ -37,61 +38,76 @@ export const KYCProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const data = await getKYCStatus();
+      if (data) data.status = data.status?.toLowerCase() as any;
       setVerification(data);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al cargar estado KYC');
+      setError(err?.response?.data?.message || 'Error al cargar estado de verificación');
     } finally {
       setLoading(false);
     }
   }, [authState.token]);
 
-  // Cargar estado KYC cuando el usuario se autentica
   useEffect(() => {
     if (authState.token) refresh();
     else setVerification(null);
   }, [authState.token, refresh]);
 
-  const submit = useCallback(async (payload: SubmitKYCPayload) => {
+  const openPersona = async (sessionToken: string, verificationUrl: string) => {
+    // Cuando el SDK nativo esté instalado, reemplazar por:
+    // const Persona = require('@persona-kyc/react-native-persona').default;
+    // Persona.start({ sessionToken, onSuccess: ..., onFailed: ..., onCancelled: ... });
+    await WebBrowser.openBrowserAsync(verificationUrl);
+    // Refrescar estado después de que el usuario vuelva del browser
+    await refresh();
+  };
+
+  const start = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await submitKYC(payload);
-      setVerification(data);
+      const response = await startVerification();
+      const { sessionToken, verificationUrl, inquiryId } = response;
+      const url = verificationUrl || (inquiryId && sessionToken
+        ? `https://withpersona.com/verify?inquiry-id=${inquiryId}&session-token=${sessionToken}`
+        : null);
+      if (!url) throw new Error('No se recibió URL de verificación del servidor');
+      await openPersona(sessionToken, url);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Error al enviar documentos';
-      setError(Array.isArray(msg) ? msg.join('. ') : msg);
-      throw err;
+      setError(err?.response?.data?.message || err?.message || 'No se pudo iniciar la verificación. Intentá de nuevo.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refresh]);
 
   const retry = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await retryKYC();
-      setVerification(data);
+      const { sessionToken, verificationUrl } = await retryVerification();
+      await openPersona(sessionToken, verificationUrl);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Error al reintentar verificación';
-      setError(Array.isArray(msg) ? msg.join('. ') : msg);
-      throw err;
+      setError(err?.response?.data?.message || 'No se pudo reiniciar la verificación.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refresh]);
+
+  const submit = useCallback(async (_payload: SubmitDocumentsPayload) => {
+    await start();
+  }, [start]);
 
   return (
     <KYCContext.Provider
       value={{
         verification,
+        kyc: verification,
         loading,
         error,
-        isVerified: verification?.status === 'approved',
-        needsKYC: !verification || verification.status !== 'approved',
+        isVerified: verification?.isVerified ?? false,
         refresh,
-        submit,
+        start,
         retry,
+        submit,
         clearError: () => setError(null),
       }}
     >

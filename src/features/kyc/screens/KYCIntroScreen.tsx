@@ -10,12 +10,14 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
+import { useKYC } from '../state/KYCContext';
 import { TOKENS } from '@/core/design-system/tokens';
 
 const STEPS = [
@@ -37,6 +39,8 @@ const STEPS = [
 ];
 
 export default function KYCIntroScreen() {
+  const { start, loading, error } = useKYC();
+
   return (
     <LinearGradient
       colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
@@ -110,6 +114,14 @@ export default function KYCIntroScreen() {
           </View>
         </MotiView>
 
+        {/* Error */}
+        {!!error && (
+          <View style={{ backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+            <MaterialIcons name="error-outline" size={18} color="#dc2626" />
+            <Text style={{ flex: 1, fontSize: 13, color: '#dc2626', lineHeight: 18 }}>{error}</Text>
+          </View>
+        )}
+
         {/* CTA */}
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
@@ -119,7 +131,8 @@ export default function KYCIntroScreen() {
         >
           <Pressable
             style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
-            onPress={() => router.push('/(tabs)/profile/kyc/document')}
+            onPress={start}
+            disabled={loading}
           >
             <LinearGradient
               colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
@@ -127,8 +140,13 @@ export default function KYCIntroScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.buttonGradient}
             >
-              <Text style={styles.primaryButtonText}>Comenzar ahora</Text>
-              <MaterialIcons name="arrow-forward" size={18} color="#fff" />
+              {loading
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <>
+                    <Text style={styles.primaryButtonText}>Comenzar ahora</Text>
+                    <MaterialIcons name="arrow-forward" size={18} color="#fff" />
+                  </>
+              }
             </LinearGradient>
           </Pressable>
 

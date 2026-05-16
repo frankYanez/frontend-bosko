@@ -30,17 +30,17 @@ const REJECTION_TIPS = [
 ];
 
 export default function KYCRejectedScreen() {
-  const { kyc, retry, loading, error, clearError } = useKYC();
+  const { verification, retry, loading, error, clearError } = useKYC();
 
-  const attemptCount = kyc?.attemptCount ?? 0;
+  const attemptCount = verification?.attemptCount ?? 0;
   const canRetry = attemptCount < MAX_ATTEMPTS;
-  const rejectionReason = kyc?.rejectionReason;
+  const rejectionReason = verification?.rejectionReason;
 
   const handleRetry = async () => {
     clearError();
     try {
       await retry();
-      router.replace('/(tabs)/profile/kyc/document');
+      router.replace('/(tabs)/profile/kyc');
     } catch {
       // Error en contexto
     }

@@ -16,31 +16,38 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
-import LottieView from 'lottie-react-native';
 import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
 import { KYCStatus } from '../types/kyc.types';
 import { TOKENS } from '@/core/design-system/tokens';
 
-// Configuración visual por estado
-const STATUS_UI: Record<KYCStatus, {
+type StatusUIConfig = {
   title: string;
   description: string;
   color: string;
   bg: string;
   icon: any;
-}> = {
-  pending: {
+};
+
+const STATUS_UI: Record<KYCStatus, StatusUIConfig> = {
+  not_started: {
     title: 'Verificación no iniciada',
     description: 'Para publicar servicios y crear órdenes necesitás verificar tu identidad.',
     color: TOKENS.color.primary,
     bg: 'rgba(133,0,33,0.08)',
     icon: 'shield',
   },
-  in_review: {
+  in_progress: {
     title: 'En revisión',
-    description: 'Tu documentación está siendo revisada por nuestro equipo. Esto puede tardar hasta 24 horas.',
+    description: 'Tu documentación está siendo revisada. Te notificamos cuando esté listo.',
+    color: '#2563eb',
+    bg: 'rgba(37,99,235,0.08)',
+    icon: 'hourglass-empty',
+  },
+  pending: {
+    title: 'En revisión',
+    description: 'Tu documentación está siendo revisada. Te notificamos cuando esté listo.',
     color: '#2563eb',
     bg: 'rgba(37,99,235,0.08)',
     icon: 'hourglass-empty',
@@ -58,6 +65,20 @@ const STATUS_UI: Record<KYCStatus, {
     color: '#dc2626',
     bg: 'rgba(220,38,38,0.08)',
     icon: 'cancel',
+  },
+  declined: {
+    title: 'Verificación rechazada',
+    description: 'Hubo un problema con tus documentos. Podés volver a intentarlo.',
+    color: '#dc2626',
+    bg: 'rgba(220,38,38,0.08)',
+    icon: 'cancel',
+  },
+  failed: {
+    title: 'Error en verificación',
+    description: 'Hubo un error técnico. Podés volver a intentarlo.',
+    color: '#dc2626',
+    bg: 'rgba(220,38,38,0.08)',
+    icon: 'error-outline',
   },
   expired: {
     title: 'Verificación vencida',
@@ -81,8 +102,10 @@ export default function KYCStatusScreen() {
     );
   }
 
-  const status = verification?.status ?? 'pending';
-  const ui = STATUS_UI[status];
+  const rawStatus = (verification?.status?.toLowerCase() ?? 'not_started') as KYCStatus;
+  // pending sin inquiryId significa que nunca se inició el proceso
+  const status: KYCStatus = (rawStatus === 'pending' && !verification?.inquiryId) ? 'not_started' : rawStatus;
+  const ui = STATUS_UI[status] ?? STATUS_UI['not_started'];
 
   return (
     <LinearGradient
@@ -116,7 +139,7 @@ export default function KYCStatusScreen() {
         </MotiView>
 
         {/* Beneficios (solo si no está aprobado) */}
-        {status !== 'approved' && (
+        {status !== 'approved' && status !== 'in_progress' && status !== 'pending' && (
           <MotiView
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -158,7 +181,7 @@ export default function KYCStatusScreen() {
           transition={{ type: 'timing', duration: 400, delay: 300 }}
           style={styles.ctaContainer}
         >
-          {(status === 'pending' || status === 'expired') && (
+          {(status === 'not_started' || status === 'expired' || status === 'failed') && (
             <Pressable
               style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
               onPress={() => router.push('/(tabs)/profile/kyc/intro')}
@@ -175,7 +198,24 @@ export default function KYCStatusScreen() {
             </Pressable>
           )}
 
-          {status === 'rejected' && verification && verification.attemptCount < 3 && (
+          {(status === 'in_progress' || status === 'pending') && (
+            <Pressable
+              style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
+              onPress={() => router.push('/(tabs)/profile/kyc/intro')}
+            >
+              <LinearGradient
+                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.primaryButtonText}>Continuar verificación</Text>
+                <MaterialIcons name="arrow-forward" size={18} color="#fff" />
+              </LinearGradient>
+            </Pressable>
+          )}
+
+          {(status === 'rejected' || status === 'declined') && verification && verification.attemptCount < verification.maxAttempts && (
             <Pressable
               style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
               onPress={() => router.push('/(tabs)/profile/kyc/intro')}
