@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from './state/ProfileContext';
+import { useKYC } from '@/features/kyc/state/KYCContext';
 import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
 
@@ -40,9 +41,14 @@ const C = {
 
 // ── KYC badge config ─────────────────────────────────────────────────────────
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
-  PENDING:   { label: 'KYC Pendiente',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
-  VERIFIED:  { label: 'Verificado',     color: C.green,  bg: '#F0FFF4', icon: 'checkmark-circle' },
-  REJECTED:  { label: 'KYC Rechazado',  color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
+  pending:      { label: 'KYC Pendiente',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
+  in_progress:  { label: 'KYC Pendiente',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
+  not_started:  { label: 'Sin verificar',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
+  approved:     { label: 'Verificado',     color: C.green,  bg: '#F0FFF4', icon: 'checkmark-circle' },
+  rejected:     { label: 'KYC Rechazado',  color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
+  declined:     { label: 'KYC Rechazado',  color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
+  failed:       { label: 'KYC Fallido',    color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
+  expired:      { label: 'KYC Vencido',    color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
 };
 
 // ── Count-up hook ─────────────────────────────────────────────────────────────
@@ -181,6 +187,7 @@ export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { authState, logout } = useAuth();
   const { profile, isLoading, refreshProfile, updateProfile } = useProfile();
+  const { verification } = useKYC();
 
   const [stats, setStats]               = useState<UserStats | null>(null);
   const [editVisible, setEditVisible]   = useState(false);
@@ -226,7 +233,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   // Derived
-  const kycStatus  = authState.user?.kycStatus ?? 'PENDING';
+  const kycStatus  = verification?.status?.toLowerCase() ?? 'not_started';
   const kycCfg     = KYC_CONFIG[kycStatus];
   const fullName   = profile
     ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`

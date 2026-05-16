@@ -48,8 +48,9 @@ export default function MyReviewsScreen() {
   const loadReviews = useCallback(async () => {
     if (!profile?.id) return;
     try {
-      const { data } = await api.get<ReviewItem[]>(`/reviews/providers/${profile.id}/reviews`);
-      setReviews(data);
+      const { data } = await api.get<any>(`/reviews/providers/${profile.id}/reviews`);
+      const list = (data as any)?.data ?? (Array.isArray(data) ? data : []);
+      setReviews(list);
     } catch (err) {
       console.error('Error loading reviews:', err);
     } finally {

@@ -24,8 +24,8 @@ import { Service } from "./service";
 export async function fetchAllServices(
   params?: Record<string, any>
 ): Promise<Service[]> {
-  const { data } = await api.get<Service[]>("/services", { params });
-  return data;
+  const { data } = await api.get<any>("/services", { params });
+  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
 }
 
 /**
@@ -41,6 +41,6 @@ export async function fetchServiceById(id: string): Promise<Service> {
 }
 
 export async function fetchFeaturedServices(): Promise<Service[]> {
-  const { data } = await api.get<Service[]>('/services/featured');
-  return data;
+  const { data } = await api.get<any>('/services/featured');
+  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
 }

@@ -20,20 +20,20 @@ interface FetchOrdersParams {
 
 /** Obtener todas las órdenes del usuario autenticado (como cliente y proveedor) */
 export async function fetchOrders(params?: FetchOrdersParams): Promise<Order[]> {
-  const { data } = await api.get<Order[]>('/orders', { params });
-  return data;
+  const { data } = await api.get<any>('/orders', { params });
+  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
 }
 
 /** Obtener órdenes donde el usuario es cliente */
 export async function fetchOrdersAsClient(params?: FetchOrdersParams): Promise<Order[]> {
-  const { data } = await api.get<Order[]>('/orders/client', { params });
-  return data;
+  const { data } = await api.get<any>('/orders/client', { params });
+  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
 }
 
 /** Obtener órdenes donde el usuario es proveedor */
 export async function fetchOrdersAsProvider(params?: FetchOrdersParams): Promise<Order[]> {
-  const { data } = await api.get<Order[]>('/orders/provider', { params });
-  return data;
+  const { data } = await api.get<any>('/orders/provider', { params });
+  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
 }
 
 /** Obtener detalle de una orden por ID */

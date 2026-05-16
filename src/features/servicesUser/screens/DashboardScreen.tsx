@@ -325,9 +325,9 @@ export default function DashboardScreen() {
   // ── Acciones ──────────────────────────────────────────────────────────────
   const handleQuickAction = (id: string) => {
     if (id === 'search')  router.push('/search');
-    if (id === 'orders')  router.push('/(tabs)/profile');
+    if (id === 'orders')  router.push('/(tabs)/orders');
     if (id === 'chat')    router.push('/(tabs)/chat');
-    if (id === 'post')    router.push('/(tabs)/profile');
+    if (id === 'post')    router.push('/(tabs)/profile/AddServices');
   };
 
   const handleCategoryPress = (catId: string) => {
@@ -358,7 +358,7 @@ export default function DashboardScreen() {
 
         <Pressable
           style={s.notifBtn}
-          onPress={() => {}}
+          onPress={() => router.push('/(tabs)/profile/Notifications')}
           hitSlop={8}
         >
           <Ionicons name="notifications-outline" size={22} color={C.text} />
