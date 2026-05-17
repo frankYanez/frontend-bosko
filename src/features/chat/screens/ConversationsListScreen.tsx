@@ -51,7 +51,7 @@ function ConversationItem({ item, myUserId }: { item: Conversation; myUserId?: s
     <Animated.View style={{ opacity: fadeAnim }}>
       <Pressable
         style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
-        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.id } })}
+        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.orderId } })}
       >
         {/* Avatar */}
         <View style={styles.avatarContainer}>

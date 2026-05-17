@@ -19,6 +19,7 @@ import {
   Alert,
   Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Audio } from 'expo-av';
 import { BlurView } from '@/core/components/BlurView';
@@ -94,7 +95,7 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
         if (status.didJustFinish) {
           setIsPlaying(false);
           setPositionMs(0);
-          soundRef.current?.setPositionAsync(0);
+          soundRef.current?.stopAsync().catch(() => {});
         }
       },
     ).then(({ sound, status }) => {
@@ -218,6 +219,7 @@ export default function ChatScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { profile } = useProfile();
   const { authState } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -255,7 +257,10 @@ export default function ChatScreen() {
     }
   }, [params.id]);
 
+  const pollBackoffRef = useRef(0);
+
   const loadMessages = useCallback(async (convId: string) => {
+    if (pollBackoffRef.current > Date.now()) return;
     try {
       const data = await fetchMessages(convId);
       setMessages(prev => {
@@ -263,7 +268,10 @@ export default function ChatScreen() {
         return data;
       });
       await markAsRead(convId).catch(() => {});
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        pollBackoffRef.current = Date.now() + 60_000;
+      }
       console.error('Error loading messages:', err);
     }
   }, []);
@@ -546,7 +554,7 @@ export default function ChatScreen() {
       )}
 
       {/* Input bar — el botón derecho SIEMPRE está montado */}
-      <BlurView intensity={25} tint="light" style={styles.inputBar}>
+      <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.inputWrapper}>
           {/* Botón izquierdo: galería o cancelar grabación */}
           {isRecording ? (
@@ -679,7 +687,6 @@ const styles = StyleSheet.create({
   // Input bar
   inputBar: {
     padding: 12,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
     overflow: 'hidden',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.6)',

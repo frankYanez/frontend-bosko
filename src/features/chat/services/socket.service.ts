@@ -16,7 +16,7 @@ import { io, Socket } from 'socket.io-client';
 import { API_URL } from '@/core/config/env';
 import { Message } from './chat.service';
 
-const SOCKET_URL = API_URL;
+const SOCKET_URL = `${API_URL}/chat`;
 
 type MessageCallback = (message: Message) => void;
 type TypingCallback = (data: { userId: string; isTyping: boolean }) => void;
@@ -71,6 +71,9 @@ class SocketService {
     this.socket.on('connect_error', (err) => {
       this.reconnectAttempts++;
       console.warn('[Socket] Connection error:', err.message);
+      if (err.message === 'Invalid namespace') {
+        this.socket?.disconnect();
+      }
     });
   }
 
