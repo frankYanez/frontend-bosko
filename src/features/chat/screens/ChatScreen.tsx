@@ -4,7 +4,7 @@
  * Soporta texto, imágenes y mensajes de audio (estilo WhatsApp).
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -39,7 +39,7 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
 
 const RECORDING_OPTIONS: Audio.RecordingOptions = {
@@ -89,7 +89,7 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
       (status) => {
         if (!mounted || !status.isLoaded) return;
         setIsPlaying(status.isPlaying ?? false);
-        setDurationMs(status.durationMillis ?? 0);
+        if (status.durationMillis) setDurationMs(status.durationMillis);
         setPositionMs(status.positionMillis ?? 0);
         if (status.didJustFinish) {
           setIsPlaying(false);
@@ -97,9 +97,10 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
           soundRef.current?.setPositionAsync(0);
         }
       },
-    ).then(({ sound }) => {
+    ).then(({ sound, status }) => {
       if (!mounted) { sound.unloadAsync(); return; }
       soundRef.current = sound;
+      if (status.isLoaded && status.durationMillis) setDurationMs(status.durationMillis);
       setLoaded(true);
     }).catch(() => {});
 
@@ -303,6 +304,7 @@ export default function ChatScreen() {
       await loadMessages(id);
       if (!active) return;
       setLoading(false);
+      if (pollRef.current) clearInterval(pollRef.current);
       pollRef.current = setInterval(() => {
         if (!socketService.isConnected) loadMessages(id);
       }, POLL_INTERVAL);
@@ -422,22 +424,8 @@ export default function ChatScreen() {
     setSending(true);
     cancelTyping();
     try {
-      if (socketService.isConnected) {
-        socketService.sendMessage(conversation.id, text);
-        const optimistic: Message = {
-          id: `temp-${Date.now()}`,
-          conversationId: conversation.id,
-          senderId: profile?.id || '',
-          content: text,
-          messageType: 'text',
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [...prev, optimistic]);
-      } else {
-        const newMsg = await sendMsgRest(conversation.id, text);
-        setMessages(prev => [...prev, newMsg]);
-      }
+      const newMsg = await sendMsgRest(conversation.id, text);
+      setMessages(prev => [...prev, newMsg]);
     } catch (err) {
       setInput(text);
       console.error('Error sending message:', err);
@@ -477,6 +465,11 @@ export default function ChatScreen() {
   useEffect(() => {
     return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
   }, []);
+
+  const sortedMessages = useMemo(
+    () => [...messages].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    [messages],
+  );
 
   const myId = profile?.id;
   const other = myId === conversation?.clientId ? conversation?.provider : conversation?.client;
@@ -531,7 +524,7 @@ export default function ChatScreen() {
       {/* Mensajes */}
       <FlatList
         ref={listRef}
-        data={messages}
+        data={sortedMessages}
         keyExtractor={item => item.id}
         renderItem={({ item }) => <MessageBubble msg={item} myUserId={myId} />}
         contentContainerStyle={styles.messagesContent}
