@@ -42,7 +42,6 @@ import { TOKENS } from '@/core/design-system/tokens';
 const POLL_INTERVAL = 5000;
 const TYPING_THROTTLE = 2000;
 
-// Opciones de grabación — m4a en iOS y Android
 const RECORDING_OPTIONS: Audio.RecordingOptions = {
   android: {
     extension: '.m4a',
@@ -70,7 +69,6 @@ function formatDuration(ms: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// Barras de forma de onda decorativas (alturas en dp)
 const WAVE_BARS = [6, 10, 16, 8, 20, 12, 22, 10, 18, 8, 14, 10, 12, 20, 8, 10, 18, 12, 8, 16];
 
 // ── Burbuja de audio ──────────────────────────────────────────────────────────
@@ -123,39 +121,25 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
 
   const progress = durationMs > 0 ? positionMs / durationMs : 0;
   const timeLabel = formatDuration(isPlaying || positionMs > 0 ? positionMs : durationMs);
-
   const accent = isMine ? '#fff' : TOKENS.color.primary;
   const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(133,0,33,0.25)';
 
   return (
-    <View style={[styles.audioBubble, isMine ? styles.audioBubbleMine : styles.audioBubbleOther]}>
+    <View style={[styles.audioBubble]}>
       <Pressable onPress={togglePlay} style={[styles.audioPlayBtn, { borderColor: accentDim }]}>
-        <MaterialIcons
-          name={isPlaying ? 'pause' : 'play-arrow'}
-          size={22}
-          color={accent}
-        />
+        <MaterialIcons name={isPlaying ? 'pause' : 'play-arrow'} size={22} color={accent} />
       </Pressable>
-
-      {/* Waveform bars */}
       <View style={styles.waveform}>
-        {WAVE_BARS.map((h, i) => {
-          const filled = progress > 0 && i / WAVE_BARS.length <= progress;
-          return (
-            <View
-              key={i}
-              style={[
-                styles.waveBar,
-                {
-                  height: h,
-                  backgroundColor: filled ? accent : accentDim,
-                },
-              ]}
-            />
-          );
-        })}
+        {WAVE_BARS.map((h, i) => (
+          <View
+            key={i}
+            style={[
+              styles.waveBar,
+              { height: h, backgroundColor: progress > 0 && i / WAVE_BARS.length <= progress ? accent : accentDim },
+            ]}
+          />
+        ))}
       </View>
-
       <Text style={[styles.audioTime, { color: accent }]}>{timeLabel}</Text>
     </View>
   );
@@ -174,8 +158,7 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
   }
 
   const timestamp = new Date(msg.createdAt).toLocaleTimeString('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
+    hour: '2-digit', minute: '2-digit',
   });
 
   return (
@@ -187,7 +170,6 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
           </Text>
         </View>
       )}
-
       <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
         {msg.messageType === 'audio' ? (
           <AudioBubble msg={msg} isMine={isMine} />
@@ -207,15 +189,14 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
   );
 }
 
-// ── Indicador de grabación ────────────────────────────────────────────────────
+// ── Indicador de grabación (reemplaza el TextInput) ───────────────────────────
 function RecordingIndicator({ duration }: { duration: number }) {
   const pulse = useRef(new Animated.Value(1)).current;
-
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.3, duration: 600, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.4, duration: 500, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 500, useNativeDriver: true }),
       ]),
     );
     anim.start();
@@ -245,10 +226,11 @@ export default function ChatScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
 
-  // Audio recording
+  // Audio — usamos ref para el estado real (evita problemas de closure en onPressOut)
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [sendingAudio, setSendingAudio] = useState(false);
+  const isRecordingRef = useRef(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const durationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -257,6 +239,9 @@ export default function ChatScreen() {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingEmitRef = useRef(0);
   const convIdRef = useRef<string>('');
+  // Ref para acceder a conversation en stopRecording sin dependencia
+  const conversationRef = useRef<Conversation | null>(null);
+  useEffect(() => { conversationRef.current = conversation; }, [conversation]);
 
   const loadConversation = useCallback(async () => {
     if (!params.id) return;
@@ -273,10 +258,7 @@ export default function ChatScreen() {
     try {
       const data = await fetchMessages(convId);
       setMessages(prev => {
-        if (
-          prev.length === data.length &&
-          prev[prev.length - 1]?.id === data[data.length - 1]?.id
-        ) return prev;
+        if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) return prev;
         return data;
       });
       await markAsRead(convId).catch(() => {});
@@ -285,7 +267,6 @@ export default function ChatScreen() {
     }
   }, []);
 
-  // WebSocket
   useEffect(() => {
     const token = authState.token;
     if (!token) return;
@@ -341,7 +322,6 @@ export default function ChatScreen() {
 
   // ── Audio recording ──────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
-    if (!conversation) return;
     try {
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) {
@@ -351,6 +331,7 @@ export default function ChatScreen() {
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
       const { recording } = await Audio.Recording.createAsync(RECORDING_OPTIONS);
       recordingRef.current = recording;
+      isRecordingRef.current = true;
       setIsRecording(true);
       setRecordingDuration(0);
       durationTimerRef.current = setInterval(() => {
@@ -359,23 +340,27 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error starting recording:', err);
     }
-  }, [conversation]);
+  }, []);
 
   const stopRecording = useCallback(async () => {
-    if (!recordingRef.current) return;
+    if (!isRecordingRef.current && !recordingRef.current) return;
     if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
+    isRecordingRef.current = false;
     setIsRecording(false);
 
     const recording = recordingRef.current;
     recordingRef.current = null;
+    if (!recording) return;
 
     try {
       await recording.stopAndUnloadAsync();
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
       const uri = recording.getURI();
-      if (!uri || !conversation) return;
+      if (!uri) return;
+      const convId = conversationRef.current?.id ?? convIdRef.current;
+      if (!convId) return;
       setSendingAudio(true);
-      const newMsg = await sendAudio(conversation.id, uri);
+      const newMsg = await sendAudio(convId, uri);
       setMessages(prev => [...prev, newMsg]);
     } catch (err) {
       console.error('Error sending audio:', err);
@@ -384,31 +369,29 @@ export default function ChatScreen() {
       setSendingAudio(false);
       setRecordingDuration(0);
     }
-  }, [conversation]);
+  }, []);
 
   const cancelRecording = useCallback(async () => {
-    if (!recordingRef.current) return;
+    if (!isRecordingRef.current && !recordingRef.current) return;
     if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
+    isRecordingRef.current = false;
+    setIsRecording(false);
     try {
-      await recordingRef.current.stopAndUnloadAsync();
+      await recordingRef.current?.stopAndUnloadAsync();
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
     } catch {}
     recordingRef.current = null;
-    setIsRecording(false);
     setRecordingDuration(0);
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
-      if (recordingRef.current) {
-        recordingRef.current.stopAndUnloadAsync().catch(() => {});
-      }
+      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
     };
   }, []);
 
-  // ── Send media (imagen) ──────────────────────────────────────────────────
+  // ── Media (imagen) ───────────────────────────────────────────────────────
   const handlePickMedia = useCallback(async () => {
     if (!conversation) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -417,9 +400,7 @@ export default function ChatScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-      allowsEditing: false,
+      mediaTypes: ['images'], quality: 0.7, allowsEditing: false,
     });
     if (result.canceled || !result.assets[0]) return;
     setSending(true);
@@ -433,7 +414,7 @@ export default function ChatScreen() {
     }
   }, [conversation]);
 
-  // ── Send text ────────────────────────────────────────────────────────────
+  // ── Texto ────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim();
     if (!text || !conversation) return;
@@ -465,7 +446,6 @@ export default function ChatScreen() {
     }
   };
 
-  // ── Typing indicator ─────────────────────────────────────────────────────
   const cancelTyping = useCallback(() => {
     socketService.emitTyping(convIdRef.current, false);
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
@@ -481,9 +461,7 @@ export default function ChatScreen() {
       socketService.emitTyping(convIdRef.current, true);
       lastTypingEmitRef.current = now;
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-      typingTimerRef.current = setTimeout(() => {
-        socketService.emitTyping(convIdRef.current, false);
-      }, TYPING_THROTTLE);
+      typingTimerRef.current = setTimeout(() => socketService.emitTyping(convIdRef.current, false), TYPING_THROTTLE);
     }
     if (!text.trim()) cancelTyping();
   }, [cancelTyping]);
@@ -503,6 +481,7 @@ export default function ChatScreen() {
   const myId = profile?.id;
   const other = myId === conversation?.clientId ? conversation?.provider : conversation?.client;
   const otherName = other ? `${other.firstName} ${other.lastName || ''}`.trim() : 'Chat';
+  const showMicButton = !input.trim() && !sending && !sendingAudio;
 
   if (loading) {
     return (
@@ -511,8 +490,6 @@ export default function ChatScreen() {
       </View>
     );
   }
-
-  const showMicButton = !input.trim() && !sending;
 
   return (
     <KeyboardAvoidingView
@@ -524,7 +501,6 @@ export default function ChatScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
         </Pressable>
-
         <View style={styles.headerInfo}>
           {other?.avatarUrl ? (
             <Image source={{ uri: other.avatarUrl }} style={styles.headerAvatar} />
@@ -542,14 +518,10 @@ export default function ChatScreen() {
             )}
           </View>
         </View>
-
         {conversation?.orderId && (
           <Pressable
             hitSlop={12}
-            onPress={() => router.push({
-              pathname: '/(tabs)/orders/[id]',
-              params: { id: conversation.orderId },
-            })}
+            onPress={() => router.push({ pathname: '/(tabs)/orders/[id]', params: { id: conversation.orderId } })}
           >
             <MaterialIcons name="assignment" size={24} color={TOKENS.color.primary} />
           </Pressable>
@@ -574,41 +546,34 @@ export default function ChatScreen() {
         style={styles.messagesList}
       />
 
-      {/* Typing */}
       {isTyping && (
         <View style={styles.typingBar}>
           <Text style={styles.typingText}>{otherName} está escribiendo...</Text>
         </View>
       )}
 
-      {/* Input bar */}
+      {/* Input bar — el botón derecho SIEMPRE está montado */}
       <BlurView intensity={25} tint="light" style={styles.inputBar}>
-        {isRecording ? (
-          <View style={styles.inputWrapper}>
-            <Pressable onPress={cancelRecording} hitSlop={8} style={styles.cancelRecordBtn}>
-              <MaterialIcons name="delete" size={20} color="#dc2626" />
+        <View style={styles.inputWrapper}>
+          {/* Botón izquierdo: galería o cancelar grabación */}
+          {isRecording ? (
+            <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn}>
+              <MaterialIcons name="delete" size={22} color="#dc2626" />
             </Pressable>
-            <RecordingIndicator duration={recordingDuration} />
-            <Pressable
-              onPress={stopRecording}
-              style={[styles.sendButton, { backgroundColor: '#dc2626' }]}
-            >
-              {sendingAudio
-                ? <ActivityIndicator color="#fff" size="small" />
-                : <MaterialIcons name="stop" size={20} color="#fff" />
-              }
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.inputWrapper}>
+          ) : (
             <Pressable
               onPress={handlePickMedia}
               hitSlop={8}
-              style={({ pressed }) => [styles.mediaBtn, pressed && { opacity: 0.6 }]}
+              style={({ pressed }) => [styles.leftBtn, pressed && { opacity: 0.6 }]}
             >
               <MaterialIcons name="add-photo-alternate" size={22} color={TOKENS.color.sub} />
             </Pressable>
+          )}
 
+          {/* Centro: input de texto o indicador de grabación */}
+          {isRecording ? (
+            <RecordingIndicator duration={recordingDuration} />
+          ) : (
             <TextInput
               style={styles.input}
               value={input}
@@ -619,34 +584,37 @@ export default function ChatScreen() {
               maxLength={1000}
               returnKeyType="default"
             />
+          )}
 
-            {showMicButton ? (
-              <Pressable
-                onLongPress={startRecording}
-                onPressOut={() => { if (isRecording) stopRecording(); }}
-                delayLongPress={200}
-                style={({ pressed }) => [styles.sendButton, pressed && styles.sendButtonPressed]}
-              >
-                <MaterialIcons name="mic" size={20} color="#fff" />
-              </Pressable>
+          {/*
+           * Botón derecho SIEMPRE montado.
+           * - Sin texto + sin grabación: 🎤 long press para grabar, onPressOut para parar
+           * - Grabando: ⬛ stop (rojo)
+           * - Con texto: ➤ enviar
+           */}
+          <Pressable
+            onLongPress={showMicButton && !isRecording ? startRecording : undefined}
+            onPressOut={() => { if (isRecordingRef.current) stopRecording(); }}
+            onPress={!showMicButton && !isRecording ? handleSend : undefined}
+            delayLongPress={150}
+            style={({ pressed }) => [
+              styles.rightBtn,
+              isRecording && styles.rightBtnRecording,
+              (!showMicButton && !isRecording && (!input.trim() || sending)) && styles.rightBtnDisabled,
+              pressed && styles.rightBtnPressed,
+            ]}
+          >
+            {sendingAudio || (sending && !input.trim()) ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : isRecording ? (
+              <MaterialIcons name="stop" size={20} color="#fff" />
+            ) : showMicButton ? (
+              <MaterialIcons name="mic" size={20} color="#fff" />
             ) : (
-              <Pressable
-                onPress={handleSend}
-                disabled={!input.trim() || sending}
-                style={({ pressed }) => [
-                  styles.sendButton,
-                  (!input.trim() || sending) && styles.sendButtonDisabled,
-                  pressed && styles.sendButtonPressed,
-                ]}
-              >
-                {sending
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <MaterialIcons name="send" size={20} color="#fff" />
-                }
-              </Pressable>
+              <MaterialIcons name="send" size={20} color="#fff" />
             )}
-          </View>
-        )}
+          </Pressable>
+        </View>
       </BlurView>
     </KeyboardAvoidingView>
   );
@@ -666,106 +634,56 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.6)',
   },
-  backButton: {
-    padding: 6,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-  },
+  backButton: { padding: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.5)' },
   headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerAvatar: { width: 40, height: 40, borderRadius: 20 },
   headerAvatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: TOKENS.color.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   headerAvatarText: { fontSize: 16, fontWeight: '700', color: '#fff' },
   headerName: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
   headerOrder: { fontSize: 12, color: TOKENS.color.sub, marginTop: 1 },
   messagesList: { flex: 1 },
-  messagesContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 8,
-    flexGrow: 1,
-  },
+  messagesContent: { paddingHorizontal: 16, paddingVertical: 16, gap: 8, flexGrow: 1 },
   systemMessage: {
     alignSelf: 'center',
     backgroundColor: 'rgba(0,0,0,0.06)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    marginVertical: 4,
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 10, marginVertical: 4,
   },
   systemText: { fontSize: 12, color: TOKENS.color.sub, textAlign: 'center' },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 4 },
   bubbleRowMine: { flexDirection: 'row-reverse' },
   bubbleAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 28, height: 28, borderRadius: 14,
     backgroundColor: TOKENS.color.sub,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   bubbleAvatarText: { fontSize: 11, fontWeight: '700', color: '#fff' },
-  bubble: {
-    maxWidth: '75%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
-    gap: 4,
-  },
-  bubbleMine: {
-    backgroundColor: TOKENS.color.primary,
-    borderBottomRightRadius: 4,
-  },
+  bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
+  bubbleMine: { backgroundColor: TOKENS.color.primary, borderBottomRightRadius: 4 },
   bubbleOther: {
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#fff', borderBottomLeftRadius: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   bubbleImage: { width: 200, height: 150, borderRadius: 10 },
   bubbleText: { fontSize: 15, color: TOKENS.color.text, lineHeight: 20 },
   bubbleTextMine: { color: '#fff' },
   bubbleTime: { fontSize: 10, color: TOKENS.color.sub, alignSelf: 'flex-end' },
   bubbleTimeMine: { color: 'rgba(255,255,255,0.7)' },
-
   // Audio bubble
-  audioBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-    minWidth: 180,
-  },
-  audioBubbleMine: {},
-  audioBubbleOther: {},
+  audioBubble: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2, minWidth: 180 },
   audioPlayBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 1.5, alignItems: 'center', justifyContent: 'center',
   },
-  waveform: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    height: 24,
-  },
+  waveform: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 24 },
   waveBar: { width: 3, borderRadius: 2 },
-  audioTime: { fontSize: 11, fontWeight: '600', minWidth: 30 },
-
-  // Input
+  audioTime: { fontSize: 11, fontWeight: '600', minWidth: 32 },
+  // Input bar
   inputBar: {
     padding: 12,
     paddingBottom: Platform.OS === 'ios' ? 28 : 12,
@@ -781,66 +699,28 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1.5,
     borderColor: 'rgba(200,200,220,0.5)',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: TOKENS.color.text,
-    maxHeight: 100,
-    paddingTop: 4,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  leftBtn: { padding: 4 },
+  input: { flex: 1, fontSize: 15, color: TOKENS.color.text, maxHeight: 100, paddingTop: 4 },
+  rightBtn: {
+    width: 36, height: 36, borderRadius: 18,
     backgroundColor: TOKENS.color.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  sendButtonDisabled: { backgroundColor: '#ccc' },
-  sendButtonPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
-  mediaBtn: { padding: 6 },
-  cancelRecordBtn: { padding: 6 },
-
-  // Recording state
-  recordingBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  recordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#dc2626',
-  },
-  recordingTimer: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#dc2626',
-    minWidth: 36,
-  },
-  recordingHint: {
-    flex: 1,
-    fontSize: 13,
-    color: TOKENS.color.sub,
-  },
-
-  // Empty
-  emptyChat: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    gap: 8,
-  },
+  rightBtnRecording: { backgroundColor: '#dc2626' },
+  rightBtnDisabled: { backgroundColor: '#ccc' },
+  rightBtnPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
+  // Recording
+  recordingBar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  recordingDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626' },
+  recordingTimer: { fontSize: 15, fontWeight: '700', color: '#dc2626', minWidth: 36 },
+  recordingHint: { flex: 1, fontSize: 12, color: TOKENS.color.sub },
+  // Empty + typing
+  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
   emptyChatText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
   emptyChatSubtext: { fontSize: 14, color: TOKENS.color.sub },
-
-  // Typing
   typingBar: { paddingHorizontal: 24, paddingVertical: 6 },
   typingText: { fontSize: 12, color: TOKENS.color.sub, fontStyle: 'italic' },
 });
