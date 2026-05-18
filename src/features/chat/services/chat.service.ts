@@ -28,17 +28,25 @@ export interface Message {
   sender?: ChatParticipant;
 }
 
+export interface OtherParty {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName?: string;
+  avatarUrl?: string | null;
+  role: string;
+  isVerified: boolean;
+  rating?: number | null;
+  reviewsCount?: number;
+}
+
 export interface Conversation {
   id: string;
   orderId: string;
-  clientId: string;
-  providerId: string;
-  lastMessageAt: string;
+  otherParty: OtherParty;
+  lastMessage?: { content: string; senderId: string; createdAt: string | Date } | null;
   unreadCount: number;
-  lastMessage?: Message;
-  client?: ChatParticipant;
-  provider?: ChatParticipant;
-  orderTitle?: string;
+  createdAt: string | Date;
 }
 
 /** Listar todas las conversaciones del usuario autenticado */

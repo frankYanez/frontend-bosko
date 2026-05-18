@@ -122,7 +122,9 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
   };
 
   const progress = durationMs > 0 ? positionMs / durationMs : 0;
-  const timeLabel = formatDuration(isPlaying || positionMs > 0 ? positionMs : durationMs);
+  const timeLabel = !loaded || durationMs === 0
+    ? '--:--'
+    : formatDuration(isPlaying || positionMs > 0 ? positionMs : durationMs);
   const accent = isMine ? '#fff' : TOKENS.color.primary;
   const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(133,0,33,0.25)';
 
@@ -480,8 +482,10 @@ export default function ChatScreen() {
   );
 
   const myId = profile?.id;
-  const other = myId === conversation?.clientId ? conversation?.provider : conversation?.client;
-  const otherName = other ? `${other.firstName} ${other.lastName || ''}`.trim() : 'Chat';
+  const other = conversation?.otherParty;
+  const otherName = other
+    ? `${other.firstName} ${other.lastName || ''}`.trim() || other.username || 'Chat'
+    : 'Chat';
   const showMicButton = !input.trim() && !sending && !sendingAudio;
 
   if (loading) {
@@ -508,15 +512,12 @@ export default function ChatScreen() {
           ) : (
             <View style={styles.headerAvatarPlaceholder}>
               <Text style={styles.headerAvatarText}>
-                {(other?.firstName || '?').charAt(0).toUpperCase()}
+                {(other?.firstName || other?.username || '?').charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
           <View>
             <Text style={styles.headerName} numberOfLines={1}>{otherName}</Text>
-            {conversation?.orderTitle && (
-              <Text style={styles.headerOrder} numberOfLines={1}>📋 {conversation.orderTitle}</Text>
-            )}
           </View>
         </View>
         {conversation?.orderId && (

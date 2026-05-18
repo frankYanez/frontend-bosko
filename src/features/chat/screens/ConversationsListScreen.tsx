@@ -37,9 +37,11 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
 }
 
-function ConversationItem({ item, myUserId }: { item: Conversation; myUserId?: string }) {
-  const other = myUserId === item.clientId ? item.provider : item.client;
-  const name  = other ? `${other.firstName} ${other.lastName || ''}`.trim() : 'Usuario';
+function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
+  const other = item.otherParty;
+  const name = other
+    ? `${other.firstName} ${other.lastName || ''}`.trim() || other.username || 'Usuario'
+    : 'Usuario';
   const hasUnread = item.unreadCount > 0;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -60,7 +62,7 @@ function ConversationItem({ item, myUserId }: { item: Conversation; myUserId?: s
           ) : (
             <View style={styles.avatarPlaceholder}>
               <Text style={styles.avatarInitial}>
-                {(other?.firstName || 'U').charAt(0).toUpperCase()}
+                {(other?.firstName || other?.username || 'U').charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
@@ -73,12 +75,10 @@ function ConversationItem({ item, myUserId }: { item: Conversation; myUserId?: s
             <Text style={[styles.itemName, hasUnread && styles.itemNameBold]} numberOfLines={1}>
               {name}
             </Text>
-            <Text style={styles.itemTime}>{timeAgo(item.lastMessageAt)}</Text>
+            <Text style={styles.itemTime}>
+              {item.lastMessage?.createdAt ? timeAgo(String(item.lastMessage.createdAt)) : ''}
+            </Text>
           </View>
-
-          {item.orderTitle && (
-            <Text style={styles.itemOrder} numberOfLines={1}>📋 {item.orderTitle}</Text>
-          )}
 
           <View style={styles.itemFooter}>
             <Text
