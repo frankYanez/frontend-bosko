@@ -22,6 +22,7 @@ export interface Message {
   content: string;
   mediaUrl?: string;
   messageType: 'text' | 'image' | 'audio' | 'file' | 'system_event';
+  isDelivered: boolean;
   isRead: boolean;
   readAt?: string;
   createdAt: string;

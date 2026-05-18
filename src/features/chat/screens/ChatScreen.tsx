@@ -186,7 +186,16 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
         )}
         <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>
           {timestamp}
-          {isMine && <Text>  {msg.isRead ? '✓✓' : '✓'}</Text>}
+          {isMine && (
+            <Text style={msg.isRead
+              ? styles.statusRead
+              : msg.isDelivered
+                ? styles.statusDelivered
+                : styles.statusSent
+            }>
+              {msg.isRead || msg.isDelivered ? '  ✓✓' : '  ✓'}
+            </Text>
+          )}
         </Text>
       </View>
     </View>
@@ -724,4 +733,7 @@ const styles = StyleSheet.create({
   emptyChatSubtext: { fontSize: 14, color: TOKENS.color.sub },
   typingBar: { paddingHorizontal: 24, paddingVertical: 6 },
   typingText: { fontSize: 12, color: TOKENS.color.sub, fontStyle: 'italic' },
+  statusSent:      { color: 'rgba(255,255,255,0.5)' },
+  statusDelivered: { color: 'rgba(255,255,255,0.7)' },
+  statusRead:      { color: '#60c8ff' },
 });
