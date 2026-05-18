@@ -16,7 +16,7 @@ import { io, Socket } from 'socket.io-client';
 import { API_URL } from '@/core/config/env';
 import { Message } from './chat.service';
 
-const SOCKET_URL = `${API_URL}/chat`;
+const SOCKET_URL = API_URL;
 
 type MessageCallback = (message: Message) => void;
 type TypingCallback = (data: { userId: string; isTyping: boolean }) => void;
