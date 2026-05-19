@@ -13,36 +13,30 @@ export interface UserProfile {
     bannerUrl?: string;
     location?: string;
     isVerified: boolean;
+    backgroundCheckStatus?: string;
     createdAt: string;
     updatedAt: string;
 }
 
+// Solo los campos que acepta PATCH /users/me
 export interface UpdateProfilePayload {
     firstName?: string;
     lastName?: string;
+    username?: string;
+    phone?: string;
     bio?: string;
-    avatarUrl?: string;
-    bannerUrl?: string;
-    location?: string;
 }
 
-/**
- * Get current user profile
- * GET /auth/me
- */
 export async function getCurrentUserProfile(): Promise<UserProfile> {
     const { data } = await api.get<UserProfile>("/users/me");
     return data;
 }
 
-/**
- * Update current user profile
- * PUT /user
- */
 export async function updateUserProfile(
     payload: UpdateProfilePayload
 ): Promise<UserProfile> {
-    const { data } = await api.patch<UserProfile>("/users/me", payload);
+    const { firstName, lastName, username, phone, bio } = payload;
+    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, username, phone, bio });
     return data;
 }
 

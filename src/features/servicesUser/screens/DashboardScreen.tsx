@@ -38,7 +38,28 @@ const C = {
 };
 
 // ── Datos estáticos ──────────────────────────────────────────────────────────
-const HERO_SLIDES = [
+const HERO_SLIDES_CLIENT = [
+  {
+    id: '1',
+    title: 'Encontrá el\nprofesional ideal',
+    subtitle: 'Miles de expertos cerca tuyo',
+    cta: 'Explorar',
+    icon: 'search' as const,
+    gradient: ['#850021', '#c0002f', '#850021'] as const,
+    route: '/(tabs)/services' as const,
+  },
+  {
+    id: '3',
+    title: 'Gestión de\npedidos',
+    subtitle: 'Seguí tus órdenes en tiempo real',
+    cta: 'Ver pedidos',
+    icon: 'clipboard' as const,
+    gradient: ['#2D1B69', '#11998E', '#38EF7D'] as const,
+    route: '/(tabs)/profile' as const,
+  },
+];
+
+const HERO_SLIDES_PROVIDER = [
   {
     id: '1',
     title: 'Encontrá el\nprofesional ideal',
@@ -68,10 +89,16 @@ const HERO_SLIDES = [
   },
 ];
 
-const QUICK_ACTIONS = [
-  { id: 'search', label: 'Buscar', icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
-  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const, color: '#FFF0F3', iconColor: C.primary },
-  { id: 'orders', label: 'Pedidos', icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
+const QUICK_ACTIONS_CLIENT = [
+  { id: 'search', label: 'Buscar',   icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
+  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
+  { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, color: '#FFF8E1', iconColor: '#F59E0B' },
+];
+
+const QUICK_ACTIONS_PROVIDER = [
+  { id: 'search', label: 'Buscar',   icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
+  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const,  color: '#FFF0F3', iconColor: C.primary },
+  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
   { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, color: '#FFF8E1', iconColor: '#F59E0B' },
 ];
 
@@ -257,6 +284,10 @@ export default function DashboardScreen() {
     getServicesForCategory,
   } = useServices();
 
+  const isProvider = authState.user?.role?.toLowerCase() === 'provider';
+  const HERO_SLIDES   = isProvider ? HERO_SLIDES_PROVIDER   : HERO_SLIDES_CLIENT;
+  const QUICK_ACTIONS = isProvider ? QUICK_ACTIONS_PROVIDER : QUICK_ACTIONS_CLIENT;
+
   // ── Estado ────────────────────────────────────────────────────────────────
   const [heroIndex, setHeroIndex] = useState(0);
   const [featuredServices, setFeaturedServices] = useState<ServiceSummary[]>([]);
@@ -290,6 +321,11 @@ export default function DashboardScreen() {
   // ── Auto-rotate hero ──────────────────────────────────────────────────────
   const heroRef        = useRef<FlatList>(null);
   const heroTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setHeroIndex(0);
+    heroRef.current?.scrollToIndex({ index: 0, animated: false });
+  }, [isProvider]);
 
   const advanceHero = useCallback(() => {
     setHeroIndex(prev => {
@@ -484,10 +520,12 @@ export default function DashboardScreen() {
           )}
         </Animated.View>
 
-        {/* ── Banner CTA ─────────────────────────────────────────────────── */}
-        <Animated.View style={[s.section, sectionStyle(4)]}>
-          <CTABanner />
-        </Animated.View>
+        {/* ── Banner CTA (solo proveedores) ──────────────────────────────── */}
+        {isProvider && (
+          <Animated.View style={[s.section, sectionStyle(4)]}>
+            <CTABanner />
+          </Animated.View>
+        )}
 
       </ScrollView>
     </View>

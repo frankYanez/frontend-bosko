@@ -233,6 +233,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   // Derived
+  const isProvider = authState.user?.role?.toLowerCase() === 'provider';
   const kycStatus  = verification?.status?.toLowerCase() ?? 'not_started';
   const kycCfg     = KYC_CONFIG[kycStatus];
   const fullName   = profile
@@ -256,7 +257,6 @@ export const ProfileScreen: React.FC = () => {
 
         {/* ── Hero banner + avatar ──────────────────────────────────────── */}
         <View style={s.hero}>
-          {/* Banner */}
           {profile?.bannerUrl ? (
             <Image source={{ uri: profile.bannerUrl }} style={s.banner} contentFit="cover" />
           ) : (
@@ -267,19 +267,15 @@ export const ProfileScreen: React.FC = () => {
               style={s.banner}
             />
           )}
-          {/* Decorative circles on banner */}
           <View style={[s.heroBubble, { width: 180, height: 180, top: -50, right: -30, opacity: 0.10 }]} />
           <View style={[s.heroBubble, { width: 100, height: 100, top: 20, right: 100, opacity: 0.06 }]} />
 
-          {/* Avatar overlapping banner */}
           <View style={s.avatarWrap}>
             <Animated.View
               style={[
                 s.avatarRing,
                 {
-                  transform: [{
-                    scale: avatarAnim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }),
-                  }],
+                  transform: [{ scale: avatarAnim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
                   opacity: avatarAnim,
                 },
               ]}
@@ -299,10 +295,9 @@ export const ProfileScreen: React.FC = () => {
 
         {/* ── Profile info ─────────────────────────────────────────────── */}
         <Animated.View style={[s.infoBlock, sec(0)]}>
-          {/* Name + verified */}
           <View style={s.nameRow}>
             <Text style={s.nameText}>{fullName}</Text>
-            {profile?.isVerified && (
+            {profile?.isVerified && profile?.backgroundCheckStatus === 'APPROVED' && (
               <View style={s.verifiedBadge}>
                 <Ionicons name="checkmark-circle" size={16} color={C.blue} />
                 <Text style={s.verifiedText}>Verificado</Text>
@@ -312,7 +307,6 @@ export const ProfileScreen: React.FC = () => {
 
           <Text style={s.usernameText}>@{profile?.username ?? authState.user?.username}</Text>
 
-          {/* Meta row */}
           <View style={s.metaRow}>
             {profile?.location ? (
               <View style={s.metaItem}>
@@ -328,8 +322,8 @@ export const ProfileScreen: React.FC = () => {
             ) : null}
           </View>
 
-          {/* KYC badge */}
-          {kycCfg ? (
+          {/* KYC badge solo para providers o en proceso */}
+          {isProvider && kycCfg ? (
             <Pressable
               onPress={() => router.push('/(tabs)/profile/kyc')}
               style={[s.kycBadge, { backgroundColor: kycCfg.bg }]}
@@ -339,62 +333,116 @@ export const ProfileScreen: React.FC = () => {
             </Pressable>
           ) : null}
 
-          {/* Bio */}
           {profile?.bio ? (
             <Text style={s.bioText}>{profile.bio}</Text>
           ) : null}
 
-          {/* Edit button */}
-          <Pressable
-            onPress={() => setEditVisible(true)}
-            style={s.editBtn}
-          >
+          <Pressable onPress={() => setEditVisible(true)} style={s.editBtn}>
             <Ionicons name="pencil-outline" size={15} color={C.primary} />
             <Text style={s.editBtnText}>Editar perfil</Text>
           </Pressable>
         </Animated.View>
 
-        {/* ── Stats ────────────────────────────────────────────────────── */}
+        {/* ── Stats (distintas según rol) ───────────────────────────────── */}
         <Animated.View style={[s.statsCard, sec(1)]}>
-          <StatCell value={stats?.servicesCount ?? 0}     label="Servicios"  />
-          <View style={s.statDivider} />
-          <StatCell value={stats?.averageRating ?? 0}     label="Valoración" suffix="fixed" color="#F59E0B" />
-          <View style={s.statDivider} />
-          <StatCell value={stats?.reviewsCount ?? 0}      label="Reseñas"    />
-          <View style={s.statDivider} />
-          <StatCell value={stats?.completedOrders ?? 0}   label="Completados" color={C.green} />
+          {isProvider ? (
+            <>
+              <StatCell value={stats?.servicesCount ?? 0}   label="Servicios" />
+              <View style={s.statDivider} />
+              <StatCell value={stats?.averageRating ?? 0}   label="Valoración" suffix="fixed" color="#F59E0B" />
+              <View style={s.statDivider} />
+              <StatCell value={stats?.reviewsCount ?? 0}    label="Reseñas" />
+              <View style={s.statDivider} />
+              <StatCell value={stats?.completedOrders ?? 0} label="Completados" color={C.green} />
+            </>
+          ) : (
+            <>
+              <StatCell value={stats?.completedOrders ?? 0} label="Pedidos" color={C.green} />
+              <View style={s.statDivider} />
+              <StatCell value={0}                           label="Favoritos" color={C.primary} />
+            </>
+          )}
         </Animated.View>
 
-        {/* ── Quick access ─────────────────────────────────────────────── */}
+        {/* ── Quick access (distintas según rol) ────────────────────────── */}
         <Animated.View style={[s.section, sec(2)]}>
           <Text style={s.sectionTitle}>Acceso rápido</Text>
           <View style={s.quickRow}>
-            <QuickCard
-              icon="construct-outline"
-              label="Servicios"
-              color={C.accent}
-              iconColor={C.primary}
-              onPress={() => router.push('/(tabs)/profile/Services')}
-              delay={0}
-            />
-            <QuickCard
-              icon="receipt-outline"
-              label="Órdenes"
-              color="#EBF4FF"
-              iconColor={C.blue}
-              onPress={() => router.push('/(tabs)/orders')}
-              delay={60}
-            />
-            <QuickCard
-              icon="star-outline"
-              label="Reseñas"
-              color="#FFFBEB"
-              iconColor={C.amber}
-              onPress={() => router.push('/(tabs)/profile/my-reviews')}
-              delay={120}
-            />
+            {isProvider ? (
+              <>
+                <QuickCard
+                  icon="construct-outline"
+                  label="Servicios"
+                  color={C.accent}
+                  iconColor={C.primary}
+                  onPress={() => router.push('/(tabs)/profile/Services')}
+                  delay={0}
+                />
+                <QuickCard
+                  icon="receipt-outline"
+                  label="Órdenes"
+                  color="#EBF4FF"
+                  iconColor={C.blue}
+                  onPress={() => router.push('/(tabs)/orders')}
+                  delay={60}
+                />
+                <QuickCard
+                  icon="star-outline"
+                  label="Reseñas"
+                  color="#FFFBEB"
+                  iconColor={C.amber}
+                  onPress={() => router.push('/(tabs)/profile/my-reviews')}
+                  delay={120}
+                />
+              </>
+            ) : (
+              <>
+                <QuickCard
+                  icon="receipt-outline"
+                  label="Mis pedidos"
+                  color="#EBF4FF"
+                  iconColor={C.blue}
+                  onPress={() => router.push('/(tabs)/orders')}
+                  delay={0}
+                />
+                <QuickCard
+                  icon="chatbubbles-outline"
+                  label="Mensajes"
+                  color="#FFF8E1"
+                  iconColor={C.amber}
+                  onPress={() => router.push('/(tabs)/chat')}
+                  delay={60}
+                />
+              </>
+            )}
           </View>
         </Animated.View>
+
+        {/* ── CTA "Quiero ser proveedor" (solo USER) ────────────────────── */}
+        {!isProvider && (
+          <Animated.View style={[s.section, sec(2)]}>
+            <Pressable
+              onPress={() => router.push('/(tabs)/profile/kyc')}
+              style={s.providerCta}
+            >
+              <LinearGradient
+                colors={[C.dark, C.primary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.providerCtaGrad}
+              >
+                <View style={s.providerCtaIcon}>
+                  <Ionicons name="briefcase-outline" size={22} color="#fff" />
+                </View>
+                <View style={s.providerCtaText}>
+                  <Text style={s.providerCtaTitle}>¿Querés ofrecer servicios?</Text>
+                  <Text style={s.providerCtaSub}>Verificá tu identidad y empezá a publicar</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        )}
 
         {/* ── Settings: Mi cuenta ──────────────────────────────────────── */}
         <Animated.View style={sec(3)}>
@@ -407,28 +455,40 @@ export const ProfileScreen: React.FC = () => {
               onPress={() => setEditVisible(true)}
             />
             <View style={s.rowSep} />
-            <SettingsRow
-              icon="shield-checkmark-outline"
-              iconBg={kycCfg?.bg ?? '#F0FFF4'}
-              iconColor={kycCfg?.color ?? C.green}
-              label="Verificación de Identidad"
-              badge={kycCfg?.label}
-              badgeColor={kycCfg?.color}
-              badgeBg={kycCfg?.bg}
-              onPress={() => router.push('/(tabs)/profile/kyc')}
-            />
-            <View style={s.rowSep} />
-            <SettingsRow
-              icon="diamond-outline"
-              iconBg="#FFF8E1"
-              iconColor={C.amber}
-              label="Planes Premium"
-              badge="Ver planes"
-              badgeColor={C.amber}
-              badgeBg="#FFF8E1"
-              onPress={() => router.push('/(tabs)/profile/plans')}
-            />
-            <View style={s.rowSep} />
+            {isProvider && (
+              <>
+                <SettingsRow
+                  icon="shield-checkmark-outline"
+                  iconBg={kycCfg?.bg ?? '#F0FFF4'}
+                  iconColor={kycCfg?.color ?? C.green}
+                  label="Verificación de Identidad"
+                  badge={kycCfg?.label}
+                  badgeColor={kycCfg?.color}
+                  badgeBg={kycCfg?.bg}
+                  onPress={() => router.push('/(tabs)/profile/kyc')}
+                />
+                <View style={s.rowSep} />
+                <SettingsRow
+                  icon="document-text-outline"
+                  iconBg="#EBF4FF"
+                  iconColor={C.blue}
+                  label="Antecedentes penales"
+                  onPress={() => router.push('/(tabs)/profile/background-check')}
+                />
+                <View style={s.rowSep} />
+                <SettingsRow
+                  icon="diamond-outline"
+                  iconBg="#FFF8E1"
+                  iconColor={C.amber}
+                  label="Planes Premium"
+                  badge="Ver planes"
+                  badgeColor={C.amber}
+                  badgeBg="#FFF8E1"
+                  onPress={() => router.push('/(tabs)/profile/plans')}
+                />
+                <View style={s.rowSep} />
+              </>
+            )}
             <SettingsRow
               icon="card-outline"
               iconBg="#F0FFF4"
@@ -459,13 +519,11 @@ export const ProfileScreen: React.FC = () => {
             />
           </SettingsGroup>
 
-          {/* Logout + Delete */}
           <View style={s.dangerGroup}>
             <Pressable onPress={handleLogout} style={s.logoutBtn}>
               <Ionicons name="log-out-outline" size={18} color={C.red} />
               <Text style={s.logoutText}>Cerrar Sesión</Text>
             </Pressable>
-
             <Pressable
               onPress={() => router.push('/(tabs)/profile/delete-account')}
               style={s.deleteBtn}
@@ -485,7 +543,7 @@ export const ProfileScreen: React.FC = () => {
           firstName: profile?.firstName ?? '',
           lastName:  profile?.lastName,
           bio:       profile?.bio,
-          location:  profile?.location,
+          avatarUrl: profile?.avatarUrl,
         }}
       />
     </View>
@@ -816,5 +874,44 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: C.sub,
     textDecorationLine: 'underline',
+  },
+
+  // CTA "Quiero ser proveedor"
+  providerCta: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  providerCtaGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    gap: 14,
+  },
+  providerCtaIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  providerCtaText: {
+    flex: 1,
+    gap: 3,
+  },
+  providerCtaTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  providerCtaSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.72)',
+    lineHeight: 17,
   },
 });

@@ -27,10 +27,45 @@ function mapService(s: any): ServiceSummary {
   };
 }
 
+const CATEGORY_ICON_MAP: Record<string, string> = {
+  plomería: '🔧', plomero: '🔧', plomeria: '🔧',
+  electricidad: '⚡', electricista: '⚡', eléctrico: '⚡', electrico: '⚡',
+  pintura: '🎨', pintor: '🎨',
+  carpintería: '🪚', carpinteria: '🪚', carpintero: '🪚', madera: '🪚',
+  limpieza: '🧹', limpiador: '🧹',
+  jardinería: '🌿', jardineria: '🌿', jardinero: '🌿', jardín: '🌿',
+  mudanza: '📦', mudanzas: '📦', flete: '📦',
+  tecnología: '💻', tecnologia: '💻', computación: '💻', informatica: '💻', técnico: '💻',
+  construcción: '🏗️', construccion: '🏗️', albañil: '🏗️', albanil: '🏗️',
+  aire: '❄️', climatización: '❄️', climatizacion: '❄️', acondicionado: '❄️',
+  cerrajería: '🔑', cerrajeria: '🔑', cerrajero: '🔑',
+  gasfitería: '🚿', gasfiteria: '🚿',
+  diseño: '✏️', diseno: '✏️', diseñador: '✏️',
+  fotografía: '📷', fotografia: '📷', fotógrafo: '📷',
+  clases: '📚', educación: '📚', educacion: '📚', tutor: '📚',
+  mecánica: '🔩', mecanica: '🔩', mecánico: '🔩', auto: '🚗',
+};
+
+function getCategoryIcon(name: string, backendIcon?: string): string {
+  if (backendIcon && backendIcon !== '🔧') return backendIcon;
+  const lower = name.toLowerCase();
+  for (const [key, emoji] of Object.entries(CATEGORY_ICON_MAP)) {
+    if (lower.includes(key)) return emoji;
+  }
+  return backendIcon ?? '🔧';
+}
+
 export async function fetchCategoriesService(): Promise<Category[]> {
   const { data } = await api.get<any>('/services', { params: { limit: 100 } });
   const services: any[] = (data as any)?.data ?? [];
+
   const seen = new Set<string>();
+  const countMap: Record<string, number> = {};
+  for (const s of services) {
+    const catId = s.category?.id;
+    if (catId) countMap[catId] = (countMap[catId] ?? 0) + 1;
+  }
+
   const categories: Category[] = [];
   for (const s of services) {
     const cat = s.category;
@@ -40,8 +75,9 @@ export async function fetchCategoriesService(): Promise<Category[]> {
         id: cat.id,
         name: cat.name ?? '',
         description: cat.description ?? '',
-        icon: cat.icon ?? '🔧',
+        icon: getCategoryIcon(cat.name ?? '', cat.icon),
         accent: cat.accent ?? '#850021',
+        servicesCount: countMap[cat.id] ?? 0,
       });
     }
   }

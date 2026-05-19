@@ -10,12 +10,17 @@ import {
   Platform,
   ActivityIndicator,
   Animated,
+  Alert,
 } from "react-native";
 import { TextInput } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
-import { UpdateProfilePayload } from "@/features/servicesUser/services/profile";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { UpdateProfilePayload, uploadAvatar } from "@/features/servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
 import { BlurView } from "@/core/components/BlurView";
+import { useProfile } from "../state/ProfileContext";
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -25,7 +30,7 @@ interface EditProfileModalProps {
     firstName: string;
     lastName?: string;
     bio?: string;
-    location?: string;
+    avatarUrl?: string;
   };
 }
 
@@ -35,13 +40,19 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onSave,
   initialData,
 }) => {
+  const { refreshProfile } = useProfile();
   const [formData, setFormData] = useState(initialData);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors]     = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarUri, setAvatarUri]       = useState<string | undefined>(initialData.avatarUrl);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const slideAnim = useRef(new Animated.Value(600)).current;
 
   useEffect(() => {
     if (visible) {
+      setFormData(initialData);
+      setAvatarUri(initialData.avatarUrl);
+      setErrors({});
       Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
     } else {
       slideAnim.setValue(600);
@@ -51,6 +62,36 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const handleChange = (field: keyof UpdateProfilePayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería para cambiar la foto.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+    setAvatarUri(uri);
+    setUploadingAvatar(true);
+    try {
+      await uploadAvatar(uri);
+      await refreshProfile();
+    } catch {
+      Alert.alert("Error", "No se pudo subir la foto. Intentá de nuevo.");
+      setAvatarUri(initialData.avatarUrl);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const validate = () => {
@@ -69,8 +110,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     try {
       await onSave(formData);
       onClose();
-    } catch (error) {
-      console.error("Error saving profile:", error);
+    } catch {
+      Alert.alert("Error", "No se pudieron guardar los cambios.");
     } finally {
       setIsSaving(false);
     }
@@ -82,6 +123,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     onClose();
   };
 
+  const handleChangePassword = () => {
+    handleClose();
+    router.push("/(tabs)/profile/ChangePassword");
+  };
+
+  const initial = (formData.firstName ?? "U")[0].toUpperCase();
+
   return (
     <Modal
       visible={visible}
@@ -91,15 +139,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
-        {/* Full screen feel modal */}
         <Animated.View
           style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
         >
-          <BlurView
-            intensity={40}
-            tint="dark"
-            style={styles.modalBlur}
-          >
+          <BlurView intensity={40} tint="dark" style={styles.modalBlur}>
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
               style={{ flex: 1 }}
@@ -108,18 +151,33 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <View style={styles.header}>
                 <Text style={styles.title}>Editar Perfil</Text>
                 <Pressable onPress={handleClose} style={styles.closeButton}>
-                  <MaterialIcons
-                    name="close"
-                    size={24}
-                    color={Colors.premium.textPrimary}
-                  />
+                  <MaterialIcons name="close" size={24} color={Colors.premium.textPrimary} />
                 </Pressable>
               </View>
 
-              <ScrollView
-                style={styles.content}
-                showsVerticalScrollIndicator={false}
-              >
+              <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+
+                {/* ── Avatar picker ─────────────────────────────────────── */}
+                <View style={styles.avatarSection}>
+                  <Pressable onPress={handlePickAvatar} style={styles.avatarWrap} disabled={uploadingAvatar}>
+                    {avatarUri ? (
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} contentFit="cover" />
+                    ) : (
+                      <View style={styles.avatarFallback}>
+                        <Text style={styles.avatarInitial}>{initial}</Text>
+                      </View>
+                    )}
+                    <View style={styles.avatarBadge}>
+                      {uploadingAvatar
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Ionicons name="camera" size={14} color="#fff" />
+                      }
+                    </View>
+                  </Pressable>
+                  <Text style={styles.avatarHint}>Tocá para cambiar la foto</Text>
+                </View>
+
+                {/* ── Datos personales ──────────────────────────────────── */}
                 <View style={styles.formSection}>
                   <Text style={styles.sectionTitle}>Información Personal</Text>
 
@@ -131,11 +189,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       onChangeText={(v) => handleChange("firstName", v)}
                       style={styles.input}
                       textColor={Colors.premium.textPrimary}
-                      theme={{
-                        colors: {
-                          onSurfaceVariant: Colors.premium.textSecondary,
-                        },
-                      }}
+                      theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
                       underlineColor={Colors.colorPrimary}
                       activeUnderlineColor={Colors.colorPrimary}
                       error={!!errors.firstName}
@@ -153,33 +207,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       onChangeText={(v) => handleChange("lastName", v)}
                       style={styles.input}
                       textColor={Colors.premium.textPrimary}
-                      theme={{
-                        colors: {
-                          onSurfaceVariant: Colors.premium.textSecondary,
-                        },
-                      }}
+                      theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
                       underlineColor={Colors.colorPrimary}
                       activeUnderlineColor={Colors.colorPrimary}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <TextInput
-                      label="Ubicación"
-                      mode="flat"
-                      value={formData.location}
-                      onChangeText={(v) => handleChange("location", v)}
-                      style={styles.input}
-                      textColor={Colors.premium.textPrimary}
-                      theme={{
-                        colors: {
-                          onSurfaceVariant: Colors.premium.textSecondary,
-                        },
-                      }}
-                      underlineColor={Colors.colorPrimary}
-                      activeUnderlineColor={Colors.colorPrimary}
-                      placeholder="Ciudad, País"
-                      placeholderTextColor={Colors.premium.textTertiary}
                     />
                   </View>
 
@@ -191,11 +221,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       onChangeText={(v) => handleChange("bio", v)}
                       style={[styles.input, styles.bioInput]}
                       textColor={Colors.premium.textPrimary}
-                      theme={{
-                        colors: {
-                          onSurfaceVariant: Colors.premium.textSecondary,
-                        },
-                      }}
+                      theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
                       underlineColor={Colors.colorPrimary}
                       activeUnderlineColor={Colors.colorPrimary}
                       multiline
@@ -203,51 +229,42 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       maxLength={200}
                       error={!!errors.bio}
                     />
-                    <Text style={styles.charCount}>
-                      {formData.bio?.length || 0}/200
-                    </Text>
-                    {errors.bio && (
-                      <Text style={styles.errorText}>{errors.bio}</Text>
-                    )}
+                    <Text style={styles.charCount}>{formData.bio?.length ?? 0}/200</Text>
+                    {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
                   </View>
                 </View>
 
+                {/* ── Seguridad ─────────────────────────────────────────── */}
                 <View style={styles.formSection}>
                   <View style={styles.sectionHeader}>
-                    <MaterialIcons
-                      name="security"
-                      size={20}
-                      color={Colors.colorPrimary}
-                    />
+                    <MaterialIcons name="security" size={20} color={Colors.colorPrimary} />
                     <Text style={styles.sectionTitle}>Seguridad</Text>
                   </View>
-                  <View style={styles.securityCard}>
-                    <Text style={styles.securityText}>
-                      Para cambiar tu contraseña o correo, por favor contacta a
-                      soporte o usa la versión web por seguridad.
-                    </Text>
-                  </View>
+                  <Pressable onPress={handleChangePassword} style={styles.passwordBtn}>
+                    <View style={styles.passwordBtnLeft}>
+                      <Ionicons name="lock-closed-outline" size={20} color={Colors.colorPrimary} />
+                      <Text style={styles.passwordBtnText}>Cambiar contraseña</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={Colors.premium.textSecondary} />
+                  </Pressable>
                 </View>
+
               </ScrollView>
 
-              {/* Footer Actions */}
+              {/* Footer */}
               <View style={styles.footer}>
                 <Pressable style={styles.cancelButton} onPress={handleClose}>
                   <Text style={styles.cancelButtonText}>Cancelar</Text>
                 </Pressable>
                 <Pressable
-                  style={[
-                    styles.saveButton,
-                    isSaving && styles.saveButtonDisabled,
-                  ]}
+                  style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
                   onPress={handleSave}
                   disabled={isSaving}
                 >
-                  {isSaving ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Guardar Cambios</Text>
-                  )}
+                  {isSaving
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={styles.saveButtonText}>Guardar Cambios</Text>
+                  }
                 </Pressable>
               </View>
             </KeyboardAvoidingView>
@@ -288,6 +305,60 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   content: { flex: 1, padding: 20 },
+
+  // Avatar
+  avatarSection: {
+    alignItems: "center",
+    marginBottom: 28,
+    gap: 8,
+  },
+  avatarWrap: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    position: "relative",
+  },
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 3,
+    borderColor: Colors.colorPrimary,
+  },
+  avatarFallback: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.colorPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: Colors.colorPrimary,
+  },
+  avatarInitial: {
+    fontSize: 34,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  avatarBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.colorPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: Colors.premium.background,
+  },
+  avatarHint: {
+    fontSize: 12,
+    color: Colors.premium.textSecondary,
+  },
+
+  // Form
   formSection: { marginBottom: 24 },
   sectionHeader: {
     flexDirection: "row",
@@ -311,18 +382,30 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   errorText: { color: "#EF4444", fontSize: 12, marginTop: 4 },
-  securityCard: {
-    padding: 16,
-    backgroundColor: Colors.premium.goldLight,
+
+  // Password button
+  passwordBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Colors.premium.inputBackground,
     borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
-    borderColor: Colors.premium.goldBorder,
+    borderColor: Colors.premium.borderSubtle,
   },
-  securityText: {
-    color: Colors.premium.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
+  passwordBtnLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
+  passwordBtnText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: Colors.premium.textPrimary,
+  },
+
+  // Footer
   footer: {
     flexDirection: "row",
     padding: 20,
