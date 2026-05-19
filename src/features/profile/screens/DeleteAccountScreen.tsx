@@ -1,9 +1,4 @@
-/**
- * DeleteAccountScreen — Eliminar cuenta del usuario.
- * DELETE /users/me — requiere confirmación por escrito.
- */
-
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,11 +8,10 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import api from '@/core/api/axiosinstance';
@@ -32,18 +26,44 @@ const WARNINGS = [
   'Esta acción no tiene vuelta atrás.',
 ];
 
+function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const ty = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+      Animated.timing(ty, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY: ty }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function DeleteAccountScreen() {
   const { logout } = useAuth();
-
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const iconScale = useRef(new Animated.Value(0.85)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(iconScale, { toValue: 1, damping: 14, useNativeDriver: true }),
+      Animated.timing(iconOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const canDelete = confirmText === CONFIRM_WORD;
 
   const handleDelete = async () => {
     if (!canDelete) return;
-
     Alert.alert(
       'Última confirmación',
       '¿Estás absolutamente seguro? Esta acción eliminará tu cuenta para siempre.',
@@ -77,68 +97,50 @@ export default function DeleteAccountScreen() {
       colors={['#fff5f5', '#fef7ff', '#f0f4ff']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.bg}
+      style={s.bg}
     >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+        <View style={s.header}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
             <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Eliminar cuenta</Text>
+          <Text style={s.headerTitle}>Eliminar cuenta</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Ícono de advertencia */}
-        <MotiView
-          from={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', damping: 14 }}
-          style={styles.warningIconWrap}
-        >
-          <View style={styles.warningCircle}>
+        {/* Warning icon */}
+        <Animated.View style={[s.warningIconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
+          <View style={s.warningCircle}>
             <MaterialIcons name="warning" size={48} color="#dc2626" />
           </View>
-          <Text style={styles.warningTitle}>Zona de peligro</Text>
-          <Text style={styles.warningSubtitle}>
-            Esta acción es permanente e irreversible.
-          </Text>
-        </MotiView>
+          <Text style={s.warningTitle}>Zona de peligro</Text>
+          <Text style={s.warningSubtitle}>Esta acción es permanente e irreversible.</Text>
+        </Animated.View>
 
-        {/* Lista de consecuencias */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 100 }}
-        >
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.cardTitle}>Si eliminás tu cuenta:</Text>
+        {/* Consequences */}
+        <FadeSlide delay={100}>
+          <View style={s.card}>
+            <Text style={s.cardTitle}>Si eliminás tu cuenta:</Text>
             {WARNINGS.map((w, i) => (
-              <View key={i} style={styles.warningItem}>
+              <View key={i} style={s.warningItem}>
                 <MaterialIcons name="close" size={16} color="#dc2626" style={{ marginTop: 2 }} />
-                <Text style={styles.warningText}>{w}</Text>
+                <Text style={s.warningText}>{w}</Text>
               </View>
             ))}
-          </BlurView>
-        </MotiView>
+          </View>
+        </FadeSlide>
 
-        {/* Campo de confirmación */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 200 }}
-        >
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.confirmLabel}>
+        {/* Confirm input */}
+        <FadeSlide delay={200}>
+          <View style={s.card}>
+            <Text style={s.confirmLabel}>
               Escribí{' '}
-              <Text style={styles.confirmWord}>{CONFIRM_WORD}</Text>
+              <Text style={s.confirmWord}>{CONFIRM_WORD}</Text>
               {' '}para continuar:
             </Text>
             <TextInput
-              style={[
-                styles.confirmInput,
-                canDelete && styles.confirmInputValid,
-              ]}
+              style={[s.confirmInput, canDelete && s.confirmInputValid]}
               value={confirmText}
               onChangeText={setConfirmText}
               placeholder={CONFIRM_WORD}
@@ -146,61 +148,55 @@ export default function DeleteAccountScreen() {
               autoCapitalize="characters"
               autoCorrect={false}
             />
-          </BlurView>
-        </MotiView>
+          </View>
+        </FadeSlide>
 
-        {/* Error */}
         {!!error && (
-          <View style={styles.errorBanner}>
+          <View style={s.errorBanner}>
             <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={s.errorText}>{error}</Text>
           </View>
         )}
 
-        {/* Botón eliminar */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 300 }}
-        >
+        {/* Delete button */}
+        <FadeSlide delay={300}>
           <Pressable
             onPress={handleDelete}
             disabled={!canDelete || loading}
             style={({ pressed }) => [
-              styles.deleteBtn,
-              !canDelete && styles.deleteBtnDisabled,
-              pressed && canDelete && styles.btnPressed,
+              s.deleteBtn,
+              !canDelete && s.deleteBtnDisabled,
+              pressed && canDelete && s.btnPressed,
             ]}
           >
             <LinearGradient
               colors={canDelete ? ['#dc2626', '#b91c1c', '#991b1b'] : ['#ccc', '#bbb']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.btnGradient}
+              style={s.btnGradient}
             >
               {loading
                 ? <ActivityIndicator color="#fff" size="small" />
                 : (
                   <>
                     <MaterialIcons name="delete-forever" size={20} color="#fff" />
-                    <Text style={styles.btnText}>Eliminar mi cuenta</Text>
+                    <Text style={s.btnText}>Eliminar mi cuenta</Text>
                   </>
                 )
               }
             </LinearGradient>
           </Pressable>
-        </MotiView>
+        </FadeSlide>
 
-        {/* Cancelar */}
-        <Pressable onPress={() => router.back()} style={styles.cancelRow}>
-          <Text style={styles.cancelText}>Cancelar, mantener mi cuenta</Text>
+        <Pressable onPress={() => router.back()} style={s.cancelRow}>
+          <Text style={s.cancelText}>Cancelar, mantener mi cuenta</Text>
         </Pressable>
       </ScrollView>
     </LinearGradient>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   bg: { flex: 1 },
   scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
   header: {
@@ -212,7 +208,7 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
   warningIconWrap: { alignItems: 'center', gap: 10, paddingVertical: 8 },
@@ -226,47 +222,26 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fecaca',
   },
-  warningTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#dc2626',
-    textAlign: 'center',
-  },
-  warningSubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: 'center',
-  },
+  warningTitle: { fontSize: 22, fontWeight: '800', color: '#dc2626', textAlign: 'center' },
+  warningSubtitle: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center' },
   card: {
     borderRadius: 20,
-    overflow: 'hidden',
     padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardTitle: { fontSize: 15, fontWeight: '700', color: TOKENS.color.text },
-  warningItem: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'flex-start',
-  },
-  warningText: {
-    flex: 1,
-    fontSize: 13,
-    color: TOKENS.color.sub,
-    lineHeight: 18,
-  },
-  confirmLabel: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    lineHeight: 20,
-  },
-  confirmWord: {
-    fontWeight: '800',
-    color: '#dc2626',
-    letterSpacing: 1,
-  },
+  warningItem: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  warningText: { flex: 1, fontSize: 13, color: TOKENS.color.sub, lineHeight: 18 },
+  confirmLabel: { fontSize: 14, color: TOKENS.color.sub, lineHeight: 20 },
+  confirmWord: { fontWeight: '800', color: '#dc2626', letterSpacing: 1 },
   confirmInput: {
     borderWidth: 2,
     borderColor: 'rgba(200,200,220,0.5)',
@@ -277,12 +252,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: TOKENS.color.text,
     letterSpacing: 2,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
-  confirmInputValid: {
-    borderColor: '#dc2626',
-    backgroundColor: '#fff5f5',
-  },
+  confirmInputValid: { borderColor: '#dc2626', backgroundColor: '#fff5f5' },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',

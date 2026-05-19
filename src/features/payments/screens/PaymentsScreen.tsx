@@ -1,9 +1,4 @@
-/**
- * PaymentsScreen — Historial de pagos y ganancias.
- * Tabs: Historial (cliente) / Ganancias (proveedor).
- */
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,11 +7,10 @@ import {
   Pressable,
   ActivityIndicator,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router } from 'expo-router';
 import { usePayments } from '../state/PaymentContext';
 import { PaymentHistoryItem, EarningsItem, PaymentStatus } from '../services/payments';
@@ -25,11 +19,11 @@ import { TOKENS } from '@/core/design-system/tokens';
 type Tab = 'history' | 'earnings';
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string }> = {
-  pending:  { label: 'Pendiente',  color: '#92400e', bg: '#fef3c7' },
-  paid:     { label: 'Pagado',     color: '#065f46', bg: '#d1fae5' },
-  released: { label: 'Liberado',   color: '#1e40af', bg: '#dbeafe' },
+  pending:  { label: 'Pendiente',   color: '#92400e', bg: '#fef3c7' },
+  paid:     { label: 'Pagado',      color: '#065f46', bg: '#d1fae5' },
+  released: { label: 'Liberado',    color: '#1e40af', bg: '#dbeafe' },
   refunded: { label: 'Reembolsado', color: '#6b21a8', bg: '#f3e8ff' },
-  failed:   { label: 'Fallido',    color: '#dc2626', bg: '#fee2e2' },
+  failed:   { label: 'Fallido',     color: '#dc2626', bg: '#fee2e2' },
 };
 
 function formatCurrency(amount: number, currency = 'ARS') {
@@ -45,9 +39,27 @@ function formatDate(iso: string) {
 function StatusBadge({ status }: { status: PaymentStatus }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   return (
-    <View style={[styles.badge, { backgroundColor: cfg.bg }]}>
-      <Text style={[styles.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
+    <View style={[s.badge, { backgroundColor: cfg.bg }]}>
+      <Text style={[s.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
     </View>
+  );
+}
+
+function AnimatedItem({ index, children }: { index: number; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const ty = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 300, delay: index * 40, useNativeDriver: true }),
+      Animated.timing(ty, { toValue: 0, duration: 300, delay: index * 40, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY: ty }] }}>
+      {children}
+    </Animated.View>
   );
 }
 
@@ -61,58 +73,50 @@ export default function PaymentsScreen() {
   }, [tab]);
 
   const renderHistoryItem = ({ item, index }: { item: PaymentHistoryItem; index: number }) => (
-    <MotiView
-      from={{ opacity: 0, translateY: 12 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 300, delay: index * 40 }}
-    >
+    <AnimatedItem index={index}>
       <Pressable
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        style={({ pressed }) => [s.card, pressed && s.cardPressed]}
         onPress={() => item.orderId && router.push(`/(tabs)/orders/${item.orderId}`)}
       >
-        <BlurView intensity={20} tint="light" style={styles.cardBlur}>
-          <View style={styles.cardRow}>
-            <View style={styles.cardIcon}>
+        <View style={s.cardInner}>
+          <View style={s.cardRow}>
+            <View style={s.cardIcon}>
               <MaterialIcons name="payment" size={22} color={TOKENS.color.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
+              <Text style={s.cardTitle} numberOfLines={1}>
                 {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
               </Text>
-              <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
+              <Text style={s.cardDate}>{formatDate(item.createdAt)}</Text>
             </View>
             <View style={{ alignItems: 'flex-end', gap: 4 }}>
-              <Text style={styles.cardAmount}>{formatCurrency(item.amount, item.currency)}</Text>
+              <Text style={s.cardAmount}>{formatCurrency(item.amount, item.currency)}</Text>
               <StatusBadge status={item.status} />
             </View>
           </View>
-        </BlurView>
+        </View>
       </Pressable>
-    </MotiView>
+    </AnimatedItem>
   );
 
   const renderEarningsItem = ({ item, index }: { item: EarningsItem; index: number }) => (
-    <MotiView
-      from={{ opacity: 0, translateY: 12 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 300, delay: index * 40 }}
-    >
-      <BlurView intensity={20} tint="light" style={styles.earningsCard}>
-        <View style={styles.earningsIcon}>
+    <AnimatedItem index={index}>
+      <View style={s.earningsCard}>
+        <View style={s.earningsIcon}>
           <MaterialIcons name="attach-money" size={22} color="#065f46" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
+          <Text style={s.cardTitle} numberOfLines={1}>
             {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
           </Text>
-          <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
+          <Text style={s.cardDate}>{formatDate(item.createdAt)}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <Text style={styles.earningsAmount}>{formatCurrency(item.amount, item.currency)}</Text>
+          <Text style={s.earningsAmount}>{formatCurrency(item.amount, item.currency)}</Text>
           <StatusBadge status={item.status} />
         </View>
-      </BlurView>
-    </MotiView>
+      </View>
+    </AnimatedItem>
   );
 
   const isEmpty = tab === 'history' ? history.length === 0 : earnings.length === 0;
@@ -122,19 +126,19 @@ export default function PaymentsScreen() {
       colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.bg}
+      style={s.bg}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+      <View style={s.header}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Pagos</Text>
+        <Text style={s.headerTitle}>Pagos</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Tabs */}
-      <BlurView intensity={20} tint="light" style={styles.tabBar}>
+      <View style={s.tabBar}>
         {([
           { key: 'history',  label: 'Historial', icon: 'history' },
           { key: 'earnings', label: 'Ganancias', icon: 'trending-up' },
@@ -142,41 +146,36 @@ export default function PaymentsScreen() {
           <Pressable
             key={t.key}
             onPress={() => setTab(t.key)}
-            style={[styles.tab, tab === t.key && styles.tabActive]}
+            style={[s.tab, tab === t.key && s.tabActive]}
           >
             <MaterialIcons
               name={t.icon}
               size={18}
               color={tab === t.key ? TOKENS.color.primary : TOKENS.color.sub}
             />
-            <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
-              {t.label}
-            </Text>
+            <Text style={[s.tabText, tab === t.key && s.tabTextActive]}>{t.label}</Text>
           </Pressable>
         ))}
-      </BlurView>
+      </View>
 
       {loading && (
-        <View style={styles.loadingWrap}>
+        <View style={s.loadingWrap}>
           <ActivityIndicator color={TOKENS.color.primary} size="large" />
         </View>
       )}
 
       {!loading && isEmpty && (
-        <View style={styles.emptyWrap}>
+        <View style={s.emptyWrap}>
           <MaterialIcons
             name={tab === 'history' ? 'receipt-long' : 'account-balance-wallet'}
             size={56}
             color="rgba(133,0,33,0.2)"
           />
-          <Text style={styles.emptyTitle}>
-            {tab === 'history' ? 'Sin pagos' : 'Sin ganancias'}
-          </Text>
-          <Text style={styles.emptyText}>
+          <Text style={s.emptyTitle}>{tab === 'history' ? 'Sin pagos' : 'Sin ganancias'}</Text>
+          <Text style={s.emptyText}>
             {tab === 'history'
               ? 'Tus pagos aparecerán aquí cuando completes una orden.'
-              : 'Tus ganancias aparecerán aquí cuando recibas pagos por servicios.'
-            }
+              : 'Tus ganancias aparecerán aquí cuando recibas pagos por servicios.'}
           </Text>
         </View>
       )}
@@ -186,14 +185,10 @@ export default function PaymentsScreen() {
           data={history}
           keyExtractor={i => i.id}
           renderItem={renderHistoryItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={s.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={() => loadHistory()}
-              colors={[TOKENS.color.primary]}
-            />
+            <RefreshControl refreshing={loading} onRefresh={() => loadHistory()} colors={[TOKENS.color.primary]} />
           }
         />
       )}
@@ -203,14 +198,10 @@ export default function PaymentsScreen() {
           data={earnings}
           keyExtractor={i => i.id}
           renderItem={renderEarningsItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={s.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={() => loadEarnings()}
-              colors={[TOKENS.color.primary]}
-            />
+            <RefreshControl refreshing={loading} onRefresh={() => loadEarnings()} colors={[TOKENS.color.primary]} />
           }
         />
       )}
@@ -218,7 +209,7 @@ export default function PaymentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   bg: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -231,7 +222,7 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
   tabBar: {
@@ -240,7 +231,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     marginBottom: 16,
   },
   tab: {
@@ -264,12 +256,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
-  emptyText: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  emptyText: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center', lineHeight: 20 },
   listContent: { paddingHorizontal: 24, paddingBottom: 40, gap: 12 },
   card: {
     borderRadius: 16,
@@ -281,17 +268,20 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  cardBlur: {
+  cardInner: {
     padding: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
   },
   earningsCard: {
     borderRadius: 16,
     overflow: 'hidden',
     padding: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -315,20 +305,8 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.color.text },
   cardDate: { fontSize: 12, color: TOKENS.color.sub, marginTop: 2 },
-  cardAmount: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: TOKENS.color.text,
-  },
-  earningsAmount: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#065f46',
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
+  cardAmount: { fontSize: 16, fontWeight: '800', color: TOKENS.color.text },
+  earningsAmount: { fontSize: 16, fontWeight: '800', color: '#065f46' },
+  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   badgeText: { fontSize: 11, fontWeight: '700' },
 });

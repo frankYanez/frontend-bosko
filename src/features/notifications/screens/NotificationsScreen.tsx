@@ -1,9 +1,4 @@
-/**
- * NotificationsScreen — Lista de notificaciones del usuario.
- * GET /notifications — con marca de leído por ítem.
- */
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,17 +7,15 @@ import {
   Pressable,
   ActivityIndicator,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router } from 'expo-router';
 import { useNotifications } from '../state/NotificationsContext';
 import { Notification } from '../services/notifications.service';
 import { TOKENS } from '@/core/design-system/tokens';
 
-// Íconos por tipo de notificación
 const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
   order_accepted:   { name: 'check-circle',   color: '#065f46', bg: '#d1fae5' },
   order_rejected:   { name: 'cancel',          color: '#dc2626', bg: '#fee2e2' },
@@ -47,56 +40,84 @@ function timeAgo(iso: string): string {
   return `hace ${d}d`;
 }
 
-function NotificationItem({
-  item,
-  onPress,
-}: {
-  item: Notification;
-  onPress: () => void;
-}) {
+function AnimatedItem({ index, children }: { index: number; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const tx = useRef(new Animated.Value(-12)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 280, delay: index * 30, useNativeDriver: true }),
+      Animated.timing(tx, { toValue: 0, duration: 280, delay: index * 30, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateX: tx }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+function NotificationItem({ item, onPress }: { item: Notification; onPress: () => void }) {
   const cfg = TYPE_ICON[item.type] ?? TYPE_ICON.default;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        styles.itemWrap,
-        !item.read && styles.itemUnread,
-        pressed && styles.itemPressed,
+        s.itemWrap,
+        !item.read && s.itemUnread,
+        pressed && s.itemPressed,
       ]}
     >
-      <BlurView intensity={20} tint="light" style={styles.itemBlur}>
-        {/* Indicador de no leído */}
-        {!item.read && <View style={styles.unreadDot} />}
-
-        <View style={[styles.itemIcon, { backgroundColor: cfg.bg }]}>
+      <View style={s.itemInner}>
+        {!item.read && <View style={s.unreadDot} />}
+        <View style={[s.itemIcon, { backgroundColor: cfg.bg }]}>
           <MaterialIcons name={cfg.name} size={22} color={cfg.color} />
         </View>
-
         <View style={{ flex: 1 }}>
-          <Text style={[styles.itemTitle, !item.read && styles.itemTitleUnread]} numberOfLines={1}>
+          <Text style={[s.itemTitle, !item.read && s.itemTitleUnread]} numberOfLines={1}>
             {item.title}
           </Text>
-          <Text style={styles.itemBody} numberOfLines={2}>
-            {item.body}
-          </Text>
-          <Text style={styles.itemTime}>{timeAgo(item.createdAt)}</Text>
+          <Text style={s.itemBody} numberOfLines={2}>{item.body}</Text>
+          <Text style={s.itemTime}>{timeAgo(item.createdAt)}</Text>
         </View>
-      </BlurView>
+      </View>
     </Pressable>
+  );
+}
+
+function EmptyState() {
+  const scale = useRef(new Animated.Value(0.85)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, damping: 14, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <View style={s.emptyWrap}>
+      <Animated.View style={{ alignItems: 'center', gap: 12, opacity, transform: [{ scale }] }}>
+        <MaterialIcons name="notifications-none" size={64} color="rgba(133,0,33,0.2)" />
+        <Text style={s.emptyTitle}>Sin notificaciones</Text>
+        <Text style={s.emptyText}>
+          Aquí aparecerán tus notificaciones de órdenes, pagos y más.
+        </Text>
+      </Animated.View>
+    </View>
   );
 }
 
 export default function NotificationsScreen() {
   const { notifications, unreadCount, loading, load, markRead } = useNotifications();
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const handlePress = async (item: Notification) => {
     if (!item.read) await markRead(item.id);
-    // Navegar según el tipo si hay data relevante
     if (item.data?.orderId) {
       router.push(`/(tabs)/orders/${item.data.orderId}`);
     }
@@ -107,18 +128,17 @@ export default function NotificationsScreen() {
       colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.bg}
+      style={s.bg}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+      <View style={s.header}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
         </Pressable>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Notificaciones</Text>
+        <View style={s.headerCenter}>
+          <Text style={s.headerTitle}>Notificaciones</Text>
           {unreadCount > 0 && (
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{unreadCount}</Text>
+            <View style={s.countBadge}>
+              <Text style={s.countText}>{unreadCount}</Text>
             </View>
           )}
         </View>
@@ -126,41 +146,22 @@ export default function NotificationsScreen() {
       </View>
 
       {loading && notifications.length === 0 && (
-        <View style={styles.loadingWrap}>
+        <View style={s.loadingWrap}>
           <ActivityIndicator color={TOKENS.color.primary} size="large" />
         </View>
       )}
 
-      {!loading && notifications.length === 0 && (
-        <View style={styles.emptyWrap}>
-          <MotiView
-            from={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 14 }}
-            style={{ alignItems: 'center', gap: 12 }}
-          >
-            <MaterialIcons name="notifications-none" size={64} color="rgba(133,0,33,0.2)" />
-            <Text style={styles.emptyTitle}>Sin notificaciones</Text>
-            <Text style={styles.emptyText}>
-              Aquí aparecerán tus notificaciones de órdenes, pagos y más.
-            </Text>
-          </MotiView>
-        </View>
-      )}
+      {!loading && notifications.length === 0 && <EmptyState />}
 
       <FlatList
         data={notifications}
         keyExtractor={n => n.id}
         renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateX: -12 }}
-            animate={{ opacity: 1, translateX: 0 }}
-            transition={{ type: 'timing', duration: 280, delay: index * 30 }}
-          >
+          <AnimatedItem index={index}>
             <NotificationItem item={item} onPress={() => handlePress(item)} />
-          </MotiView>
+          </AnimatedItem>
         )}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={s.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -174,7 +175,7 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   bg: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   headerCenter: {
     flexDirection: 'row',
@@ -208,12 +209,7 @@ const styles = StyleSheet.create({
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
-  emptyText: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  emptyText: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center', lineHeight: 20 },
   listContent: { paddingHorizontal: 24, paddingBottom: 40, gap: 8 },
   itemWrap: {
     borderRadius: 16,
@@ -224,18 +220,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  itemUnread: {
-    shadowOpacity: 0.1,
-    elevation: 4,
-  },
+  itemUnread: { shadowOpacity: 0.1, elevation: 4 },
   itemPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
-  itemBlur: {
+  itemInner: {
     padding: 14,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     position: 'relative',
   },
   unreadDot: {
@@ -255,22 +250,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 2,
   },
-  itemTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: TOKENS.color.text,
-    paddingRight: 16,
-  },
+  itemTitle: { fontSize: 14, fontWeight: '600', color: TOKENS.color.text, paddingRight: 16 },
   itemTitleUnread: { fontWeight: '800' },
-  itemBody: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-    lineHeight: 18,
-    marginTop: 2,
-  },
-  itemTime: {
-    fontSize: 11,
-    color: 'rgba(107,107,107,0.6)',
-    marginTop: 4,
-  },
+  itemBody: { fontSize: 13, color: TOKENS.color.sub, lineHeight: 18, marginTop: 2 },
+  itemTime: { fontSize: 11, color: 'rgba(107,107,107,0.6)', marginTop: 4 },
 });

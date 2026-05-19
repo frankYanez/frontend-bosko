@@ -15,7 +15,6 @@ import { TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { UpdateProfilePayload } from "@/features/servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
-import { BlurView } from "expo-blur";
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -95,9 +94,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         <Animated.View
           style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
         >
-          <BlurView
-            intensity={40}
-            tint="dark"
+          <View
             style={styles.modalBlur}
           >
             <KeyboardAvoidingView
@@ -251,7 +248,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 </Pressable>
               </View>
             </KeyboardAvoidingView>
-          </BlurView>
+          </View>
         </Animated.View>
       </View>
     </Modal>

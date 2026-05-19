@@ -1,8 +1,3 @@
-/**
- * ChangePasswordScreen — Cambio de contraseña desde el perfil.
- * Requiere la contraseña actual + nueva contraseña (PATCH /users/me/password).
- */
-
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -18,16 +13,108 @@ import {
   Alert,
   Dimensions,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
 
 const { width } = Dimensions.get('window');
+const PRIMARY = TOKENS.color.primary;
+
+function getStrength(pwd: string): 0 | 1 | 2 | 3 {
+  if (!pwd) return 0;
+  let s = 0;
+  if (pwd.length >= 8) s++;
+  if (/[0-9]/.test(pwd)) s++;
+  if (/[^a-zA-Z0-9]/.test(pwd)) s++;
+  return s as 0 | 1 | 2 | 3;
+}
+
+const STRENGTH_LABELS = ['', 'Débil', 'Regular', 'Fuerte'];
+const STRENGTH_COLORS = ['', '#ef4444', '#f59e0b', '#16a34a'];
+
+function StrengthBar({ password }: { password: string }) {
+  const strength = getStrength(password);
+  if (!password) return null;
+  return (
+    <View style={sb.row}>
+      {[1, 2, 3].map(i => (
+        <View
+          key={i}
+          style={[sb.segment, { backgroundColor: i <= strength ? STRENGTH_COLORS[strength] : '#E5E7EB' }]}
+        />
+      ))}
+      <Text style={[sb.label, { color: STRENGTH_COLORS[strength] }]}>
+        {STRENGTH_LABELS[strength]}
+      </Text>
+    </View>
+  );
+}
+const sb = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  segment: { flex: 1, height: 4, borderRadius: 2 },
+  label: { fontSize: 12, fontWeight: '700', width: 60 },
+});
+
+function FieldInput({
+  label,
+  value,
+  onChange,
+  show,
+  toggleShow,
+  inputRef,
+  nextRef,
+  last,
+  focused,
+  onFocus,
+  onBlur,
+}: {
+  label: string;
+  value: string;
+  onChange: (t: string) => void;
+  show: boolean;
+  toggleShow: () => void;
+  inputRef?: React.RefObject<TextInput>;
+  nextRef?: React.RefObject<TextInput>;
+  last?: boolean;
+  focused?: boolean;
+  onFocus?: () => void;
+  onBlur?: () => void;
+}) {
+  return (
+    <View style={s.fieldContainer}>
+      <Text style={s.fieldLabel}>{label}</Text>
+      <View style={[s.inputWrapper, focused && s.inputWrapperFocused]}>
+        <Ionicons name="lock-closed-outline" size={20} color={focused ? PRIMARY : TOKENS.color.sub} />
+        <TextInput
+          ref={inputRef}
+          style={s.input}
+          value={value}
+          onChangeText={onChange}
+          secureTextEntry={!show}
+          placeholderTextColor={TOKENS.color.sub}
+          placeholder="••••••••"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType={last ? 'done' : 'next'}
+          onSubmitEditing={last ? undefined : () => nextRef?.current?.focus()}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+        <Pressable onPress={toggleShow} hitSlop={8}>
+          <Ionicons
+            name={show ? 'eye-outline' : 'eye-off-outline'}
+            size={20}
+            color={focused ? PRIMARY : TOKENS.color.sub}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export default function ChangePasswordScreen() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -35,8 +122,10 @@ export default function ChangePasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [focused, setFocused] = useState<string | null>(null);
 
   const newRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
@@ -53,7 +142,6 @@ export default function ChangePasswordScreen() {
   const handleSave = async () => {
     Keyboard.dismiss();
     setError('');
-
     if (!currentPassword || !newPassword || !confirmPassword) {
       setError('Completá todos los campos');
       return;
@@ -66,7 +154,6 @@ export default function ChangePasswordScreen() {
       setError('Las contraseñas no coinciden');
       return;
     }
-
     setIsLoading(true);
     try {
       await api.patch('/users/me/password', { currentPassword, newPassword });
@@ -81,129 +168,101 @@ export default function ChangePasswordScreen() {
     }
   };
 
-  const InputField = ({
-    label,
-    value,
-    onChange,
-    show,
-    toggleShow,
-    ref: inputRef,
-    nextRef,
-    last,
-  }: any) => (
-    <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={[styles.inputWrapper]}>
-        <MaterialIcons name="lock" size={20} color={TOKENS.color.sub} />
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          value={value}
-          onChangeText={(t: string) => { onChange(t); setError(''); }}
-          secureTextEntry={!show}
-          placeholderTextColor={TOKENS.color.sub}
-          placeholder="••••••••"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType={last ? 'done' : 'next'}
-          onSubmitEditing={last ? handleSave : () => nextRef?.current?.focus()}
-        />
-        <Pressable onPress={toggleShow} hitSlop={8}>
-          <MaterialIcons
-            name={show ? 'visibility' : 'visibility-off'}
-            size={20}
-            color={TOKENS.color.sub}
-          />
-        </Pressable>
-      </View>
-    </View>
-  );
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <LinearGradient
         colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.background}
+        style={s.background}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.flex}
+          style={s.flex}
         >
           <ScrollView
-            contentContainerStyle={styles.container}
+            contentContainerStyle={s.container}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Animated.View style={[styles.inner, { opacity: fadeAnim, transform: [{ translateY }] }]}>
+            <Animated.View style={[s.inner, { opacity: fadeAnim, transform: [{ translateY }] }]}>
               {/* Header */}
-              <View style={styles.header}>
-                <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
-                  <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+              <View style={s.header}>
+                <Pressable onPress={() => router.back()} hitSlop={12} style={s.backButton}>
+                  <Ionicons name="arrow-back" size={24} color={TOKENS.color.text} />
                 </Pressable>
-                <Text style={styles.headerTitle}>Cambiar contraseña</Text>
+                <Text style={s.headerTitle}>Cambiar contraseña</Text>
                 <View style={{ width: 40 }} />
               </View>
 
-              {/* Ícono */}
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="shield" size={36} color={TOKENS.color.primary} />
+              {/* Icon */}
+              <View style={s.iconCircle}>
+                <Ionicons name="shield-checkmark" size={36} color={PRIMARY} />
               </View>
-
-              <Text style={styles.subtitle}>
+              <Text style={s.subtitle}>
                 Tu contraseña debe tener al menos 8 caracteres.
               </Text>
 
-              {/* Card glass */}
-              <BlurView intensity={30} tint="light" style={styles.card}>
-                <InputField
+              {/* Card */}
+              <View style={s.card}>
+                <FieldInput
                   label="Contraseña actual"
                   value={currentPassword}
-                  onChange={setCurrentPassword}
+                  onChange={t => { setCurrentPassword(t); setError(''); }}
                   show={showCurrent}
                   toggleShow={() => setShowCurrent(v => !v)}
                   nextRef={newRef}
+                  focused={focused === 'current'}
+                  onFocus={() => setFocused('current')}
+                  onBlur={() => setFocused(null)}
                 />
-                <InputField
+                <FieldInput
                   label="Nueva contraseña"
                   value={newPassword}
-                  onChange={setNewPassword}
+                  onChange={t => { setNewPassword(t); setError(''); }}
                   show={showNew}
                   toggleShow={() => setShowNew(v => !v)}
-                  ref={newRef}
+                  inputRef={newRef}
                   nextRef={confirmRef}
+                  focused={focused === 'new'}
+                  onFocus={() => setFocused('new')}
+                  onBlur={() => setFocused(null)}
                 />
-                <InputField
+                <StrengthBar password={newPassword} />
+
+                <FieldInput
                   label="Confirmar nueva contraseña"
                   value={confirmPassword}
-                  onChange={setConfirmPassword}
-                  show={showNew}
-                  toggleShow={() => setShowNew(v => !v)}
-                  ref={confirmRef}
+                  onChange={t => { setConfirmPassword(t); setError(''); }}
+                  show={showConfirm}
+                  toggleShow={() => setShowConfirm(v => !v)}
+                  inputRef={confirmRef}
                   last
+                  focused={focused === 'confirm'}
+                  onFocus={() => setFocused('confirm')}
+                  onBlur={() => setFocused(null)}
                 />
 
-                {!!error && <Text style={styles.errorText}>{error}</Text>}
+                {!!error && <Text style={s.errorText}>{error}</Text>}
 
                 <Pressable
                   onPress={handleSave}
                   disabled={isLoading}
-                  style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+                  style={({ pressed }) => [s.button, pressed && s.buttonPressed]}
                 >
                   <LinearGradient
-                    colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                    colors={[PRIMARY, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.buttonGradient}
+                    style={s.buttonGradient}
                   >
                     {isLoading
                       ? <ActivityIndicator color="#fff" size="small" />
-                      : <Text style={styles.buttonText}>Guardar cambios</Text>
+                      : <Text style={s.buttonText}>Guardar cambios</Text>
                     }
                   </LinearGradient>
                 </Pressable>
-              </BlurView>
+              </View>
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -212,7 +271,7 @@ export default function ChangePasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   background: { flex: 1 },
   flex: { flex: 1 },
   container: {
@@ -221,10 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     flexGrow: 1,
   },
-  inner: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  inner: { flex: 1, alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -235,7 +291,7 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   headerTitle: {
     fontSize: 18,
@@ -260,10 +316,10 @@ const styles = StyleSheet.create({
   card: {
     width: width - 48,
     borderRadius: 24,
-    overflow: 'hidden',
     padding: 24,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
@@ -281,7 +337,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.75)',
+    backgroundColor: '#F9FAFB',
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: 'rgba(200,200,220,0.5)',
@@ -289,6 +345,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 10,
     minHeight: 52,
+  },
+  inputWrapperFocused: {
+    borderColor: PRIMARY,
+    backgroundColor: '#fff',
   },
   input: {
     flex: 1,
@@ -306,7 +366,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 12,
-    shadowColor: TOKENS.color.primary,
+    shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,

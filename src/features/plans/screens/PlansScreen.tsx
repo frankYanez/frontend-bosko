@@ -1,9 +1,4 @@
-/**
- * PlansScreen — Planes y suscripciones.
- * Muestra plan actual, planes disponibles, suscribir/cancelar.
- */
-
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,11 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router } from 'expo-router';
 import {
   fetchPlans,
@@ -37,12 +31,33 @@ function formatPrice(price: number, currency: string) {
   }).format(price);
 }
 
+function AnimatedCard({ index, children }: { index: number; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const ty = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 350, delay: index * 100, useNativeDriver: true }),
+      Animated.spring(ty, { toValue: 0, damping: 16, delay: index * 100, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY: ty }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function PlansScreen() {
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [myPlan, setMyPlan] = useState<MyPlan | null | undefined>(undefined); // null = no plan, undefined = loading
+  const [myPlan, setMyPlan] = useState<MyPlan | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+
+  const bannerOpacity = useRef(new Animated.Value(0)).current;
+  const bannerScale = useRef(new Animated.Value(0.95)).current;
 
   const load = useCallback(async () => {
     try {
@@ -52,6 +67,10 @@ export default function PlansScreen() {
       ]);
       setPlans(plansData);
       setMyPlan(myPlanData);
+      Animated.parallel([
+        Animated.timing(bannerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(bannerScale, { toValue: 1, damping: 14, useNativeDriver: true }),
+      ]).start();
     } catch (err) {
       console.error('Error loading plans:', err);
     } finally {
@@ -110,154 +129,137 @@ export default function PlansScreen() {
       colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.bg}
+      style={s.bg}
     >
       {/* Header */}
-      <BlurView intensity={25} tint="light" style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+      <View style={s.header}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Planes</Text>
+        <Text style={s.headerTitle}>Planes</Text>
         <View style={{ width: 40 }} />
-      </BlurView>
+      </View>
 
       {loading ? (
-        <View style={styles.loadingWrap}>
+        <View style={s.loadingWrap}>
           <ActivityIndicator color={TOKENS.color.primary} size="large" />
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={s.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[TOKENS.color.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[TOKENS.color.primary]}
+            />
           }
         >
           {/* Current plan banner */}
           {isSubscribed && myPlan && (
-            <MotiView
-              from={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', damping: 14 }}
-              style={styles.currentPlanBanner}
-            >
+            <Animated.View style={[s.currentPlanBanner, { opacity: bannerOpacity, transform: [{ scale: bannerScale }] }]}>
               <LinearGradient
                 colors={['#850021', '#4A0F20']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.currentPlanGrad}
+                style={s.currentPlanGrad}
               >
                 <MaterialIcons name="workspace-premium" size={28} color="#FFD700" />
-                <View style={styles.currentPlanInfo}>
-                  <Text style={styles.currentPlanLabel}>Plan actual</Text>
-                  <Text style={styles.currentPlanName}>{myPlan.plan.name}</Text>
-                  <Text style={styles.currentPlanPeriod}>
+                <View style={s.currentPlanInfo}>
+                  <Text style={s.currentPlanLabel}>Plan actual</Text>
+                  <Text style={s.currentPlanName}>{myPlan.plan.name}</Text>
+                  <Text style={s.currentPlanPeriod}>
                     Vigente hasta {new Date(myPlan.currentPeriodEnd).toLocaleDateString('es-AR')}
                   </Text>
                 </View>
-                <Pressable onPress={handleCancel} style={styles.cancelBtn}>
-                  <Text style={styles.cancelBtnText}>Cancelar</Text>
+                <Pressable onPress={handleCancel} style={s.cancelBtn}>
+                  <Text style={s.cancelBtnText}>Cancelar</Text>
                 </Pressable>
               </LinearGradient>
-            </MotiView>
+            </Animated.View>
           )}
 
-          {/* Free plan note when not subscribed */}
+          {/* Free plan note */}
           {!isSubscribed && (
-            <MotiView
-              from={{ opacity: 0, translateY: 16 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              style={styles.freeNote}
-            >
-              <BlurView intensity={25} tint="light" style={styles.freeNoteBlur}>
-                <MaterialIcons name="info" size={18} color={TOKENS.color.primary} />
-                <Text style={styles.freeNoteText}>
-                  Estás en el plan Free. Actualizá para acceder a más beneficios.
-                </Text>
-              </BlurView>
-            </MotiView>
+            <View style={s.freeNote}>
+              <MaterialIcons name="info" size={18} color={TOKENS.color.primary} />
+              <Text style={s.freeNoteText}>
+                Estás en el plan Free. Actualizá para acceder a más beneficios.
+              </Text>
+            </View>
           )}
 
-          {/* Plans grid */}
+          {/* Plans */}
           {plans.map((plan, idx) => {
             const isCurrent = plan.id === currentPlanId;
             const isPopular = plan.highlighted;
 
             return (
-              <MotiView
-                key={plan.id}
-                from={{ opacity: 0, translateY: 24 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ type: 'spring', damping: 16, delay: idx * 100 }}
-              >
+              <AnimatedCard key={plan.id} index={idx}>
                 <Pressable
-                  style={[styles.planCard, isPopular && styles.planCardPopular]}
-                  onPress={() => {
-                    if (!isCurrent && !subscribing) handleSubscribe(plan.id);
-                  }}
+                  style={[s.planCard, isPopular && s.planCardPopular]}
+                  onPress={() => { if (!isCurrent && !subscribing) handleSubscribe(plan.id); }}
                   disabled={isCurrent || !!subscribing}
                 >
-                  <BlurView intensity={isPopular ? 30 : 20} tint="light" style={styles.planBlur}>
+                  <View style={[s.planInner, isPopular && s.planInnerPopular]}>
                     {isPopular && (
-                      <View style={styles.popularBadge}>
-                        <Text style={styles.popularText}>Más popular</Text>
+                      <View style={s.popularBadge}>
+                        <Text style={s.popularText}>Más popular</Text>
                       </View>
                     )}
 
-                    <View style={styles.planHeader}>
-                      <Text style={[styles.planName, isPopular && styles.planNamePopular]}>
-                        {plan.name}
-                      </Text>
-                      <View style={styles.planPrice}>
-                        <Text style={[styles.planPriceAmount, isPopular && styles.planPricePopular]}>
+                    <View style={s.planHeader}>
+                      <Text style={[s.planName, isPopular && s.planNamePopular]}>{plan.name}</Text>
+                      <View style={s.planPrice}>
+                        <Text style={[s.planPriceAmount, isPopular && s.planPricePopular]}>
                           {formatPrice(plan.price, plan.currency)}
                         </Text>
-                        <Text style={styles.planPriceInterval}>/{plan.interval === 'month' ? 'mes' : 'año'}</Text>
+                        <Text style={s.planPriceInterval}>
+                          /{plan.interval === 'month' ? 'mes' : 'año'}
+                        </Text>
                       </View>
                     </View>
 
-                    <Text style={styles.planDescription}>{plan.description}</Text>
+                    <Text style={s.planDescription}>{plan.description}</Text>
 
-                    <View style={styles.featuresList}>
+                    <View style={s.featuresList}>
                       {plan.features.map((feature, i) => (
-                        <View key={i} style={styles.featureRow}>
+                        <View key={i} style={s.featureRow}>
                           <MaterialIcons
                             name="check-circle"
                             size={18}
                             color={isPopular ? '#FFD700' : '#16a34a'}
                           />
-                          <Text style={styles.featureText}>{feature}</Text>
+                          <Text style={s.featureText}>{feature}</Text>
                         </View>
                       ))}
                     </View>
 
                     {isCurrent ? (
-                      <View style={styles.currentBadge}>
+                      <View style={s.currentBadge}>
                         <MaterialIcons name="check" size={16} color="#fff" />
-                        <Text style={styles.currentBadgeText}>Plan actual</Text>
+                        <Text style={s.currentBadgeText}>Plan actual</Text>
                       </View>
                     ) : (
                       <LinearGradient
                         colors={isPopular ? ['#FFD700', '#FFA500'] : ['#850021', '#4A0F20']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
-                        style={styles.subscribeBtn}
+                        style={s.subscribeBtn}
                       >
                         {subscribing === plan.id ? (
                           <ActivityIndicator color="#fff" size="small" />
                         ) : (
-                          <Text style={[
-                            styles.subscribeBtnText,
-                            isPopular && { color: '#4A0F20' },
-                          ]}>
+                          <Text style={[s.subscribeBtnText, isPopular && { color: '#4A0F20' }]}>
                             {plan.price === 0 ? 'Gratuito' : 'Suscribirse'}
                           </Text>
                         )}
                       </LinearGradient>
                     )}
-                  </BlurView>
+                  </View>
                 </Pressable>
-              </MotiView>
+              </AnimatedCard>
             );
           })}
         </ScrollView>
@@ -266,7 +268,7 @@ export default function PlansScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   bg: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -275,19 +277,18 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 24,
     paddingBottom: 16,
-    overflow: 'hidden',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   backBtn: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: 24, paddingBottom: 40, gap: 20 },
-  // Current plan
   currentPlanBanner: { borderRadius: 20, overflow: 'hidden' },
   currentPlanGrad: {
     flexDirection: 'row',
@@ -296,7 +297,12 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   currentPlanInfo: { flex: 1, gap: 2 },
-  currentPlanLabel: { fontSize: 11, fontWeight: '700', color: 'rgba(255,215,0,0.7)', textTransform: 'uppercase' },
+  currentPlanLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,215,0,0.7)',
+    textTransform: 'uppercase',
+  },
   currentPlanName: { fontSize: 18, fontWeight: '800', color: '#fff' },
   currentPlanPeriod: { fontSize: 12, color: 'rgba(255,255,255,0.6)' },
   cancelBtn: {
@@ -307,18 +313,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   cancelBtnText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
-  // Free note
-  freeNote: { borderRadius: 16, overflow: 'hidden' },
-  freeNoteBlur: {
+  freeNote: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
   },
   freeNoteText: { flex: 1, fontSize: 13, color: TOKENS.color.text, lineHeight: 18 },
-  // Plan card
   planCard: {
     borderRadius: 24,
     overflow: 'hidden',
@@ -328,12 +333,19 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
-  planCardPopular: {
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
+  planCardPopular: { shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+  planInner: {
+    padding: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
   },
-  planBlur: { padding: 20, gap: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)' },
+  planInnerPopular: {
+    borderColor: 'rgba(133,0,33,0.2)',
+    backgroundColor: '#FFFAF9',
+  },
   popularBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#FFD700',
@@ -363,10 +375,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   currentBadgeText: { fontSize: 14, fontWeight: '700', color: '#16a34a' },
-  subscribeBtn: {
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
+  subscribeBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   subscribeBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 });

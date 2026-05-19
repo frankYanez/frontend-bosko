@@ -1,9 +1,4 @@
-/**
- * KYCRejectedScreen — Muestra el motivo de rechazo y permite reintentar.
- * POST /kyc/retry — reintento cuando el KYC fue rechazado.
- */
-
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,11 +6,10 @@ import {
   Pressable,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -29,8 +23,36 @@ const REJECTION_TIPS = [
   'Usá el documento vigente, no vencido.',
 ];
 
+function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const ty = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
+      Animated.timing(ty, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY: ty }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function KYCRejectedScreen() {
   const { kyc, retry, loading, error, clearError } = useKYC();
+
+  const iconScale = useRef(new Animated.Value(0.85)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(iconScale, { toValue: 1, damping: 14, useNativeDriver: true }),
+      Animated.timing(iconOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const attemptCount = kyc?.attemptCount ?? 0;
   const canRetry = attemptCount < MAX_ATTEMPTS;
@@ -51,150 +73,127 @@ export default function KYCRejectedScreen() {
       colors={['#fff5f5', '#fef7ff', '#f0f4ff']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.bg}
+      style={s.bg}
     >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+        <View style={s.header}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
             <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Verificación rechazada</Text>
+          <Text style={s.headerTitle}>Verificación rechazada</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Ícono */}
-        <MotiView
-          from={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', damping: 14 }}
-          style={styles.iconWrap}
-        >
-          <View style={styles.iconCircle}>
+        {/* Icon */}
+        <Animated.View style={[s.iconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
+          <View style={s.iconCircle}>
             <MaterialIcons name="cancel" size={52} color="#dc2626" />
           </View>
-          <Text style={styles.title}>Verificación rechazada</Text>
-          <Text style={styles.subtitle}>
+          <Text style={s.title}>Verificación rechazada</Text>
+          <Text style={s.subtitle}>
             Tu verificación de identidad no fue aprobada. Revisá el motivo y volvé a intentarlo.
           </Text>
-        </MotiView>
+        </Animated.View>
 
-        {/* Motivo de rechazo */}
+        {/* Rejection reason */}
         {!!rejectionReason && (
-          <MotiView
-            from={{ opacity: 0, translateY: 16 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', duration: 400, delay: 100 }}
-          >
-            <BlurView intensity={25} tint="light" style={[styles.card, styles.reasonCard]}>
-              <View style={styles.reasonHeader}>
+          <FadeSlide delay={100}>
+            <View style={[s.card, s.reasonCard]}>
+              <View style={s.reasonHeader}>
                 <MaterialIcons name="info" size={18} color="#dc2626" />
-                <Text style={styles.reasonTitle}>Motivo del rechazo</Text>
+                <Text style={s.reasonTitle}>Motivo del rechazo</Text>
               </View>
-              <Text style={styles.reasonText}>{rejectionReason}</Text>
-            </BlurView>
-          </MotiView>
+              <Text style={s.reasonText}>{rejectionReason}</Text>
+            </View>
+          </FadeSlide>
         )}
 
-        {/* Tips para el reintento */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 150 }}
-        >
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.cardTitle}>Consejos para el reintento</Text>
+        {/* Tips */}
+        <FadeSlide delay={150}>
+          <View style={s.card}>
+            <Text style={s.cardTitle}>Consejos para el reintento</Text>
             {REJECTION_TIPS.map((tip, i) => (
-              <View key={i} style={styles.tipRow}>
-                <View style={styles.tipBullet}>
-                  <Text style={styles.tipNumber}>{i + 1}</Text>
+              <View key={i} style={s.tipRow}>
+                <View style={s.tipBullet}>
+                  <Text style={s.tipNumber}>{i + 1}</Text>
                 </View>
-                <Text style={styles.tipText}>{tip}</Text>
+                <Text style={s.tipText}>{tip}</Text>
               </View>
             ))}
-          </BlurView>
-        </MotiView>
+          </View>
+        </FadeSlide>
 
-        {/* Contador de intentos */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 200 }}
-        >
-          <BlurView intensity={25} tint="light" style={styles.attemptsCard}>
+        {/* Attempts counter */}
+        <FadeSlide delay={200}>
+          <View style={s.attemptsCard}>
             <MaterialIcons
               name="refresh"
               size={18}
               color={canRetry ? TOKENS.color.primary : '#dc2626'}
             />
-            <Text style={[styles.attemptsText, !canRetry && styles.attemptsExhausted]}>
+            <Text style={[s.attemptsText, !canRetry && s.attemptsExhausted]}>
               {canRetry
                 ? `Intentos disponibles: ${MAX_ATTEMPTS - attemptCount} de ${MAX_ATTEMPTS}`
                 : 'Agotaste los 3 intentos. Contactá a soporte.'
               }
             </Text>
-          </BlurView>
-        </MotiView>
+          </View>
+        </FadeSlide>
 
-        {/* Error del contexto */}
         {!!error && (
-          <View style={styles.errorBanner}>
+          <View style={s.errorBanner}>
             <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={s.errorText}>{error}</Text>
           </View>
         )}
 
-        {/* Botones */}
         {canRetry ? (
-          <MotiView
-            from={{ opacity: 0, translateY: 16 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'timing', duration: 400, delay: 250 }}
-          >
+          <FadeSlide delay={250}>
             <Pressable
               onPress={handleRetry}
               disabled={loading}
-              style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
+              style={({ pressed }) => [s.primaryBtn, pressed && s.btnPressed]}
             >
               <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.btnGradient}
+                style={s.btnGradient}
               >
                 {loading
                   ? <ActivityIndicator color="#fff" size="small" />
                   : (
                     <>
                       <MaterialIcons name="refresh" size={20} color="#fff" />
-                      <Text style={styles.btnText}>Reintentar verificación</Text>
+                      <Text style={s.btnText}>Reintentar verificación</Text>
                     </>
                   )
                 }
               </LinearGradient>
             </Pressable>
-          </MotiView>
+          </FadeSlide>
         ) : (
-          <BlurView intensity={20} tint="light" style={styles.supportCard}>
+          <View style={s.supportCard}>
             <MaterialIcons name="support-agent" size={24} color={TOKENS.color.primary} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.supportTitle}>¿Necesitás ayuda?</Text>
-              <Text style={styles.supportText}>
+              <Text style={s.supportTitle}>¿Necesitás ayuda?</Text>
+              <Text style={s.supportText}>
                 Contactá a nuestro equipo de soporte con tu problema de verificación.
               </Text>
             </View>
-          </BlurView>
+          </View>
         )}
 
-        <Pressable onPress={() => router.replace('/(tabs)/profile/kyc')} style={styles.secondaryRow}>
-          <Text style={styles.secondaryText}>Ver estado de verificación</Text>
+        <Pressable onPress={() => router.replace('/(tabs)/profile/kyc')} style={s.secondaryRow}>
+          <Text style={s.secondaryText}>Ver estado de verificación</Text>
         </Pressable>
       </ScrollView>
     </LinearGradient>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   bg: { flex: 1 },
   scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
   header: {
@@ -206,7 +205,7 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
   iconWrap: { alignItems: 'center', gap: 10, paddingVertical: 8 },
@@ -220,55 +219,30 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fecaca',
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#dc2626',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  title: { fontSize: 22, fontWeight: '800', color: '#dc2626', textAlign: 'center' },
+  subtitle: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center', lineHeight: 20 },
   card: {
     borderRadius: 20,
-    overflow: 'hidden',
     padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   reasonCard: {
     borderColor: '#fecaca',
-    backgroundColor: 'rgba(254,226,226,0.3)',
+    backgroundColor: 'rgba(254,226,226,0.5)',
   },
-  reasonHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  reasonTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  reasonText: {
-    fontSize: 14,
-    color: '#7f1d1d',
-    lineHeight: 20,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-  },
-  tipRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
+  reasonHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  reasonTitle: { fontSize: 14, fontWeight: '700', color: '#dc2626' },
+  reasonText: { fontSize: 14, color: '#7f1d1d', lineHeight: 20 },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: TOKENS.color.text },
+  tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   tipBullet: {
     width: 24,
     height: 24,
@@ -278,32 +252,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 1,
   },
-  tipNumber: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: TOKENS.color.primary,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 13,
-    color: TOKENS.color.sub,
-    lineHeight: 18,
-  },
+  tipNumber: { fontSize: 12, fontWeight: '700', color: TOKENS.color.primary },
+  tipText: { flex: 1, fontSize: 13, color: TOKENS.color.sub, lineHeight: 18 },
   attemptsCard: {
     borderRadius: 14,
-    overflow: 'hidden',
     padding: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  attemptsText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: TOKENS.color.primary,
-  },
+  attemptsText: { fontSize: 13, fontWeight: '600', color: TOKENS.color.primary },
   attemptsExhausted: { color: '#dc2626' },
   errorBanner: {
     flexDirection: 'row',
@@ -334,10 +295,10 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   supportCard: {
     borderRadius: 16,
-    overflow: 'hidden',
     padding: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
@@ -345,9 +306,5 @@ const styles = StyleSheet.create({
   supportTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.color.text },
   supportText: { fontSize: 13, color: TOKENS.color.sub, lineHeight: 18, marginTop: 2 },
   secondaryRow: { alignItems: 'center', paddingVertical: 8 },
-  secondaryText: {
-    fontSize: 14,
-    color: TOKENS.color.primary,
-    fontWeight: '600',
-  },
+  secondaryText: { fontSize: 14, color: TOKENS.color.primary, fontWeight: '600' },
 });
