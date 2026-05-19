@@ -5,12 +5,15 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  ActivityIndicator,
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useKYC } from '../state/KYCContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { MotiView } from 'moti';
 
 const STEPS = [
   {
@@ -49,15 +52,7 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 }
 
 export default function KYCIntroScreen() {
-  const heroScale = useRef(new Animated.Value(0.9)).current;
-  const heroOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(heroScale, { toValue: 1, damping: 14, delay: 100, useNativeDriver: true }),
-      Animated.timing(heroOpacity, { toValue: 1, duration: 350, delay: 100, useNativeDriver: true }),
-    ]).start();
-  }, []);
+  const { start, loading, error } = useKYC();
 
   return (
     <LinearGradient
@@ -77,7 +72,7 @@ export default function KYCIntroScreen() {
         </View>
 
         {/* Hero */}
-        <Animated.View style={[s.hero, { opacity: heroOpacity, transform: [{ scale: heroScale }] }]}>
+        <FadeSlide delay={100}>
           <View style={s.heroIcon}>
             <MaterialIcons name="verified-user" size={56} color={TOKENS.color.primary} />
           </View>
@@ -85,7 +80,7 @@ export default function KYCIntroScreen() {
           <Text style={s.heroSubtitle}>
             El proceso toma menos de 5 minutos y solo se realiza una vez.
           </Text>
-        </Animated.View>
+        </FadeSlide>
 
         {/* Steps card */}
         <FadeSlide delay={200}>
@@ -119,32 +114,49 @@ export default function KYCIntroScreen() {
           </View>
         </FadeSlide>
 
-        {/* CTA */}
-        <FadeSlide delay={400}>
-          <View style={s.ctaContainer}>
-            <Pressable
-              style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-              onPress={() => router.push('/(tabs)/profile/kyc/document')}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.buttonGradient}
-              >
-                <Text style={s.primaryButtonText}>Comenzar ahora</Text>
-                <MaterialIcons name="arrow-forward" size={18} color="#fff" />
-              </LinearGradient>
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [s.secondaryButton, pressed && s.buttonPressed]}
-            >
-              <Text style={s.secondaryButtonText}>Lo haré más tarde</Text>
-            </Pressable>
+        {/* Error */}
+        {!!error && (
+          <View style={{ backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+            <MaterialIcons name="error-outline" size={18} color="#dc2626" />
+            <Text style={{ flex: 1, fontSize: 13, color: '#dc2626', lineHeight: 18 }}>{error}</Text>
           </View>
-        </FadeSlide>
+        )}
+
+        {/* CTA */}
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 400, delay: 400 }}
+          style={s.ctaContainer}
+        >
+          <Pressable
+            style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+            onPress={start}
+            disabled={loading}
+          >
+            <LinearGradient
+              colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={s.buttonGradient}
+            >
+              {loading
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <>
+                  <Text style={s.primaryButtonText}>Comenzar ahora</Text>
+                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
+                </>
+              }
+            </LinearGradient>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [s.secondaryButton, pressed && s.buttonPressed]}
+          >
+            <Text style={s.secondaryButtonText}>Lo haré más tarde</Text>
+          </Pressable>
+        </MotiView>
       </ScrollView>
     </LinearGradient>
   );

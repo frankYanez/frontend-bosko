@@ -25,6 +25,7 @@ import {
   registerUserService,
   checkUsernameAvailabilityService,
 } from '../services/auth';
+import api from '@/core/api/axiosinstance';
 import type {
   AuthContextType,
   AuthResponse,
@@ -184,6 +185,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
+    const refreshToken = tokenStorage.getRefreshToken();
+    try {
+      await api.post('/auth/logout', { refreshToken });
+    } catch {
+      // Si falla el servidor igual limpiamos localmente
+    }
     await tokenStorage.clear();
     setAuthState(EMPTY_STATE);
   }, []);

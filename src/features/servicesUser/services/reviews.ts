@@ -1,45 +1,42 @@
-
-/**
- * Reviews (ratings and comments) related API calls.
- *
- * After a job is completed, clients can leave a rating and comment
- * for the pro. The average of all ratings typically appears on the
- * service card. These endpoints allow fetching reviews for a
- * service and posting new reviews.
- */
-
 import api from "@/core/api/axiosinstance";
 
 export interface Review {
-  id?: string;
-  serviceId: string;
-  userId: string;
+  id: string;
+  orderId: string;
+  reviewerId: string;
+  providerId: string;
   rating: number;
   comment: string;
-  createdAt?: string;
+  reply?: string;
+  createdAt: string;
 }
 
-/**
- * fetchReviewsByService
- *
- * GET `/services/{id}/reviews`
- *
- * Retrieve all reviews for a specific service.
- */
-export async function fetchReviewsByService(serviceId: string): Promise<Review[]> {
-  const { data } = await api.get<Review[]>(`/services/${serviceId}/reviews`);
+export interface PaginatedReviews {
+  data: Review[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/** Reseñas de un proveedor — GET /reviews/providers/:id/reviews */
+export async function fetchReviewsByProvider(
+  providerId: string,
+  page = 1,
+  limit = 20,
+): Promise<PaginatedReviews> {
+  const { data } = await api.get<PaginatedReviews>(
+    `/reviews/providers/${providerId}/reviews`,
+    { params: { page, limit } },
+  );
   return data;
 }
 
-/**
- * createReview
- *
- * POST `/services/{id}/reviews`
- *
- * Submit a new review for a service. The backend will attach the
- * current user ID from the auth token.
- */
-export async function createReview(serviceId: string, payload: Omit<Review, 'id' | 'serviceId' | 'userId' | 'createdAt'>): Promise<Review> {
-  const { data } = await api.post<Review>(`/services/${serviceId}/reviews`, payload);
+/** Rating promedio de un proveedor — GET /reviews/providers/:id/rating */
+export async function fetchProviderRating(
+  providerId: string,
+): Promise<{ rating: number; count: number }> {
+  const { data } = await api.get<{ rating: number; count: number }>(
+    `/reviews/providers/${providerId}/rating`,
+  );
   return data;
 }

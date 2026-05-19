@@ -4,8 +4,9 @@
  * Acciones: aceptar, rechazar, iniciar, completar, cancelar, disputar.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   View,
   Text,
   StyleSheet,
@@ -16,9 +17,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
@@ -101,6 +101,16 @@ export default function OrderDetailScreen() {
   const [order, setOrder] = useState<Order | undefined>();
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const anims = useRef(
+    Array.from({ length: 4 }, () => new Animated.Value(0))
+  ).current;
+
+  useEffect(() => {
+    Animated.stagger(80, anims.map(v =>
+      Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true })
+    )).start();
+  }, []);
 
   const loadOrder = useCallback(async () => {
     if (!params.id) return;
@@ -215,11 +225,7 @@ export default function OrderDetailScreen() {
         </View>
 
         {/* Nombre del servicio + fecha */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400 }}
-        >
+        <Animated.View style={{ opacity: anims[0], transform: [{ translateY: anims[0].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
           <BlurView intensity={25} tint="light" style={styles.card}>
             <Text style={styles.serviceName}>{order.service?.title || 'Servicio'}</Text>
             <View style={styles.metaRow}>
@@ -233,31 +239,23 @@ export default function OrderDetailScreen() {
               </View>
             )}
           </BlurView>
-        </MotiView>
+        </Animated.View>
 
         {/* Timeline */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 80 }}
-        >
+        <Animated.View style={{ opacity: anims[1], transform: [{ translateY: anims[1].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
           <BlurView intensity={25} tint="light" style={styles.card}>
             <Text style={styles.sectionTitle}>Estado de la orden</Text>
             <Timeline currentStatus={order.status} />
           </BlurView>
-        </MotiView>
+        </Animated.View>
 
         {/* Mensaje del cliente */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 160 }}
-        >
+        <Animated.View style={{ opacity: anims[2], transform: [{ translateY: anims[2].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
           <BlurView intensity={25} tint="light" style={styles.card}>
             <Text style={styles.sectionTitle}>Mensaje</Text>
             <Text style={styles.messageText}>{order.clientMessage}</Text>
           </BlurView>
-        </MotiView>
+        </Animated.View>
 
         {/* Botón ir al chat */}
         <Pressable
@@ -270,12 +268,7 @@ export default function OrderDetailScreen() {
         </Pressable>
 
         {/* Acciones según rol y estado */}
-        <MotiView
-          from={{ opacity: 0, translateY: 16 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 240 }}
-          style={styles.actionsContainer}
-        >
+        <Animated.View style={[styles.actionsContainer, { opacity: anims[3], transform: [{ translateY: anims[3].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }]}>
           {/* PROVEEDOR: puede aceptar o rechazar si pending */}
           {isProvider && order.status === 'pending' && (
             <>
@@ -383,7 +376,7 @@ export default function OrderDetailScreen() {
               )}
             />
           )}
-        </MotiView>
+        </Animated.View>
       </ScrollView>
     </LinearGradient>
   );

@@ -16,10 +16,10 @@ import {
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 const PRIMARY = TOKENS.color.primary;

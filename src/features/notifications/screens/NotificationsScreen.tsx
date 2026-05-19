@@ -17,16 +17,16 @@ import { Notification } from '../services/notifications.service';
 import { TOKENS } from '@/core/design-system/tokens';
 
 const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
-  order_accepted:   { name: 'check-circle',   color: '#065f46', bg: '#d1fae5' },
-  order_rejected:   { name: 'cancel',          color: '#dc2626', bg: '#fee2e2' },
-  order_started:    { name: 'play-circle',     color: '#1e40af', bg: '#dbeafe' },
-  order_completed:  { name: 'done-all',        color: '#065f46', bg: '#d1fae5' },
-  order_cancelled:  { name: 'block',           color: '#92400e', bg: '#fef3c7' },
-  payment_received: { name: 'attach-money',    color: '#065f46', bg: '#d1fae5' },
-  kyc_approved:     { name: 'verified-user',   color: TOKENS.color.primary, bg: 'rgba(133,0,33,0.1)' },
-  kyc_rejected:     { name: 'gpp-bad',         color: '#dc2626', bg: '#fee2e2' },
-  message:          { name: 'chat-bubble',     color: '#1e40af', bg: '#dbeafe' },
-  default:          { name: 'notifications',   color: TOKENS.color.sub, bg: 'rgba(100,100,120,0.1)' },
+  order_accepted: { name: 'check-circle', color: '#065f46', bg: '#d1fae5' },
+  order_rejected: { name: 'cancel', color: '#dc2626', bg: '#fee2e2' },
+  order_started: { name: 'play-circle', color: '#1e40af', bg: '#dbeafe' },
+  order_completed: { name: 'done-all', color: '#065f46', bg: '#d1fae5' },
+  order_cancelled: { name: 'block', color: '#92400e', bg: '#fef3c7' },
+  payment_received: { name: 'attach-money', color: '#065f46', bg: '#d1fae5' },
+  kyc_approved: { name: 'verified-user', color: TOKENS.color.primary, bg: 'rgba(133,0,33,0.1)' },
+  kyc_rejected: { name: 'gpp-bad', color: '#dc2626', bg: '#fee2e2' },
+  message: { name: 'chat-bubble', color: '#1e40af', bg: '#dbeafe' },
+  default: { name: 'notifications', color: TOKENS.color.sub, bg: 'rgba(100,100,120,0.1)' },
 };
 
 function timeAgo(iso: string): string {

@@ -42,27 +42,17 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 }
 
 export default function KYCRejectedScreen() {
-  const { kyc, retry, loading, error, clearError } = useKYC();
+  const { verification, retry, loading, error, clearError } = useKYC();
 
-  const iconScale = useRef(new Animated.Value(0.85)).current;
-  const iconOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(iconScale, { toValue: 1, damping: 14, useNativeDriver: true }),
-      Animated.timing(iconOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const attemptCount = kyc?.attemptCount ?? 0;
+  const attemptCount = verification?.attemptCount ?? 0;
   const canRetry = attemptCount < MAX_ATTEMPTS;
-  const rejectionReason = kyc?.rejectionReason;
+  const rejectionReason = verification?.rejectionReason;
 
   const handleRetry = async () => {
     clearError();
     try {
       await retry();
-      router.replace('/(tabs)/profile/kyc/document');
+      router.replace('/(tabs)/profile/kyc');
     } catch {
       // Error en contexto
     }
@@ -86,7 +76,7 @@ export default function KYCRejectedScreen() {
         </View>
 
         {/* Icon */}
-        <Animated.View style={[s.iconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
+        <Animated.View style={[s.iconWrap, { opacity: 1 }]}>
           <View style={s.iconCircle}>
             <MaterialIcons name="cancel" size={52} color="#dc2626" />
           </View>

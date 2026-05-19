@@ -12,7 +12,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@/core/components/BlurView";
 import { TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import Animated, { SlideInDown } from "react-native-reanimated";

@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useServices } from '@/features/servicesUser/state/ServicesContext';
+import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
 
 const { width: W } = Dimensions.get('window');
@@ -37,7 +38,28 @@ const C = {
 };
 
 // ── Datos estáticos ──────────────────────────────────────────────────────────
-const HERO_SLIDES = [
+const HERO_SLIDES_CLIENT = [
+  {
+    id: '1',
+    title: 'Encontrá el\nprofesional ideal',
+    subtitle: 'Miles de expertos cerca tuyo',
+    cta: 'Explorar',
+    icon: 'search' as const,
+    gradient: ['#850021', '#c0002f', '#850021'] as const,
+    route: '/(tabs)/services' as const,
+  },
+  {
+    id: '3',
+    title: 'Gestión de\npedidos',
+    subtitle: 'Seguí tus órdenes en tiempo real',
+    cta: 'Ver pedidos',
+    icon: 'clipboard' as const,
+    gradient: ['#2D1B69', '#11998E', '#38EF7D'] as const,
+    route: '/(tabs)/profile' as const,
+  },
+];
+
+const HERO_SLIDES_PROVIDER = [
   {
     id: '1',
     title: 'Encontrá el\nprofesional ideal',
@@ -67,10 +89,16 @@ const HERO_SLIDES = [
   },
 ];
 
-const QUICK_ACTIONS = [
-  { id: 'search', label: 'Buscar', icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
-  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const, color: '#FFF0F3', iconColor: C.primary },
-  { id: 'orders', label: 'Pedidos', icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
+const QUICK_ACTIONS_CLIENT = [
+  { id: 'search', label: 'Buscar',   icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
+  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
+  { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, color: '#FFF8E1', iconColor: '#F59E0B' },
+];
+
+const QUICK_ACTIONS_PROVIDER = [
+  { id: 'search', label: 'Buscar',   icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
+  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const,  color: '#FFF0F3', iconColor: C.primary },
+  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
   { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, color: '#FFF8E1', iconColor: '#F59E0B' },
 ];
 
@@ -178,8 +206,8 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
         onPress={() => {}}
         style={s.serviceCard}
       >
-        {item.thumbnail ? (
-          <Image source={{ uri: item.thumbnail }} style={s.serviceThumb} contentFit="cover" />
+        {(item.thumbnail || item.images?.[0]) ? (
+          <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={s.serviceThumb} contentFit="cover" />
         ) : (
           <LinearGradient colors={['#f5f5f5', '#ebebeb']} style={s.serviceThumb}>
             <Ionicons name="image-outline" size={28} color={C.sub} />
@@ -253,9 +281,12 @@ export default function DashboardScreen() {
     categories,
     categoriesStatus,
     fetchCategories,
-    fetchServicesByCategory,
     getServicesForCategory,
   } = useServices();
+
+  const isProvider = authState.user?.role?.toLowerCase() === 'provider';
+  const HERO_SLIDES   = isProvider ? HERO_SLIDES_PROVIDER   : HERO_SLIDES_CLIENT;
+  const QUICK_ACTIONS = isProvider ? QUICK_ACTIONS_PROVIDER : QUICK_ACTIONS_CLIENT;
 
   // ── Estado ────────────────────────────────────────────────────────────────
   const [heroIndex, setHeroIndex] = useState(0);
@@ -291,6 +322,11 @@ export default function DashboardScreen() {
   const heroRef        = useRef<FlatList>(null);
   const heroTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    setHeroIndex(0);
+    heroRef.current?.scrollToIndex({ index: 0, animated: false });
+  }, [isProvider]);
+
   const advanceHero = useCallback(() => {
     setHeroIndex(prev => {
       const next = (prev + 1) % HERO_SLIDES.length;
@@ -310,12 +346,10 @@ export default function DashboardScreen() {
   }, []);
 
   useEffect(() => {
-    if (!categories.length) return;
-    const firstCat = categories[0];
-    fetchServicesByCategory(firstCat.id)
+    fetchFeaturedServices()
       .then(services => setFeaturedServices(services.slice(0, 6)))
       .catch(() => {});
-  }, [categories]);
+  }, []);
 
   // ── Datos derivados ───────────────────────────────────────────────────────
   const displayName = profile?.firstName
@@ -327,9 +361,9 @@ export default function DashboardScreen() {
   // ── Acciones ──────────────────────────────────────────────────────────────
   const handleQuickAction = (id: string) => {
     if (id === 'search')  router.push('/search');
-    if (id === 'orders')  router.push('/(tabs)/profile');
+    if (id === 'orders')  router.push('/(tabs)/orders');
     if (id === 'chat')    router.push('/(tabs)/chat');
-    if (id === 'post')    router.push('/(tabs)/profile');
+    if (id === 'post')    router.push('/(tabs)/profile/AddServices');
   };
 
   const handleCategoryPress = (catId: string) => {
@@ -360,7 +394,7 @@ export default function DashboardScreen() {
 
         <Pressable
           style={s.notifBtn}
-          onPress={() => {}}
+          onPress={() => router.push('/(tabs)/profile/Notifications')}
           hitSlop={8}
         >
           <Ionicons name="notifications-outline" size={22} color={C.text} />
@@ -486,10 +520,12 @@ export default function DashboardScreen() {
           )}
         </Animated.View>
 
-        {/* ── Banner CTA ─────────────────────────────────────────────────── */}
-        <Animated.View style={[s.section, sectionStyle(4)]}>
-          <CTABanner />
-        </Animated.View>
+        {/* ── Banner CTA (solo proveedores) ──────────────────────────────── */}
+        {isProvider && (
+          <Animated.View style={[s.section, sectionStyle(4)]}>
+            <CTABanner />
+          </Animated.View>
+        )}
 
       </ScrollView>
     </View>

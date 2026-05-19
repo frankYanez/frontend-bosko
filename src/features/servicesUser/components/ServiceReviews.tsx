@@ -20,6 +20,7 @@ import { StarRating } from "./StarRating";
 
 interface ServiceReviewsProps {
   serviceId: string;
+  orderId?: string;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
@@ -32,14 +33,12 @@ const formatDate = (date: string) => {
   }
 };
 
-const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
+const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId, orderId }) => {
   const {
     fetchServiceReviews,
     getReviewsForService,
     reviewsStatus,
     addReviewWithRating,
-    canReviewService,
-    ensureCanReviewService,
   } = useServices();
   const { authState } = useAuth();
   const userId = authState.user?.id ?? "";
@@ -57,21 +56,7 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
     fetchServiceReviews(serviceId).catch((err) => console.error(err));
   }, [fetchServiceReviews, serviceId]);
 
-  useEffect(() => {
-    if (!userId) {
-      return;
-    }
-    ensureCanReviewService(serviceId, userId).catch((err) => console.error(err));
-  }, [ensureCanReviewService, serviceId, userId]);
-
-  const eligibility = userId ? canReviewService(serviceId, userId) : false;
-
-  const canSubmit = useMemo(() => {
-    if (!userId) {
-      return false;
-    }
-    return eligibility !== false;
-  }, [eligibility, userId]);
+  const canSubmit = useMemo(() => Boolean(userId), [userId]);
 
   const handleSubmit = async () => {
     if (!userId) {
@@ -88,10 +73,13 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
     }
     setErrorMessage(null);
     setSubmitting(true);
+    if (!orderId) {
+      Alert.alert("Sin orden", "Solo podés dejar una reseña desde una orden completada.");
+      return;
+    }
     try {
       await addReviewWithRating({
-        serviceId,
-        userId,
+        orderId,
         rating,
         comment: comment.trim(),
       });
@@ -184,10 +172,6 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
         {!userId ? (
           <Text style={styles.helperText}>
             Iniciá sesión para poder dejar un comentario y una calificación.
-          </Text>
-        ) : eligibility === false ? (
-          <Text style={styles.helperText}>
-            Solo quienes contrataron este servicio pueden dejar una reseña.
           </Text>
         ) : null}
         <Pressable

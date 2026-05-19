@@ -19,10 +19,10 @@ import { DocumentType } from '../types/kyc.types';
 import { TOKENS } from '@/core/design-system/tokens';
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
-  { value: 'DNI',       label: 'DNI (Argentina)' },
-  { value: 'CEDULA',    label: 'Cédula' },
+  { value: 'DNI', label: 'DNI (Argentina)' },
+  { value: 'CEDULA', label: 'Cédula' },
   { value: 'PASAPORTE', label: 'Pasaporte' },
-  { value: 'RUT',       label: 'RUT (Chile/Uruguay)' },
+  { value: 'RUT', label: 'RUT (Chile/Uruguay)' },
 ];
 
 interface DocumentPhoto {
@@ -100,8 +100,8 @@ export default function KYCDocumentScreen() {
     });
     if (!result.canceled && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      if (type === 'front')  setFront({ uri });
-      if (type === 'back')   setBack({ uri });
+      if (type === 'front') setFront({ uri });
+      if (type === 'back') setBack({ uri });
       if (type === 'selfie') setSelfie({ uri });
     }
   };

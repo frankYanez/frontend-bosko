@@ -19,11 +19,11 @@ import { TOKENS } from '@/core/design-system/tokens';
 type Tab = 'history' | 'earnings';
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string }> = {
-  pending:  { label: 'Pendiente',   color: '#92400e', bg: '#fef3c7' },
-  paid:     { label: 'Pagado',      color: '#065f46', bg: '#d1fae5' },
-  released: { label: 'Liberado',    color: '#1e40af', bg: '#dbeafe' },
+  pending: { label: 'Pendiente', color: '#92400e', bg: '#fef3c7' },
+  paid: { label: 'Pagado', color: '#065f46', bg: '#d1fae5' },
+  released: { label: 'Liberado', color: '#1e40af', bg: '#dbeafe' },
   refunded: { label: 'Reembolsado', color: '#6b21a8', bg: '#f3e8ff' },
-  failed:   { label: 'Fallido',     color: '#dc2626', bg: '#fee2e2' },
+  failed: { label: 'Fallido', color: '#dc2626', bg: '#fee2e2' },
 };
 
 function formatCurrency(amount: number, currency = 'ARS') {
@@ -68,8 +68,8 @@ export default function PaymentsScreen() {
   const [tab, setTab] = useState<Tab>('history');
 
   useEffect(() => {
-    if (tab === 'history') loadHistory().catch(() => {});
-    else loadEarnings().catch(() => {});
+    if (tab === 'history') loadHistory().catch(() => { });
+    else loadEarnings().catch(() => { });
   }, [tab]);
 
   const renderHistoryItem = ({ item, index }: { item: PaymentHistoryItem; index: number }) => (
@@ -140,7 +140,7 @@ export default function PaymentsScreen() {
       {/* Tabs */}
       <View style={s.tabBar}>
         {([
-          { key: 'history',  label: 'Historial', icon: 'history' },
+          { key: 'history', label: 'Historial', icon: 'history' },
           { key: 'earnings', label: 'Ganancias', icon: 'trending-up' },
         ] as const).map(t => (
           <Pressable

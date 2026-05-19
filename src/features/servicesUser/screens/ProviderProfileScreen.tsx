@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MotiView } from "moti";
+import { MotiView } from "@/core/components/MotiView";
 
 
 import { Provider } from "@/src/interfaces/provider";

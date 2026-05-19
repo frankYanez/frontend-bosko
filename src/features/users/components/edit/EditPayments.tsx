@@ -1,67 +1,93 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { usePayments } from '@/features/payments/state/PaymentContext';
+import { TOKENS } from '@/core/design-system/tokens';
 
-type PaymentMethod = {
-  id: string;
-  type: string;
-  last4?: string;
+const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+  pending:  { label: 'Pendiente', color: '#D97706' },
+  paid:     { label: 'Pagado',    color: '#2563EB' },
+  released: { label: 'Liberado',  color: '#16A34A' },
+  refunded: { label: 'Reintegrado', color: '#6B7280' },
+  failed:   { label: 'Fallido',   color: '#DC2626' },
 };
 
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency }).format(amount);
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 export default function EditPayments() {
-  const [methods, setMethods] = useState<PaymentMethod[]>([
-    { id: "1", type: "Visa", last4: "4242" },
-    { id: "2", type: "MasterCard", last4: "1234" },
-  ]);
+  const { history, loading, loadHistory } = usePayments();
 
-  const addMethod = () => {
-    // Aquí deberías abrir un flow de Stripe/PayPal/etc
-    console.log("Agregar nuevo método de pago");
-  };
+  useEffect(() => { loadHistory(1); }, []);
 
-  const removeMethod = (id: string) => {
-    setMethods((prev) => prev.filter((m) => m.id !== id));
-  };
+  if (loading && history.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={TOKENS.color.primary} />
+      </View>
+    );
+  }
+
+  if (!loading && history.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <MaterialIcons name="receipt-long" size={40} color={TOKENS.color.sub} />
+        <Text style={styles.empty}>No tenés pagos registrados aún.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Métodos de pago</Text>
-      {methods.map((m) => (
-        <View key={m.id} style={styles.card}>
-          <Text style={styles.text}>
-            {m.type} {m.last4 ? `**** ${m.last4}` : ""}
-          </Text>
-          <TouchableOpacity onPress={() => removeMethod(m.id)}>
-            <Text style={styles.remove}>Eliminar</Text>
-          </TouchableOpacity>
-        </View>
-      ))}
-
-      <TouchableOpacity onPress={addMethod} style={styles.btn}>
-        <Text style={styles.btnText}>+ Agregar método de pago</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>Historial de pagos</Text>
+      <FlatList
+        data={history}
+        keyExtractor={(item) => item.id}
+        scrollEnabled={false}
+        renderItem={({ item }) => {
+          const st = STATUS_LABEL[item.status] ?? { label: item.status, color: '#6B7280' };
+          return (
+            <View style={styles.row}>
+              <View style={styles.rowLeft}>
+                <Text style={styles.rowTitle} numberOfLines={1}>
+                  {item.order?.title ?? `Orden ${item.orderId.slice(0, 8)}`}
+                </Text>
+                <Text style={styles.rowDate}>{formatDate(item.createdAt)}</Text>
+              </View>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowAmount}>{formatAmount(item.amount, item.currency)}</Text>
+                <Text style={[styles.rowStatus, { color: st.color }]}>{st.label}</Text>
+              </View>
+            </View>
+          );
+        }}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 18, fontWeight: "600", marginBottom: 12 },
-  card: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#f5f5f5",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  empty: { fontSize: 15, color: TOKENS.color.sub },
+  title: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text, marginBottom: 16 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
   },
-  text: { fontSize: 15 },
-  remove: { color: "red", fontWeight: "500" },
-  btn: {
-    marginTop: 20,
-    backgroundColor: "#850021",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  btnText: { color: "#fff", fontWeight: "600" },
+  rowLeft: { flex: 1, marginRight: 12 },
+  rowTitle: { fontSize: 14, fontWeight: '600', color: TOKENS.color.text },
+  rowDate: { fontSize: 12, color: TOKENS.color.sub, marginTop: 2 },
+  rowRight: { alignItems: 'flex-end' },
+  rowAmount: { fontSize: 15, fontWeight: '700', color: TOKENS.color.text },
+  rowStatus: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  separator: { height: 1, backgroundColor: '#F3F4F6' },
 });

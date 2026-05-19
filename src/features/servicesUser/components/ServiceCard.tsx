@@ -78,9 +78,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       >
         {/* Cover Image Section */}
         <View style={styles.coverContainer}>
-          {service.thumbnail ? (
+          {(service.thumbnail || service.images?.[0]) ? (
             <Image
-              source={{ uri: service.thumbnail }}
+              source={{ uri: service.thumbnail ?? service.images![0] }}
               style={styles.coverImage}
               resizeMode="cover"
             />

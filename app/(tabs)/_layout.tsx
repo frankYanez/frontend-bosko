@@ -56,6 +56,6 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: '#F7F7FA',
   },
 });
