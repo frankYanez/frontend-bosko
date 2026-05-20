@@ -8,6 +8,7 @@ export interface UserProfile {
     firstName: string;
     lastName?: string;
     phone?: string;
+    isPhoneVerified?: boolean;
     bio?: string;
     avatarUrl?: string;
     bannerUrl?: string;
@@ -62,4 +63,8 @@ export interface UserStats {
 export async function getUserStats(): Promise<UserStats> {
     const { data } = await api.get<UserStats>("/users/me/stats");
     return data;
+}
+
+export async function verifyPhoneWithFirebase(firebaseIdToken: string): Promise<void> {
+    await api.post('/users/me/verify-phone', { firebaseIdToken });
 }

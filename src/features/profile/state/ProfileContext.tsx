@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   getCurrentUserProfile,
   UpdateProfilePayload,
@@ -36,35 +36,25 @@ export const ProfileProvider = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!authState.token) {
-      console.log("No token available, skipping profile fetch");
       return;
     }
 
-    console.log("Starting profile fetch...");
     setIsLoading(true);
     setError(null);
 
     try {
       const data = await getCurrentUserProfile();
-      console.log("Profile fetched successfully:", data);
-
       setProfile(data);
     } catch (err: any) {
       const message =
         err?.response?.data?.message || "Error al cargar el perfil";
       setError(message);
-      console.error("Error loading profile:", {
-        message,
-        status: err?.response?.status,
-        data: err?.response?.data,
-        error: err,
-      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [authState.token]);
 
   const updateProfile = async (payload: UpdateProfilePayload) => {
     setIsLoading(true);
@@ -85,25 +75,13 @@ export const ProfileProvider = ({
 
   const clearError = () => setError(null);
 
-  // Load profile when user is authenticated
   useEffect(() => {
-    console.log(
-      "🔐 [ProfileContext] Auth token changed:",
-      authState.token ? "Token present" : "No token",
-      "Token value:",
-      authState.token ? authState.token.substring(0, 20) + "..." : null
-    );
     if (authState.token) {
-      console.log(
-        "🔄 [ProfileContext] Token detected, calling refreshProfile..."
-      );
       refreshProfile();
     } else {
-      console.log("🧹 [ProfileContext] Clearing profile - no token");
       setProfile(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authState.token]);
+  }, [authState.token, refreshProfile]);
 
   return (
     <ProfileContext.Provider
