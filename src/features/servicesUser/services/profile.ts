@@ -4,7 +4,6 @@ import api from "@/core/api/axiosinstance";
 export interface UserProfile {
     id: string;
     email: string;
-    username: string;
     firstName: string;
     lastName?: string;
     phone?: string;
@@ -15,7 +14,8 @@ export interface UserProfile {
     location?: string;
     isVerified: boolean;
     backgroundCheckStatus?: string;
-    role?: 'user' | 'provider';
+    role?: 'user' | 'admin';
+    isProvider?: boolean;
     isAvailable?: boolean;
     createdAt: string;
     updatedAt: string;
@@ -25,7 +25,6 @@ export interface UserProfile {
 export interface UpdateProfilePayload {
     firstName?: string;
     lastName?: string;
-    username?: string;
     phone?: string;
     bio?: string;
     isAvailable?: boolean;
@@ -39,8 +38,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile> {
 export async function updateUserProfile(
     payload: UpdateProfilePayload
 ): Promise<UserProfile> {
-    const { firstName, lastName, username, phone, bio, isAvailable } = payload;
-    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, username, phone, bio, isAvailable });
+    const { firstName, lastName, phone, bio, isAvailable } = payload;
+    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, phone, bio, isAvailable });
     return data;
 }
 

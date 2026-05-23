@@ -31,7 +31,7 @@ export default function EditProfileScreen() {
 
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
-  const [username, setUsername] = useState(profile?.username || '');
+  const [username] = useState('');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [bio, setBio] = useState(profile?.bio || '');
   const [location, setLocation] = useState(profile?.location || '');

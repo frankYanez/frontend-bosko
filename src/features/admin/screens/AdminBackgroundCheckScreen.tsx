@@ -16,7 +16,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { adminListPending, adminReview } from '@/features/kyc/services/background-check.service';
+import { adminReview } from '@/features/kyc/services/background-check.service';
 
 const C = {
   primary: '#850021',
@@ -59,7 +59,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
         )}
         <View style={{ flex: 1 }}>
           <Text style={s.cardName}>{item.firstName} {item.lastName}</Text>
-          <Text style={s.cardEmail}>@{item.username} · {item.email}</Text>
+          <Text style={s.cardEmail}>{item.email}</Text>
         </View>
         <View style={s.pendingBadge}>
           <Ionicons name="time-outline" size={12} color={C.amber} />
@@ -147,15 +147,10 @@ export default function AdminBackgroundCheckScreen() {
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
-    try {
-      const data = await adminListPending();
-      setItems(data);
-    } catch {
-      Alert.alert('Error', 'No se pudieron cargar los antecedentes pendientes.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    // El endpoint GET /admin/background-check/pending no está disponible en el backend actual
+    setItems([]);
+    setLoading(false);
+    setRefreshing(false);
   }, []);
 
   useEffect(() => { load(); }, []);

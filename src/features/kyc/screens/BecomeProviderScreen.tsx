@@ -195,7 +195,7 @@ export function BecomeProviderScreen() {
     setRefreshing(false);
   }, [refreshKYC, loadData]);
 
-  const isProvider = profile?.role === 'provider';
+  const isProvider = profile?.isProvider === true;
 
   // ── Derivar estado KYC ────────────────────────────────────────────────────
   const rawKyc = (verification?.status?.toLowerCase() ?? 'not_started') as KYCStatus;

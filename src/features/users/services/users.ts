@@ -2,7 +2,6 @@ import api from "@/core/api/axiosinstance";
 
 export interface PublicUser {
   id: string;
-  username: string;
   firstName: string;
   lastName?: string;
   avatarUrl?: string;

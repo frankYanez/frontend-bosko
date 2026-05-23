@@ -28,12 +28,6 @@ export async function getBackgroundCheckStatus(): Promise<BackgroundCheckState |
   }
 }
 
-// Admin endpoints
-export async function adminListPending(): Promise<any[]> {
-  const { data } = await api.get('/admin/background-check/pending');
-  return Array.isArray(data) ? data : data?.data ?? [];
-}
-
 export async function adminReview(userId: string, approved: boolean, notes?: string): Promise<void> {
   await api.patch(`/admin/background-check/${userId}`, { approved, notes });
 }

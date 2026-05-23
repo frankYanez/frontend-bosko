@@ -23,7 +23,6 @@ import { tokenStorage } from '@/core/auth/tokenStorage';
 import {
   loginService,
   registerUserService,
-  checkUsernameAvailabilityService,
 } from '../services/auth';
 import api from '@/core/api/axiosinstance';
 import type {
@@ -170,20 +169,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  // ── Verificar disponibilidad de username ───────────────────────────────
-  const checkUsernameAvailability = useCallback(
-    async (username: string): Promise<boolean> => {
-      try {
-        return await checkUsernameAvailabilityService(username);
-      } catch (err: any) {
-        const msg = err?.response?.data?.message ?? 'No se pudo verificar el usuario';
-        setError(msg);
-        throw new Error(msg);
-      }
-    },
-    [],
-  );
-
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
     const refreshToken = tokenStorage.getRefreshToken();
@@ -211,7 +196,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         login,
         registerUser,
-        checkUsernameAvailability,
         logout,
         clearError,
       }}

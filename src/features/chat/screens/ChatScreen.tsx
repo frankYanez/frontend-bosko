@@ -552,7 +552,7 @@ export default function ChatScreen() {
   const myId = profile?.id;
   const other = conversation?.otherParty;
   const otherName = other
-    ? `${other.firstName} ${other.lastName || ''}`.trim() || other.username || 'Chat'
+    ? `${other.firstName} ${other.lastName || ''}`.trim() || 'Chat'
     : 'Chat';
   const showMicButton = !input.trim() && !sending && !sendingAudio;
 
@@ -581,7 +581,7 @@ export default function ChatScreen() {
           ) : (
             <View style={styles.headerAvatarPlaceholder}>
               <Text style={styles.headerAvatarText}>
-                {(other?.firstName || other?.username || '?').charAt(0).toUpperCase()}
+                {(other?.firstName || '?').charAt(0).toUpperCase()}
               </Text>
             </View>
           )}

@@ -284,7 +284,7 @@ export default function DashboardScreen() {
     getServicesForCategory,
   } = useServices();
 
-  const isProvider = profile?.role === 'provider';
+  const isProvider = profile?.isProvider === true;
   const HERO_SLIDES   = isProvider ? HERO_SLIDES_PROVIDER   : HERO_SLIDES_CLIENT;
   const QUICK_ACTIONS = isProvider ? QUICK_ACTIONS_PROVIDER : QUICK_ACTIONS_CLIENT;
 
@@ -352,9 +352,7 @@ export default function DashboardScreen() {
   }, []);
 
   // ── Datos derivados ───────────────────────────────────────────────────────
-  const displayName = profile?.firstName
-    ?? authState.user?.username
-    ?? 'Bienvenido';
+  const displayName = profile?.firstName ?? 'Bienvenido';
 
   const greeting = getGreeting();
 
@@ -382,7 +380,7 @@ export default function DashboardScreen() {
           ) : (
             <LinearGradient colors={[C.primary, C.dark]} style={s.avatarGrad}>
               <Text style={s.avatarInitial}>
-                {(profile?.firstName ?? authState.user?.username ?? 'U')[0].toUpperCase()}
+                {(profile?.firstName ?? 'U')[0].toUpperCase()}
               </Text>
             </LinearGradient>
           )}

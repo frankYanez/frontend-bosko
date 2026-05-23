@@ -40,33 +40,21 @@ interface Step {
 }
 
 interface FormData {
-  firstName: string;
-  lastName: string;
-  username: string;
   email: string;
-  phone: string;
   password: string;
 }
 
 const STEPS: Step[] = [
-  { label: 'Tu nombre', placeholder: 'Ej: Juan', field: 'firstName', icon: 'person' },
-  { label: 'Tu apellido', placeholder: 'Ej: García', field: 'lastName', icon: 'person' },
-  { label: 'Usuario', placeholder: 'Ej: juangarcia92', field: 'username', icon: 'alternate-email' },
   { label: 'Email', placeholder: 'tucorreo@ejemplo.com', field: 'email', keyboardType: 'email-address', icon: 'email' },
-  { label: 'Teléfono', placeholder: '+549 11 1234-5678', field: 'phone', keyboardType: 'phone-pad', icon: 'phone' },
   { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres', field: 'password', secure: true, icon: 'lock' },
 ];
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
-  const { registerUser, checkUsernameAvailability, isLoading, error, clearError } = useAuth();
+  const { registerUser, isLoading, error, clearError } = useAuth();
 
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    lastName: '',
-    username: '',
     email: '',
-    phone: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -107,18 +95,6 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
       return false;
     }
 
-    if (currentStep.field === 'username') {
-      try {
-        const exists = await checkUsernameAvailability(value);
-        if (exists) {
-          setFieldError('Este nombre de usuario ya está en uso');
-          return false;
-        }
-      } catch {
-        // Si falla la verificación, dejamos pasar (el backend valida en register)
-      }
-    }
-
     return true;
   };
 
@@ -153,14 +129,8 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     const email = formData.email.trim().toLowerCase();
     try {
       await registerUser({
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        username: formData.username.trim(),
         email,
-        phone: formData.phone.trim(),
         password: formData.password,
-        acceptedTermsVersion: "1",
-        acceptedPrivacyVersion: "1",
       });
       router.replace(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {

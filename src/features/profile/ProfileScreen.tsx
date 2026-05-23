@@ -284,12 +284,12 @@ export const ProfileScreen: React.FC = () => {
   };
 
   // Derived
-  const isProvider = profile?.role === 'provider';
+  const isProvider = profile?.isProvider === true;
   const kycStatus  = verification?.status?.toLowerCase() ?? 'not_started';
   const kycCfg     = KYC_CONFIG[kycStatus];
   const fullName   = profile
     ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`
-    : authState.user?.username ?? '';
+    : '';
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
     : '';
@@ -336,7 +336,7 @@ export const ProfileScreen: React.FC = () => {
               ) : (
                 <LinearGradient colors={[C.primary, C.dark]} style={s.avatarFallback}>
                   <Text style={s.avatarInitial}>
-                    {(profile?.firstName ?? authState.user?.username ?? 'U')[0].toUpperCase()}
+                    {(profile?.firstName ?? 'U')[0].toUpperCase()}
                   </Text>
                 </LinearGradient>
               )}
@@ -356,7 +356,7 @@ export const ProfileScreen: React.FC = () => {
             )}
           </View>
 
-          <Text style={s.usernameText}>@{profile?.username ?? authState.user?.username}</Text>
+          {profile?.email ? <Text style={s.usernameText}>{profile.email}</Text> : null}
 
           <View style={s.metaRow}>
             {profile?.location ? (

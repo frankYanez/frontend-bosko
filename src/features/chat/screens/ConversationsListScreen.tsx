@@ -43,7 +43,7 @@ function timeAgo(dateStr: string): string {
 function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
   const other = item.otherParty;
   const name = other
-    ? `${other.firstName} ${other.lastName || ''}`.trim() || other.username || 'Usuario'
+    ? `${other.firstName} ${other.lastName || ''}`.trim() || 'Usuario'
     : 'Usuario';
   const hasUnread = item.unreadCount > 0;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -65,7 +65,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
           ) : (
             <View style={styles.avatarPlaceholder}>
               <Text style={styles.avatarInitial}>
-                {(other?.firstName || other?.username || 'U').charAt(0).toUpperCase()}
+                {(other?.firstName || 'U').charAt(0).toUpperCase()}
               </Text>
             </View>
           )}

@@ -7,23 +7,16 @@ export interface Credentials {
 }
 
 /** Payload completo para registrar un nuevo usuario */
-export interface RegisterUserPayload extends Credentials {
-  username:               string;
-  firstName:              string;
-  lastName:               string;
-  phone?:                 string;
-  acceptedTermsVersion:   string;
-  acceptedPrivacyVersion: string;
-}
+export interface RegisterUserPayload extends Credentials {}
 
 /** Usuario incluido en la respuesta de login/register */
 export interface AuthUser {
   id:         string;
   email:      string;
-  username:   string;
+  role:       string;
+  isProvider: boolean;
   isVerified: boolean;
   kycStatus:  string;
-  role:       string;
 }
 
 /** Tokens + usuario devueltos por login, register o refresh */
@@ -63,7 +56,6 @@ export interface AuthContextType {
   error:                       string | null;
   login:                       (credentials: Credentials) => Promise<AuthResponse>;
   registerUser:                (data: RegisterUserPayload) => Promise<AuthResponse>;
-  checkUsernameAvailability:   (username: string) => Promise<boolean>;
   logout:                      () => Promise<void>;
   clearError:                  () => void;
 }

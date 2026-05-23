@@ -11,7 +11,6 @@ export interface ChatParticipant {
   id: string;
   firstName: string;
   lastName?: string;
-  username: string;
   avatarUrl?: string;
 }
 
@@ -31,7 +30,6 @@ export interface Message {
 
 export interface OtherParty {
   id: string;
-  username: string;
   firstName: string;
   lastName?: string;
   avatarUrl?: string | null;

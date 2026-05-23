@@ -20,14 +20,3 @@ export async function registerUserService(
   return data;
 }
 
-/**
- * @returns `true` si el username YA EXISTE, `false` si está disponible.
- */
-export async function checkUsernameAvailabilityService(
-  username: string,
-): Promise<boolean> {
-  const { data } = await api.get<boolean>('/auth/check-username', {
-    params: { username },
-  });
-  return data;
-}
