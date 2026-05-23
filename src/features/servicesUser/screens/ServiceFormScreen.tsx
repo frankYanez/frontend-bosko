@@ -241,9 +241,14 @@ export default function ServiceFormScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>
-        {isEditing ? "Editar servicio" : "Publicar nuevo servicio"}
-      </Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>
+          {isEditing ? "Editar servicio" : "Publicar nuevo servicio"}
+        </Text>
+        <Pressable style={styles.closeButton} onPress={() => router.back()} hitSlop={8}>
+          <Text style={styles.closeButtonText}>✕</Text>
+        </Pressable>
+      </View>
 
       <Text style={styles.label}>Título</Text>
       <TextInput
@@ -428,10 +433,31 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: "600",
-    marginBottom: 8,
+    flex: 1,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: "#6B7280",
+    fontWeight: "600",
+    lineHeight: 18,
   },
   label: {
     fontSize: 14,
