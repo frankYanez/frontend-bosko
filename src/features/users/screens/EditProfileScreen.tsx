@@ -192,7 +192,19 @@ export default function EditProfileScreen() {
 
             {/* Teléfono */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Teléfono</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.label}>Teléfono</Text>
+                {profile?.isPhoneVerified ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialIcons name="verified" size={14} color="#16a34a" />
+                    <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '600' }}>Verificado</Text>
+                  </View>
+                ) : (
+                  <Pressable onPress={() => router.push('/(tabs)/profile/verify-phone')}>
+                    <Text style={{ fontSize: 12, color: '#850021', fontWeight: '600' }}>Verificar →</Text>
+                  </Pressable>
+                )}
+              </View>
               <TextInput
                 style={styles.input}
                 value={phone}
