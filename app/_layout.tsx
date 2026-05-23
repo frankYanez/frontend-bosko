@@ -1,4 +1,5 @@
 import React from "react";
+import { View } from "react-native";
 import { Redirect, Stack, Tabs } from "expo-router";
 import { AuthProvider } from "@/features/auth/state/AuthContext";
 import { ProfileProvider } from "@/features/profile/state/ProfileContext";
@@ -29,6 +30,7 @@ function RootLayoutNav() {
 
 export default function _layout() {
   return (
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
     <AuthProvider>
       <ProfileProvider>
         <UsersProvider>
@@ -58,5 +60,6 @@ export default function _layout() {
         </UsersProvider>
       </ProfileProvider>
     </AuthProvider>
+    </View>
   );
 }
