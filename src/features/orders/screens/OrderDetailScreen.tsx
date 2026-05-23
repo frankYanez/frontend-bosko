@@ -22,7 +22,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
-import { usePayments } from '@/features/payments/state/PaymentContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
 
@@ -96,7 +95,6 @@ export default function OrderDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { getOrder, acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
   const { profile } = useProfile();
-  const { initiate: initiatePayment } = usePayments();
 
   const [order, setOrder] = useState<Order | undefined>();
   const [loading, setLoading] = useState(true);
@@ -128,18 +126,12 @@ export default function OrderDetailScreen() {
   const paymentPending = order?.paymentStatus === 'pending' || order?.paymentStatus === undefined;
   const needsPayment = isClient && paymentPending && ['accepted', 'in_progress', 'completed'].includes(order?.status || '');
 
-  const handlePay = async () => {
+  const handlePay = () => {
     if (!order?.id) return;
-    setActionLoading('Pagar');
-    try {
-      await initiatePayment(order.id);
-      Alert.alert('Pago iniciado', 'El pago está siendo procesado.');
-      loadOrder();
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'No se pudo procesar el pago');
-    } finally {
-      setActionLoading(null);
-    }
+    router.push({
+      pathname: '/(tabs)/orders/checkout',
+      params: { orderId: order.id },
+    });
   };
 
   const runAction = async (label: string, action: () => Promise<void>) => {

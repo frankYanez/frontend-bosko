@@ -4,7 +4,8 @@
  * timestamp y badge de mensajes no leídos.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -16,24 +17,26 @@ import {
   Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
+import { EmptyState } from '@/core/components/EmptyState';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { fetchConversations, Conversation } from '../services/chat.service';
 import { useProfile } from '@/features/profile/state/ProfileContext';
+import { useUnread } from '@/features/chat/state/UnreadContext';
+import { useConversations } from '@/features/chat/state/ConversationsContext';
 import { TOKENS } from '@/core/design-system/tokens';
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
-  const mins  = Math.floor(diff / 60000);
+  const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
+  const days = Math.floor(diff / 86400000);
 
-  if (mins < 1)   return 'ahora';
-  if (mins < 60)  return `hace ${mins}m`;
+  if (mins < 1) return 'ahora';
+  if (mins < 60) return `hace ${mins}m`;
   if (hours < 24) return `hace ${hours}h`;
-  if (days < 7)   return `hace ${days}d`;
+  if (days < 7) return `hace ${days}d`;
   return new Date(dateStr).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
 }
 
@@ -103,17 +106,32 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
 
 export default function ConversationsListScreen() {
   const { profile } = useProfile();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const { setTotal } = useUnread();
+  const { conversations, setConversations } = useConversations();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const data = await fetchConversations();
-      // Ordenar por último mensaje (más reciente primero)
-      setConversations(data.sort((a, b) =>
-        new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-      ));
+      const sorted = data.sort((a, b) => {
+        const tA = new Date(String(a.lastMessage?.createdAt ?? a.createdAt)).getTime();
+        const tB = new Date(String(b.lastMessage?.createdAt ?? b.createdAt)).getTime();
+        return tB - tA;
+      });
+      // Preserve optimistic lastMessage if it's newer than what the backend returned
+      setConversations(prev =>
+        sorted.map(fresh => {
+          const existing = prev.find(c => c.id === fresh.id);
+          if (existing?.lastMessage && fresh.lastMessage) {
+            const existingTime = new Date(String(existing.lastMessage.createdAt)).getTime();
+            const freshTime = new Date(String(fresh.lastMessage.createdAt)).getTime();
+            if (existingTime > freshTime) return { ...fresh, lastMessage: existing.lastMessage };
+          }
+          return fresh;
+        }),
+      );
+      setTotal(data.reduce((acc, c) => acc + c.unreadCount, 0));
     } catch (err) {
       console.error('Error al cargar conversaciones:', err);
     } finally {
@@ -121,7 +139,7 @@ export default function ConversationsListScreen() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -139,14 +157,14 @@ export default function ConversationsListScreen() {
       style={styles.background}
     >
       {/* Header */}
-      <BlurView intensity={20} tint="light" style={styles.header}>
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Mensajes</Text>
         {totalUnread > 0 && (
           <View style={styles.headerBadge}>
             <Text style={styles.headerBadgeText}>{totalUnread}</Text>
           </View>
         )}
-      </BlurView>
+      </View>
 
       {loading ? (
         <ActivityIndicator
@@ -164,19 +182,12 @@ export default function ConversationsListScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="chat-bubble-outline" size={64} color="rgba(133,0,33,0.15)" />
-              <Text style={styles.emptyTitle}>Sin mensajes todavía</Text>
-              <Text style={styles.emptySubtitle}>
-                Las conversaciones aparecen cuando cotizás o te contratan.
-              </Text>
-              <Pressable
-                style={({ pressed }) => [styles.emptyButton, pressed && styles.buttonPressed]}
-                onPress={() => router.push('/(tabs)/services')}
-              >
-                <Text style={styles.emptyButtonText}>Explorar servicios</Text>
-              </Pressable>
-            </View>
+            <EmptyState
+              icon="chatbubbles-outline"
+              title="Sin mensajes todavía"
+              subtitle="Las conversaciones aparecen cuando cotizás un servicio o te contratan como prestador."
+              cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
+            />
           }
           refreshControl={
             <RefreshControl

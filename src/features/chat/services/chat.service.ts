@@ -85,10 +85,11 @@ export async function markAsRead(conversationId: string): Promise<void> {
   await api.patch(`/conversations/${conversationId}/read`);
 }
 
-/** Enviar un archivo/imagen */
-export async function sendMedia(conversationId: string, fileUri: string): Promise<Message> {
+/** Enviar un archivo/imagen/video */
+export async function sendMedia(conversationId: string, fileUri: string, mimeType = 'image/jpeg'): Promise<Message> {
+  const ext = mimeType.startsWith('video/') ? 'mp4' : mimeType === 'image/png' ? 'png' : 'jpg';
   const formData = new FormData();
-  formData.append('file', { uri: fileUri, type: 'image/jpeg', name: 'media.jpg' } as any);
+  formData.append('file', { uri: fileUri, type: mimeType, name: `media.${ext}` } as any);
 
   const { data } = await api.post<Message>(`/conversations/${conversationId}/media`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

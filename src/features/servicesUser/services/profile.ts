@@ -14,6 +14,8 @@ export interface UserProfile {
     location?: string;
     isVerified: boolean;
     backgroundCheckStatus?: string;
+    role?: 'user' | 'provider';
+    isAvailable?: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -25,6 +27,7 @@ export interface UpdateProfilePayload {
     username?: string;
     phone?: string;
     bio?: string;
+    isAvailable?: boolean;
 }
 
 export async function getCurrentUserProfile(): Promise<UserProfile> {
@@ -35,8 +38,13 @@ export async function getCurrentUserProfile(): Promise<UserProfile> {
 export async function updateUserProfile(
     payload: UpdateProfilePayload
 ): Promise<UserProfile> {
-    const { firstName, lastName, username, phone, bio } = payload;
-    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, username, phone, bio });
+    const { firstName, lastName, username, phone, bio, isAvailable } = payload;
+    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, username, phone, bio, isAvailable });
+    return data;
+}
+
+export async function toggleAvailabilityService(isAvailable: boolean): Promise<UserProfile> {
+    const { data } = await api.patch<UserProfile>("/users/me", { isAvailable });
     return data;
 }
 

@@ -18,10 +18,11 @@ import {
   Image,
   Alert,
   Animated,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Audio } from 'expo-av';
+import { Audio, Video, ResizeMode } from 'expo-av';
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -36,6 +37,7 @@ import {
   Conversation,
 } from '../services/chat.service';
 import { socketService } from '../services/socket.service';
+import { useConversations } from '../state/ConversationsContext';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -149,6 +151,19 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
   );
 }
 
+// ── Burbuja de video ──────────────────────────────────────────────────────────
+function VideoBubble({ uri }: { uri: string }) {
+  return (
+    <Video
+      source={{ uri }}
+      style={styles.bubbleVideo}
+      useNativeControls
+      resizeMode={ResizeMode.CONTAIN}
+      isLooping={false}
+    />
+  );
+}
+
 // ── Burbuja de mensaje ────────────────────────────────────────────────────────
 function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
   const isMine = msg.senderId === myUserId;
@@ -177,6 +192,8 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
       <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
         {msg.messageType === 'audio' ? (
           <AudioBubble msg={msg} isMine={isMine} />
+        ) : (msg.messageType === 'file' || msg.messageType === 'image') && msg.mediaUrl && /\.(mp4|mov|avi|webm)$/i.test(msg.mediaUrl) ? (
+          <VideoBubble uri={msg.mediaUrl} />
         ) : msg.messageType === 'image' && msg.mediaUrl ? (
           <Image source={{ uri: msg.mediaUrl }} style={styles.bubbleImage} resizeMode="cover" />
         ) : (
@@ -225,11 +242,42 @@ function RecordingIndicator({ duration }: { duration: number }) {
   );
 }
 
+// ── Typing bubble ─────────────────────────────────────────────────────────────
+function TypingBubble() {
+  const dots = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
+
+  useEffect(() => {
+    const anims = dots.map((dot, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 160),
+          Animated.timing(dot, { toValue: -5, duration: 280, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 280, useNativeDriver: true }),
+          Animated.delay(480),
+        ]),
+      ),
+    );
+    anims.forEach(a => a.start());
+    return () => anims.forEach(a => a.stop());
+  }, []);
+
+  return (
+    <View style={styles.typingBubbleRow}>
+      <View style={styles.typingBubble}>
+        {dots.map((dot, i) => (
+          <Animated.View key={i} style={[styles.typingDot, { transform: [{ translateY: dot }] }]} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ── Pantalla principal ────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { profile } = useProfile();
   const { authState } = useAuth();
+  const { updateLastMessage } = useConversations();
   const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -238,7 +286,8 @@ export default function ChatScreen() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [socketReady, setSocketReady] = useState(false);
+  const [socketReady, setSocketReady] = useState(socketService.isConnected);
+  const [convId, setConvId] = useState('');
 
   // Audio — usamos ref para el estado real (evita problemas de closure en onPressOut)
   const [isRecording, setIsRecording] = useState(false);
@@ -296,11 +345,17 @@ export default function ChatScreen() {
   }, [authState.token]);
 
   useEffect(() => {
-    const id = convIdRef.current;
-    if (!id || !socketReady) return;
-    socketService.joinConversation(id);
-    return () => { socketService.leaveConversation(id); };
-  }, [socketReady, convIdRef.current]);
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!convId || !socketReady) return;
+    socketService.joinConversation(convId);
+    return () => { socketService.leaveConversation(convId); };
+  }, [socketReady, convId]);
 
   useEffect(() => {
     const unsub = socketService.onMessageReceived((msg) => {
@@ -320,13 +375,12 @@ export default function ChatScreen() {
       const id = await loadConversation();
       if (!id || !active) { setLoading(false); return; }
       convIdRef.current = id;
+      setConvId(id);
       await loadMessages(id);
       if (!active) return;
       setLoading(false);
       if (pollRef.current) clearInterval(pollRef.current);
-      pollRef.current = setInterval(() => {
-        if (!socketService.isConnected) loadMessages(id);
-      }, POLL_INTERVAL);
+      pollRef.current = setInterval(() => loadMessages(id), POLL_INTERVAL);
     };
     init();
     return () => {
@@ -335,11 +389,6 @@ export default function ChatScreen() {
     };
   }, [loadConversation, loadMessages]);
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-    }
-  }, [messages.length]);
 
   // ── Audio recording ──────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
@@ -383,6 +432,7 @@ export default function ChatScreen() {
       setSendingAudio(true);
       const newMsg = await sendAudio(convId, uri);
       setMessages(prev => [...prev, newMsg]);
+      updateLastMessage(convId, '🎤 Audio', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending audio:', err);
       Alert.alert('Error', 'No se pudo enviar el audio. Intentá de nuevo.');
@@ -421,15 +471,23 @@ export default function ChatScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'], quality: 0.7, allowsEditing: false,
+      mediaTypes: ['images', 'videos'],
+      quality: 0.7,
+      allowsEditing: false,
+      videoMaxDuration: 60,
     });
     if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const isVideo = asset.type === 'video';
+    const mimeType = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
     setSending(true);
     try {
-      const newMsg = await sendMedia(conversation.id, result.assets[0].uri);
+      const newMsg = await sendMedia(conversation.id, asset.uri, mimeType);
       setMessages(prev => [...prev, newMsg]);
+      updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Imagen', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending media:', err);
+      Alert.alert('Error', 'No se pudo enviar el archivo.');
     } finally {
       setSending(false);
     }
@@ -445,6 +503,7 @@ export default function ChatScreen() {
     try {
       const newMsg = await sendMsgRest(conversation.id, text);
       setMessages(prev => [...prev, newMsg]);
+      updateLastMessage(conversation.id, text, profile?.id ?? '');
     } catch (err) {
       setInput(text);
       console.error('Error sending message:', err);
@@ -507,7 +566,8 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
       style={styles.background}
     >
       {/* Header */}
@@ -547,6 +607,10 @@ export default function ChatScreen() {
         renderItem={({ item }) => <MessageBubble msg={item} myUserId={myId} />}
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+        onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
         ListEmptyComponent={
           <View style={styles.emptyChat}>
             <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
@@ -557,11 +621,7 @@ export default function ChatScreen() {
         style={styles.messagesList}
       />
 
-      {isTyping && (
-        <View style={styles.typingBar}>
-          <Text style={styles.typingText}>{otherName} está escribiendo...</Text>
-        </View>
-      )}
+      {isTyping && <TypingBubble />}
 
       {/* Input bar — el botón derecho SIEMPRE está montado */}
       <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -681,6 +741,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   bubbleImage: { width: 200, height: 150, borderRadius: 10 },
+  bubbleVideo: { width: 220, height: 160, borderRadius: 10, backgroundColor: '#000' },
   bubbleText: { fontSize: 15, color: TOKENS.color.text, lineHeight: 20 },
   bubbleTextMine: { color: '#fff' },
   bubbleTime: { fontSize: 10, color: TOKENS.color.sub, alignSelf: 'flex-end' },
@@ -731,8 +792,29 @@ const styles = StyleSheet.create({
   emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
   emptyChatText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
   emptyChatSubtext: { fontSize: 14, color: TOKENS.color.sub },
-  typingBar: { paddingHorizontal: 24, paddingVertical: 6 },
-  typingText: { fontSize: 12, color: TOKENS.color.sub, fontStyle: 'italic' },
+  typingBubbleRow: { paddingHorizontal: 16, paddingVertical: 4 },
+  typingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    borderBottomLeftRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  typingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: TOKENS.color.sub,
+  },
   statusSent:      { color: 'rgba(255,255,255,0.5)' },
   statusDelivered: { color: 'rgba(255,255,255,0.7)' },
   statusRead:      { color: '#60c8ff' },

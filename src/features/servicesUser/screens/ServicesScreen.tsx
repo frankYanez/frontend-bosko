@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 
 import { useServices } from '../state/ServicesContext';
 import type { Category } from '@/types/services';
+import { EmptyState } from '@/core/components/EmptyState';
 
 const { width: W } = Dimensions.get('window');
 const CARD_GAP   = 12;
@@ -314,11 +315,13 @@ export default function ServicesScreen() {
         {loading ? (
           <SkeletonScreen />
         ) : categories.length === 0 ? (
-          <View style={s.empty}>
-            <Text style={s.emptyIcon}>🔍</Text>
-            <Text style={s.emptyTitle}>Próximamente</Text>
-            <Text style={s.emptySub}>Las categorías estarán disponibles en breve.</Text>
-          </View>
+          <EmptyState
+            icon="grid-outline"
+            title="Categorías próximamente"
+            subtitle="Estamos cargando los servicios disponibles. Volvé en breve."
+            iconColor="#6B7280"
+            iconBg="#F3F4F6"
+          />
         ) : (
           <View style={s.grid}>
             {/* Featured card (first category, full width) */}

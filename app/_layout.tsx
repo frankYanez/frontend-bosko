@@ -13,6 +13,7 @@ import { ProvidersProvider } from "@/contexts/ProvidersContext";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { KYCProvider } from "@/features/kyc/state/KYCContext";
 import { NotificationsProvider } from "@/features/notifications/state/NotificationsContext";
+import { FavoritesProvider } from "@/features/favorites/state/FavoritesContext";
 
 function RootLayoutNav() {
   return (
@@ -41,7 +42,9 @@ export default function _layout() {
                         <ReviewsProvider providerId="global">
                           <KYCProvider>
                             <NotificationsProvider>
-                              <RootLayoutNav />
+                              <FavoritesProvider>
+                                <RootLayoutNav />
+                              </FavoritesProvider>
                             </NotificationsProvider>
                           </KYCProvider>
                         </ReviewsProvider>

@@ -284,7 +284,7 @@ export default function DashboardScreen() {
     getServicesForCategory,
   } = useServices();
 
-  const isProvider = authState.user?.role?.toLowerCase() === 'provider';
+  const isProvider = profile?.role === 'provider';
   const HERO_SLIDES   = isProvider ? HERO_SLIDES_PROVIDER   : HERO_SLIDES_CLIENT;
   const QUICK_ACTIONS = isProvider ? QUICK_ACTIONS_PROVIDER : QUICK_ACTIONS_CLIENT;
 

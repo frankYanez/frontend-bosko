@@ -24,6 +24,7 @@ function mapService(s: any): ServiceSummary {
     },
     averageRating: s.provider?.rating ?? s.averageRating ?? 0,
     reviewsCount: s.provider?.reviewsCount ?? s.reviewsCount ?? 0,
+    isAvailable: s.provider?.isAvailable ?? s.isAvailable,
   };
 }
 

@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Start dev server
-npx expo start
+# Start dev server (always clear cache on first run or after .env changes)
+npx expo start -c
 
 # Target platform
 npx expo start --android
@@ -19,30 +19,52 @@ npm test
 npx jest __tests__/login.test.tsx
 ```
 
+## Key constraints
+
+- **Dev build required**: `react-native-reanimated` ~4.1.1 and `moti` ^0.30.0 use TurboModules (`react-native-worklets`) not bundled in Expo Go. Use `npx expo run:ios` or EAS Build for full functionality.
+- **Env vars**: requires `.env` at root with `EXPO_PUBLIC_API_URL=https://api.boskoapp.site/api/v1`. App crashes at module load if missing.
+- **Platform**: iOS + Android. `KeyboardAvoidingView` uses `behavior="padding"` on both.
+
+## Stack
+
+| Package | Version |
+|---|---|
+| expo | ^54.0.4 |
+| react-native | 0.81.4 |
+| expo-router | ~6.0.7 |
+| react-native-reanimated | ~4.1.1 |
+| moti | ^0.30.0 |
+| socket.io-client | ^4.8.3 |
+| axios | ^1.12.2 |
+| expo-av | ~16.0.8 |
+| expo-image-picker | ~17.0.11 |
+
 ## Architecture
 
-**Bosko** is a React Native + Expo marketplace app for service providers. Uses Expo Router (file-based routing) and React Context for all state management.
+**Bosko** — React Native + Expo marketplace for service providers. Expo Router (file-based routing), React Context for all state.
 
 ### Path alias
 
-`@/` maps to the project root. Use `@/features/...`, `@/core/...`, `@/contexts/...` etc.
+`@/` maps to the project root.
 
 ### Routing
 
 ```
-app/index.tsx          → OnBoarding (entry, no auth required)
+app/index.tsx          → Gate: authenticated → /(tabs), else → OnBoarding
 app/login/             → Login / Register flow
 app/(tabs)/            → Authenticated tab navigator (Inicio, Servicios, Reels, Perfil, Mensajes)
-app/chat/[id].tsx      → Chat screen (outside tabs)
+app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId)
 app/search.tsx         → Search screen
 ```
 
-Auth guard lives in `app/(tabs)/_layout.tsx` — redirects to `/login` if no token in `AuthContext`.
+Auth guards:
+- `app/index.tsx` — primary gate
+- `app/(tabs)/_layout.tsx` — secondary guard, redirects to `/login` if no token
+- `app/login/_layout.tsx` — inverse guard, redirects to `/(tabs)` if authenticated
 
-### Context provider tree (root layout)
+### Context provider tree
 
-Providers nest in this order in `app/_layout.tsx`:
-
+Root (`app/_layout.tsx`):
 ```
 AuthProvider
   └─ ProfileProvider
@@ -53,56 +75,83 @@ AuthProvider
                            └─ SearchProvider
                                 └─ PaymentsProvider
                                      └─ OrdersProvider
-                                          └─ PostsProvider (serviceId="global")
-                                               └─ ReviewsProvider (serviceId="global")
+                                          └─ PostsProvider
+                                               └─ ReviewsProvider
+```
+
+Tabs (`app/(tabs)/_layout.tsx`):
+```
+ConversationsProvider   ← shared conversations list + optimistic lastMessage updates
+  └─ UnreadProvider     ← total unread count for tab badge
 ```
 
 ### Feature modules (`src/features/`)
-
-Each feature owns screens, services (API calls), state (context), components, and types:
 
 | Feature | Purpose |
 |---|---|
 | `auth` | Login, register, onboarding, token management |
 | `profile` | Current user profile (fetch/update via `ProfileContext`) |
 | `servicesUser` | Marketplace: categories, services, provider profiles, reviews, posts |
-| `users` | User lookup by ID |
-| `orders` | Order creation and history |
+| `users` | User lookup by ID, edit profile |
+| `orders` | Order creation, history, status tracking, quote requests |
 | `payments` | Payment processing |
-| `chat` | Messaging between users |
+| `chat` | Real-time messaging (socket.io + REST fallback) |
+| `kyc` | KYC / background check flow |
+| `reviews` | Reviews and ratings |
+| `reels` | Video reels feed |
 | `search` | Search services/providers |
+| `notifications` | Push notifications (expo-notifications, dev build only) |
+| `plans` | Subscription plan management |
 
 ### API layer
 
-- **Active client**: `src/core/api/axiosinstance.tsx` — axios instance with JWT bearer token injected on every request and automatic token refresh on 401.
-- **Base URL**: `src/core/config/env.ts` → `http://204.168.149.235:4000`
-- **Token storage**: `expo-secure-store` keys: `token`, `refreshToken`, `userEmail`, `user`
-- `src/core/api/client.ts` is commented out / unused — ignore it.
+- **Axios instance**: `src/core/api/axiosinstance.tsx`
+  - Injects JWT Bearer token on every request (reads from in-memory cache in `tokenStorage`)
+  - Auto-refresh on 401 (calls `/auth/refresh-token`, retries original request)
+  - Unwraps `{ success, timestamp, data: T }` server envelope automatically
+  - Skips refresh on `/auth/login`, `/auth/register`, `/auth/refresh-token`
+- **Base URL**: `src/core/config/env.ts` → `process.env.EXPO_PUBLIC_API_URL`
+- **Token storage**: `src/core/auth/tokenStorage.ts` — singleton, SecureStore + in-memory cache. Exposes `setForceLogoutCallback()` so axios interceptor can force logout without circular dependency on AuthContext.
 
-Token refresh skips `/auth/login` and `/auth/register` endpoints to avoid refresh loops.
+### Chat module (`src/features/chat/`)
 
-### ServicesContext state model
+Real-time chat tied to orders (no free DMs).
 
-`ServicesContext` (`src/features/servicesUser/state/ServicesContext.tsx`) manages the marketplace via a `useReducer`-based state (`MarketplaceState`) with normalized records keyed by ID:
+**Services:**
+- `chat.service.ts` — REST: fetch conversations, messages, send text/media/audio, mark read
+- `socket.service.ts` — socket.io singleton. Connect with JWT, join/leave rooms, emit/receive messages and typing indicators. Falls back to REST polling every 10s.
 
-- `servicesByCategory[categoryId]` — list of `ServiceSummary` per category
-- `servicesById[id]` — flat service lookup
-- `providers[id]` — provider profiles
-- `reviewsByService[id]` — reviews per service
-- `eligibility[serviceId][userId]` — review permission cache
+**State:**
+- `ConversationsContext` — holds conversations list shared between `ConversationsListScreen` and `ChatScreen`. `updateLastMessage(convId, content, senderId)` updates preview instantly (optimistic, no re-fetch needed).
+- `UnreadContext` — total unread count, read by `CustomTabBar` to show badge on chat tab.
 
-Plan gating: `FREE` plan allows max 1 service. `PLUS`/`PREMIUM` plans allow more. Plan is derived from `authState.user` fields at login.
+**ChatScreen features:**
+- Text, image, video (up to 60s), audio (long-press mic) messages
+- Typing indicator: animated 3-dot bubble
+- Real-time via socket; poll fallback when disconnected
+- Auto-scroll: `onContentSizeChange` + `onLayout` on FlatList; keyboard open also scrolls to end
+- `keyboardDismissMode="interactive"`, `keyboardShouldPersistTaps="handled"`
+
+**Socket join race condition fix**: `socketReady` initializes as `socketService.isConnected` (not always `false`), and join effect depends on `convId` state (not ref) so it re-runs correctly.
+
+### Tab bar
+
+`src/components/CustomTabBar.tsx` — custom animated pill tab bar.
+- Reads `useUnread()` to show red badge on chat tab when `total > 0`.
+- Pill slides with spring animation to active tab.
+- Icons from `@expo/vector-icons` Ionicons.
 
 ### Design system
 
-- **Primary tokens**: `src/core/design-system/tokens.ts` → `TOKENS` (brand color `#850021`, radius scale, shadows)
-- **Extended palette**: `src/core/design-system/Colors.ts` → `Colors` (includes premium gold theme)
-- **Fonts**: Inter and Outfit loaded via `expo-font` plugin. Lottie animations in `assets/lotties/`.
+- **Tokens**: `src/core/design-system/tokens.ts` → `TOKENS` (brand color `#850021`, radius, shadows)
+- **Colors**: `src/core/design-system/Colors.ts` → extended palette including premium gold theme
+- **Fonts**: Inter and Outfit via `expo-font` plugin
+- **MotiView**: `src/core/components/MotiView.ios.tsx` / `.android.tsx` — thin re-export of `moti`. Requires dev build (TurboModule).
 
 ### SVG support
 
-SVGs are transformed via `react-native-svg-transformer` (configured in `metro.config.js`). Import SVGs as React components — the type declaration is in `declarations.d.ts`.
+`react-native-svg-transformer` in `metro.config.js`. Import SVGs as React components. Type declaration in `declarations.d.ts`.
 
 ### Tests
 
-Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` are mocked in `jest.setup.ts`. The `@/` alias works in tests via `moduleNameMapper` in `package.json`.
+Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.

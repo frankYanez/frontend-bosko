@@ -20,6 +20,7 @@ import { router } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { EmptyState } from '@/core/components/EmptyState';
 
 type TabType = 'client' | 'provider';
 
@@ -107,31 +108,23 @@ export default function OrdersListScreen() {
 
   const orders = activeTab === 'client' ? clientOrders : providerOrders;
 
-  const EmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <MaterialIcons
-        name={activeTab === 'client' ? 'shopping-bag' : 'work'}
-        size={56}
-        color="rgba(133,0,33,0.15)"
+  const OrdersEmptyState = () =>
+    activeTab === 'client' ? (
+      <EmptyState
+        icon="receipt-outline"
+        title="Todavía no pediste nada"
+        subtitle="Explorá servicios, cotizá con profesionales y hacé tu primer pedido."
+        cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
       />
-      <Text style={styles.emptyTitle}>
-        {activeTab === 'client' ? 'Todavía no solicitaste servicios' : 'Todavía no recibiste solicitudes'}
-      </Text>
-      <Text style={styles.emptySubtitle}>
-        {activeTab === 'client'
-          ? 'Explorá servicios y cotizá con profesionales.'
-          : 'Asegurate de tener tu perfil y KYC verificados.'}
-      </Text>
-      {activeTab === 'client' && (
-        <Pressable
-          style={({ pressed }) => [styles.ctaButton, pressed && styles.buttonPressed]}
-          onPress={() => router.push('/(tabs)/services')}
-        >
-          <Text style={styles.ctaText}>Explorar servicios</Text>
-        </Pressable>
-      )}
-    </View>
-  );
+    ) : (
+      <EmptyState
+        icon="briefcase-outline"
+        title="Sin solicitudes todavía"
+        subtitle="Asegurate de tener tu perfil verificado y al menos un servicio publicado."
+        cta={{ label: 'Ver mi perfil', onPress: () => router.push('/(tabs)/profile') }}
+        secondaryCta={{ label: 'Publicar un servicio', onPress: () => router.push('/(tabs)/profile/AddServices') }}
+      />
+    );
 
   return (
     <LinearGradient
@@ -190,7 +183,7 @@ export default function OrdersListScreen() {
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<EmptyState />}
+          ListEmptyComponent={<OrdersEmptyState />}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from './state/ProfileContext';
 import { useKYC } from '@/features/kyc/state/KYCContext';
+import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
 
@@ -182,16 +183,60 @@ function SettingsGroup({ title, children }: { title: string; children: React.Rea
   );
 }
 
+// ── Availability toggle ───────────────────────────────────────────────────────
+function AvailabilityToggle({
+  isAvailable,
+  onToggle,
+  toggling,
+}: {
+  isAvailable: boolean;
+  onToggle: () => void;
+  toggling: boolean;
+}) {
+  const slideAnim = useRef(new Animated.Value(isAvailable ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: isAvailable ? 1 : 0,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 100,
+    }).start();
+  }, [isAvailable]);
+
+  const thumbColor = isAvailable ? C.green : C.amber;
+  const bgColor    = isAvailable ? '#DCFCE7' : '#FFF8E1';
+  const label      = isAvailable ? 'Disponible' : 'Ocupado';
+  const dotX       = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [3, 27] });
+
+  return (
+    <Pressable
+      onPress={onToggle}
+      disabled={toggling}
+      style={[s.availRow, { opacity: toggling ? 0.6 : 1 }]}
+    >
+      <View style={[s.availTrack, { backgroundColor: bgColor }]}>
+        <Animated.View
+          style={[s.availThumb, { backgroundColor: thumbColor, transform: [{ translateX: dotX }] }]}
+        />
+      </View>
+      <Text style={[s.availLabel, { color: thumbColor }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { authState, logout } = useAuth();
-  const { profile, isLoading, refreshProfile, updateProfile } = useProfile();
+  const { profile, isLoading, refreshProfile, updateProfile, toggleAvailability } = useProfile();
   const { verification } = useKYC();
+  const { count: favCount } = useFavorites();
 
   const [stats, setStats]               = useState<UserStats | null>(null);
   const [editVisible, setEditVisible]   = useState(false);
   const [refreshing, setRefreshing]     = useState(false);
+  const [availToggling, setAvailToggling] = useState(false);
 
   // Entrance animations for 5 sections
   const sections = useRef(Array.from({ length: 5 }, () => new Animated.Value(0))).current;
@@ -227,13 +272,19 @@ export const ProfileScreen: React.FC = () => {
     await updateProfile(data);
   };
 
+  const handleToggleAvailability = async () => {
+    setAvailToggling(true);
+    await toggleAvailability().catch(() => {});
+    setAvailToggling(false);
+  };
+
   const handleLogout = async () => {
     await logout();
     router.replace('/login');
   };
 
   // Derived
-  const isProvider = authState.user?.role?.toLowerCase() === 'provider';
+  const isProvider = profile?.role === 'provider';
   const kycStatus  = verification?.status?.toLowerCase() ?? 'not_started';
   const kycCfg     = KYC_CONFIG[kycStatus];
   const fullName   = profile
@@ -324,13 +375,20 @@ export const ProfileScreen: React.FC = () => {
 
           {/* KYC badge solo para providers o en proceso */}
           {isProvider && kycCfg ? (
-            <Pressable
-              onPress={() => router.push('/(tabs)/profile/kyc')}
-              style={[s.kycBadge, { backgroundColor: kycCfg.bg }]}
-            >
-              <Ionicons name={kycCfg.icon} size={14} color={kycCfg.color} />
-              <Text style={[s.kycText, { color: kycCfg.color }]}>{kycCfg.label}</Text>
-            </Pressable>
+            <View style={s.badgeRow}>
+              <Pressable
+                onPress={() => router.push('/(tabs)/profile/kyc')}
+                style={[s.kycBadge, { backgroundColor: kycCfg.bg }]}
+              >
+                <Ionicons name={kycCfg.icon} size={14} color={kycCfg.color} />
+                <Text style={[s.kycText, { color: kycCfg.color }]}>{kycCfg.label}</Text>
+              </Pressable>
+              <AvailabilityToggle
+                isAvailable={profile?.isAvailable ?? true}
+                onToggle={handleToggleAvailability}
+                toggling={availToggling}
+              />
+            </View>
           ) : null}
 
           {profile?.bio ? (
@@ -359,7 +417,9 @@ export const ProfileScreen: React.FC = () => {
             <>
               <StatCell value={stats?.completedOrders ?? 0} label="Pedidos" color={C.green} />
               <View style={s.statDivider} />
-              <StatCell value={0}                           label="Favoritos" color={C.primary} />
+              <Pressable onPress={() => router.push('/(tabs)/profile/favorites')}>
+                <StatCell value={favCount} label="Favoritos" color={C.primary} />
+              </Pressable>
             </>
           )}
         </Animated.View>
@@ -422,7 +482,7 @@ export const ProfileScreen: React.FC = () => {
         {!isProvider && (
           <Animated.View style={[s.section, sec(2)]}>
             <Pressable
-              onPress={() => router.push('/(tabs)/profile/kyc')}
+              onPress={() => router.push('/(tabs)/profile/become-provider')}
               style={s.providerCta}
             >
               <LinearGradient
@@ -659,6 +719,13 @@ const s = StyleSheet.create({
     fontSize: 12,
     color: C.sub,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+    marginTop: 2,
+  },
   kycBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -667,10 +734,34 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 99,
-    marginTop: 2,
   },
   kycText: {
     fontSize: 12,
+    fontWeight: '600',
+  },
+  availRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  availTrack: {
+    width: 46,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  availThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  availLabel: {
+    fontSize: 13,
     fontWeight: '600',
   },
   bioText: {

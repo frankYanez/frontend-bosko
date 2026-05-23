@@ -13,6 +13,7 @@ import {
 import { useFocusEffect, useRouter } from "expo-router";
 import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service } from "@/features/servicesUser/services/service";
+import { EmptyState } from '@/core/components/EmptyState';
 
 const currencyFormatter = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -131,18 +132,15 @@ export default function MyServiceScreen() {
       ) : null}
 
       {services.length === 0 && !loading ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Aún no has publicado servicios</Text>
-          <Text style={styles.emptyDescription}>
-            Publica tu primer servicio para que los clientes puedan encontrarte.
-          </Text>
-          <Pressable
-            style={styles.primaryButton}
-            onPress={() => router.push("/(tabs)/profile/AddServices")}
-          >
-            <Text style={styles.primaryButtonText}>Publicar servicio</Text>
-          </Pressable>
-        </View>
+        <EmptyState
+          icon="construct-outline"
+          title="Todavía no publicaste servicios"
+          subtitle="Creá tu primer servicio para que los clientes puedan encontrarte y contratarte."
+          cta={{
+            label: 'Publicar primer servicio',
+            onPress: () => router.push("/(tabs)/profile/AddServices"),
+          }}
+        />
       ) : (
         <FlatList
           data={services}

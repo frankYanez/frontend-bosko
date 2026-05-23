@@ -11,6 +11,8 @@ export default function ProfileLayout() {
       <Stack.Screen name="Notifications" />
       <Stack.Screen name="Payments" />
       <Stack.Screen name="kyc" />
+      <Stack.Screen name="become-provider" />
+      <Stack.Screen name="favorites" />
       <Stack.Screen name="delete-account" />
       <Stack.Screen name="[id]" />
     </Stack>

@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Restaurar sesión al arrancar ──────────────────────────────────────
   useEffect(() => {
+
     (async () => {
       try {
         // Hidratar el cache en memoria con los tokens guardados en SecureStore
@@ -114,10 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       setAuthState({
-        token:        response.accessToken,
+        token: response.accessToken,
         refreshToken: response.refreshToken,
-        userEmail:    credentials.email,
-        user:         response.user ?? null,
+        userEmail: credentials.email,
+        user: response.user ?? null,
       });
 
       return response;
@@ -150,10 +151,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
 
         setAuthState({
-          token:        response.accessToken,
+          token: response.accessToken,
           refreshToken: response.refreshToken,
-          userEmail:    data.email,
-          user:         response.user ?? null,
+          userEmail: data.email,
+          user: response.user ?? null,
         });
 
         return response;

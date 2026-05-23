@@ -27,6 +27,7 @@ export type ServiceSummary = {
   rate: Rate;
   averageRating: number;
   reviewsCount: number;
+  isAvailable?: boolean;
 };
 
 export type ProviderProfile = {
@@ -50,6 +51,7 @@ export type ProviderProfile = {
   averageRating: number;
   reviewsCount: number;
   rate: Rate;
+  isAvailable?: boolean;
 };
 
 export type Review = {

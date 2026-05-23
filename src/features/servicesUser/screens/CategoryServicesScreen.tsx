@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useServices } from '../state/ServicesContext';
 import type { ServiceSummary } from '@/types/services';
+import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 
 const { width: W } = Dimensions.get('window');
 
@@ -103,6 +104,18 @@ function ServiceCard({
   index: number;
   onPress: () => void;
 }) {
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(item.id);
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  const handleFavorite = () => {
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true }),
+      Animated.spring(heartScale, { toValue: 1,   useNativeDriver: true }),
+    ]).start();
+    toggle(item);
+  };
+
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(32)).current;
   const scaleA    = useRef(new Animated.Value(1)).current;
@@ -126,14 +139,19 @@ function ServiceCard({
       }}
     >
       <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={s.serviceCard}>
-        {/* Avatar */}
-        {item.thumbnail ? (
-          <Image source={{ uri: item.thumbnail }} style={s.avatar} contentFit="cover" />
-        ) : (
-          <LinearGradient colors={['#e8ecf2', '#d0d7e2']} style={s.avatarFallback}>
-            <Ionicons name="person-outline" size={24} color="#9CA3AF" />
-          </LinearGradient>
-        )}
+        {/* Avatar + availability dot */}
+        <View style={s.avatarWrap}>
+          {item.thumbnail ? (
+            <Image source={{ uri: item.thumbnail }} style={s.avatar} contentFit="cover" />
+          ) : (
+            <LinearGradient colors={['#e8ecf2', '#d0d7e2']} style={s.avatarFallback}>
+              <Ionicons name="person-outline" size={24} color="#9CA3AF" />
+            </LinearGradient>
+          )}
+          {item.isAvailable !== undefined && (
+            <View style={[s.availDot, { backgroundColor: item.isAvailable ? '#22C55E' : '#9CA3AF' }]} />
+          )}
+        </View>
 
         {/* Info */}
         <View style={s.info}>
@@ -153,8 +171,19 @@ function ServiceCard({
           <Text style={s.price}>Desde {formatRate(item.rate)}</Text>
         </View>
 
-        {/* Chevron */}
-        <Ionicons name="chevron-forward" size={18} color={C.border} />
+        {/* Favorite + chevron */}
+        <View style={s.cardActions}>
+          <Pressable onPress={handleFavorite} hitSlop={8} style={s.heartBtn}>
+            <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+              <Ionicons
+                name={fav ? 'heart' : 'heart-outline'}
+                size={20}
+                color={fav ? '#EF4444' : C.border}
+              />
+            </Animated.View>
+          </Pressable>
+          <Ionicons name="chevron-forward" size={16} color={C.border} />
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -410,11 +439,27 @@ const s = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+  cardActions: {
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 0,
+  },
+  heartBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: '#F9FAFB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarWrap: {
+    position: 'relative',
+    flexShrink: 0,
+  },
   avatar: {
     width: 64,
     height: 64,
     borderRadius: 18,
-    flexShrink: 0,
   },
   avatarFallback: {
     width: 64,
@@ -422,7 +467,16 @@ const s = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+  },
+  availDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   info: {
     flex: 1,

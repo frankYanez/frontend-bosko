@@ -12,10 +12,15 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TOKENS } from '@/core/design-system/tokens';
 import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
+import { useProfile } from '@/features/profile/state/ProfileContext';
+import { UnreadProvider } from '@/features/chat/state/UnreadContext';
+import { ConversationsProvider } from '@/features/chat/state/ConversationsContext';
 
 export default function TabsLayout() {
   const { authLoaded, isAuthenticated } = useAuth();
+  const { profile } = useProfile();
   const insets = useSafeAreaInsets();
+  const isProvider = profile?.role === 'provider';
 
   // Mientras carga no mostrar nada (evita el flash de la tab bar sin datos)
   if (!authLoaded) return null;
@@ -24,6 +29,8 @@ export default function TabsLayout() {
   if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
+    <ConversationsProvider>
+    <UnreadProvider>
     <SafeAreaView
       style={styles.container}
       edges={['left', 'right',]}
@@ -43,13 +50,16 @@ export default function TabsLayout() {
           />
         )}
       >
-        <Tabs.Screen name="index" options={{ title: 'Inicio' }} />
+        <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
         <Tabs.Screen name="services" options={{ title: 'Servicios' }} />
-        <Tabs.Screen name="reels" options={{ title: 'Reels' }} />
-        <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
-        <Tabs.Screen name="chat" options={{ title: 'Mensajes' }} />
+        <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
+        <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
+        <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
+        <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />
       </Tabs>
     </SafeAreaView>
+    </UnreadProvider>
+    </ConversationsProvider>
   );
 }
 

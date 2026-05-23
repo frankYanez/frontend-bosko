@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUnread } from '@/features/chat/state/UnreadContext';
 
 const COLORS = {
   bordo:     '#850021',
@@ -13,17 +14,17 @@ const COLORS = {
 };
 
 const BAR_H  = 68;
-const PILL_W = 62;
 const PILL_H = 38;
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const ICONS: Record<string, { icon: IconName; activeIcon?: IconName; label: string }> = {
-  index:    { icon: 'home-outline',               activeIcon: 'home',               label: 'Inicio'    },
-  services: { icon: 'grid-outline',               activeIcon: 'grid',               label: 'Servicios' },
-  reels:    { icon: 'play-circle-outline',        activeIcon: 'play-circle',        label: 'Reels'     },
-  profile:  { icon: 'person-outline',             activeIcon: 'person',             label: 'Perfil'    },
+  index:    { icon: 'home-outline',                activeIcon: 'home',                label: 'Inicio'    },
+  services: { icon: 'grid-outline',                activeIcon: 'grid',                label: 'Servicios' },
+  orders:   { icon: 'receipt-outline',             activeIcon: 'receipt',             label: 'Pedidos'   },
+  reels:    { icon: 'play-circle-outline',         activeIcon: 'play-circle',         label: 'Reels'     },
   chat:     { icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses', label: 'Mensajes'  },
+  profile:  { icon: 'person-outline',              activeIcon: 'person',              label: 'Perfil'    },
 };
 
 function getRouteConfig(routeName: string) {
@@ -31,27 +32,29 @@ function getRouteConfig(routeName: string) {
 }
 
 // ── Tab bar ───────────────────────────────────────────────────────────────────
-export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
+  const { total: unreadMessages } = useUnread();
   const insets   = useSafeAreaInsets();
   const [barWidth, setBarWidth] = useState<number>(Dimensions.get('window').width - 32);
 
   const tabCount = state.routes.length;
   const tabWidth = barWidth / Math.max(1, tabCount);
+  const pillW    = Math.min(62, tabWidth - 8);
 
   // Pill slides to center of active tab
   const pillX = useRef(
-    new Animated.Value(state.index * tabWidth + (tabWidth - PILL_W) / 2)
+    new Animated.Value(state.index * tabWidth + (tabWidth - pillW) / 2)
   ).current;
 
   useEffect(() => {
     Animated.spring(pillX, {
-      toValue: state.index * tabWidth + (tabWidth - PILL_W) / 2,
+      toValue: state.index * tabWidth + (tabWidth - pillW) / 2,
       damping: 20,
       stiffness: 260,
       mass: 0.6,
       useNativeDriver: true,
     }).start();
-  }, [state.index, tabWidth]);
+  }, [state.index, tabWidth, pillW]);
 
   const onTabPress = useCallback(
     (routeIndex: number) => {
@@ -109,7 +112,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           pointerEvents="none"
           style={[
             styles.pill,
-            { transform: [{ translateX: pillX }] },
+            { width: pillW, transform: [{ translateX: pillX }] },
           ]}
         >
           {/* Glass shine inside pill */}
@@ -126,13 +129,15 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           {routes.map((route, idx) => {
             const cfg       = getRouteConfig(route.name);
             const isFocused = idx === state.index;
+            const label     = descriptors[route.key]?.options?.title ?? cfg.label;
             return (
               <TabButton
                 key={route.key}
-                label={cfg.label}
+                label={label}
                 icon={cfg.icon}
                 activeIcon={cfg.activeIcon}
                 isFocused={isFocused}
+                badge={route.name === 'chat' ? unreadMessages : 0}
                 onPress={() => onTabPress(idx)}
                 onLongPress={() => onTabLongPress(idx)}
               />
@@ -146,12 +151,13 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
 // ── Tab button ────────────────────────────────────────────────────────────────
 function TabButton({
-  label, icon, activeIcon, isFocused, onPress, onLongPress,
+  label, icon, activeIcon, isFocused, badge, onPress, onLongPress,
 }: {
   label: string;
   icon: IconName;
   activeIcon?: IconName;
   isFocused: boolean;
+  badge?: number;
   onPress: () => void;
   onLongPress: () => void;
 }) {
@@ -199,6 +205,11 @@ function TabButton({
           size={22}
           color={COLORS.white}
         />
+        {!!badge && badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
+          </View>
+        )}
       </Animated.View>
 
       <Animated.Text
@@ -252,12 +263,10 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
 
-  // Compact pill — doesn't span full tab width
   pill: {
     position: 'absolute',
     top: (BAR_H - PILL_H) / 2,
     left: 0,
-    width: PILL_W,
     height: PILL_H,
     borderRadius: 13,
     backgroundColor: 'rgba(255,255,255,0.16)',
@@ -289,5 +298,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
     color: COLORS.white,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: COLORS.bordo,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#fff',
   },
 });
