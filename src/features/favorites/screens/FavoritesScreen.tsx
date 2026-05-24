@@ -87,7 +87,7 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
             {item.averageRating > 0 && (
               <View style={s.ratingChip}>
                 <Ionicons name="star" size={11} color={C.amber} />
-                <Text style={s.ratingText}>{item.averageRating.toFixed(1)}</Text>
+                <Text style={s.ratingText}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
               </View>
             )}
             {item.location ? (

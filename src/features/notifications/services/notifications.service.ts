@@ -47,6 +47,21 @@ export async function registerPushToken(token: string, platform: 'ios' | 'androi
   await api.post('/notifications/token', { token, platform });
 }
 
+/** Marcar todas como leídas — PATCH /notifications/read-all */
+export async function markAllNotificationsRead(): Promise<void> {
+  await api.patch('/notifications/read-all');
+}
+
+/** Eliminar una notificación — DELETE /notifications/:id */
+export async function deleteNotification(id: string): Promise<void> {
+  await api.delete(`/notifications/${id}`);
+}
+
+/** Limpiar todas las notificaciones — DELETE /notifications */
+export async function clearAllNotifications(): Promise<void> {
+  await api.delete('/notifications');
+}
+
 /** Eliminar push token — DELETE /notifications/token */
 export async function deletePushToken(): Promise<void> {
   await api.delete('/notifications/token');

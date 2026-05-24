@@ -19,6 +19,9 @@ import {
   fetchNotifications,
   fetchUnreadCount,
   markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
+  clearAllNotifications,
   registerPushToken,
   Notification,
 } from '../services/notifications.service';
@@ -31,6 +34,9 @@ interface NotificationsState {
   error: string;
   load: (page?: number) => Promise<void>;
   markRead: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
+  remove: (id: string) => Promise<void>;
+  clearAll: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -100,6 +106,25 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
+  const markAllRead = async () => {
+    await markAllNotificationsRead();
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+  };
+
+  const remove = async (id: string) => {
+    const wasUnread = notifications.find(n => n.id === id)?.read === false;
+    await deleteNotification(id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (wasUnread) setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const clearAll = async () => {
+    await clearAllNotifications();
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
   return (
     <NotificationsContext.Provider
       value={{
@@ -109,6 +134,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         error,
         load,
         markRead,
+        markAllRead,
+        remove,
+        clearAll,
         clearError: () => setError(''),
       }}
     >

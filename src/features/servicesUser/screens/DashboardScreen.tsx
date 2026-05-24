@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useServices } from '@/features/servicesUser/state/ServicesContext';
+import { useNotifications } from '@/features/notifications/state/NotificationsContext';
 import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
 
@@ -218,7 +219,7 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
           <Text style={s.serviceTitle} numberOfLines={2}>{item.title ?? item.name}</Text>
           <View style={s.serviceRow}>
             <Ionicons name="star" size={11} color="#F59E0B" />
-            <Text style={s.serviceStar}>{item.averageRating?.toFixed(1) ?? '—'}</Text>
+            <Text style={s.serviceStar}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
             <Text style={s.serviceReviews}> ({item.reviewsCount ?? 0})</Text>
           </View>
           <Text style={s.servicePrice}>
@@ -284,6 +285,7 @@ export default function DashboardScreen() {
     getServicesForCategory,
   } = useServices();
 
+  const { unreadCount } = useNotifications();
   const isProvider = profile?.isProvider === true;
   const HERO_SLIDES   = isProvider ? HERO_SLIDES_PROVIDER   : HERO_SLIDES_CLIENT;
   const QUICK_ACTIONS = isProvider ? QUICK_ACTIONS_PROVIDER : QUICK_ACTIONS_CLIENT;
@@ -396,8 +398,7 @@ export default function DashboardScreen() {
           hitSlop={8}
         >
           <Ionicons name="notifications-outline" size={22} color={C.text} />
-          {/* Badge de no leídas */}
-          <View style={s.notifDot} />
+          {unreadCount > 0 && <View style={s.notifDot} />}
         </Pressable>
       </Animated.View>
 
@@ -490,7 +491,7 @@ export default function DashboardScreen() {
                 <CategoryPill
                   key={cat.id}
                   name={cat.name}
-                  icon={cat.icon ?? '🔧'}
+                  icon={cat.icon || '🔧'}
                   accent={cat.accent ?? C.primary}
                   onPress={() => handleCategoryPress(cat.id)}
                   delay={idx * 40}

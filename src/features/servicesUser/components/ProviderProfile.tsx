@@ -112,7 +112,7 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
             <Text style={styles.heroTitle}>{provider.title}</Text>
             <Text style={styles.heroSummary}>{provider.summary}</Text>
             <View style={styles.heroStats}>
-              <Text style={styles.heroRating}>★ {rating.averageRating.toFixed(1)}</Text>
+              <Text style={styles.heroRating}>★ {rating.averageRating ? Number(rating.averageRating).toFixed(1) : '0.0'}</Text>
               <View style={styles.dot} />
               <Text style={styles.heroReviews}>{rating.reviewsCount} reseñas</Text>
             </View>

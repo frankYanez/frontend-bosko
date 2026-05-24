@@ -161,7 +161,7 @@ function ServiceCard({
           <View style={s.metaRow}>
             <View style={s.ratingChip}>
               <Ionicons name="star" size={11} color={C.amber} />
-              <Text style={s.ratingText}>{item.averageRating?.toFixed(1) ?? '—'}</Text>
+              <Text style={s.ratingText}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
               <Text style={s.reviewCount}>({item.reviewsCount ?? 0})</Text>
             </View>
             <View style={s.dot} />

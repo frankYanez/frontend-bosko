@@ -117,7 +117,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                         )}
                                         <View style={styles.ratingChip}>
                                             <Ionicons name="star" size={12} color="#FFD700" />
-                                            <Text style={styles.ratingText}>{service.averageRating?.toFixed(1) || "New"}</Text>
+                                            <Text style={styles.ratingText}>{service.averageRating ? Number(service.averageRating).toFixed(1) : 'New'}</Text>
                                         </View>
                                     </View>
                                     <Text style={styles.title}>{service.title}</Text>

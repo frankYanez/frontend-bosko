@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Animated,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -58,12 +59,22 @@ function AnimatedItem({ index, children }: { index: number; children: React.Reac
   );
 }
 
-function NotificationItem({ item, onPress }: { item: Notification; onPress: () => void }) {
-  const cfg = TYPE_ICON[item.type] ?? TYPE_ICON.default;
+function NotificationItem({ item, onPress, onDelete }: { item: Notification; onPress: () => void; onDelete: () => void }) {
+  const cfg = TYPE_ICON[item.type.toLowerCase()] ?? TYPE_ICON.default;
+  const swipeX = useRef(new Animated.Value(0)).current;
+  const deleteOpacity = swipeX.interpolate({ inputRange: [-80, -20], outputRange: [1, 0], extrapolate: 'clamp' });
+
+  const onLongPress = () => {
+    Alert.alert('Eliminar', '¿Eliminás esta notificación?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: onDelete },
+    ]);
+  };
 
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       style={({ pressed }) => [
         s.itemWrap,
         !item.read && s.itemUnread,
@@ -82,6 +93,9 @@ function NotificationItem({ item, onPress }: { item: Notification; onPress: () =
           <Text style={s.itemBody} numberOfLines={2}>{item.body}</Text>
           <Text style={s.itemTime}>{timeAgo(item.createdAt)}</Text>
         </View>
+        <Pressable onPress={onDelete} hitSlop={8} style={s.deleteBtn}>
+          <MaterialIcons name="close" size={16} color={TOKENS.color.sub} />
+        </Pressable>
       </View>
     </Pressable>
   );
@@ -112,15 +126,30 @@ function EmptyState() {
 }
 
 export default function NotificationsScreen() {
-  const { notifications, unreadCount, loading, load, markRead } = useNotifications();
+  const { notifications, unreadCount, loading, load, markRead, markAllRead, remove, clearAll } = useNotifications();
 
   useEffect(() => { load(); }, []);
 
   const handlePress = async (item: Notification) => {
     if (!item.read) await markRead(item.id);
+
+    const type = item.type.toLowerCase();
     if (item.data?.orderId) {
       router.push(`/(tabs)/orders/${item.data.orderId}`);
+    } else if (type === 'new_message' && item.data?.conversationId) {
+      router.push(`/chat/${item.data.conversationId}`);
+    } else if (type.startsWith('identity') || type === 'background_check') {
+      router.push('/(tabs)/profile/become-provider');
+    } else if (type === 'payment_released') {
+      router.push('/(tabs)/orders');
     }
+  };
+
+  const handleClearAll = () => {
+    Alert.alert('Limpiar notificaciones', '¿Eliminás todas las notificaciones?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Limpiar todo', style: 'destructive', onPress: clearAll },
+    ]);
   };
 
   return (
@@ -142,7 +171,18 @@ export default function NotificationsScreen() {
             </View>
           )}
         </View>
-        <View style={{ width: 40 }} />
+        <View style={s.headerActions}>
+          {unreadCount > 0 && (
+            <Pressable onPress={markAllRead} hitSlop={8} style={s.actionBtn}>
+              <MaterialIcons name="done-all" size={20} color={TOKENS.color.primary} />
+            </Pressable>
+          )}
+          {notifications.length > 0 && (
+            <Pressable onPress={handleClearAll} hitSlop={8} style={s.actionBtn}>
+              <MaterialIcons name="delete-sweep" size={20} color={TOKENS.color.sub} />
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {loading && notifications.length === 0 && (
@@ -158,7 +198,7 @@ export default function NotificationsScreen() {
         keyExtractor={n => n.id}
         renderItem={({ item, index }) => (
           <AnimatedItem index={index}>
-            <NotificationItem item={item} onPress={() => handlePress(item)} />
+            <NotificationItem item={item} onPress={() => handlePress(item)} onDelete={() => remove(item.id)} />
           </AnimatedItem>
         )}
         contentContainerStyle={s.listContent}
@@ -250,7 +290,17 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 2,
   },
-  itemTitle: { fontSize: 14, fontWeight: '600', color: TOKENS.color.text, paddingRight: 16 },
+  headerActions: { flexDirection: 'row', gap: 4 },
+  actionBtn: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  deleteBtn: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  itemTitle: { fontSize: 14, fontWeight: '600', color: TOKENS.color.text, paddingRight: 8 },
   itemTitleUnread: { fontWeight: '800' },
   itemBody: { fontSize: 13, color: TOKENS.color.sub, lineHeight: 18, marginTop: 2 },
   itemTime: { fontSize: 11, color: 'rgba(107,107,107,0.6)', marginTop: 4 },

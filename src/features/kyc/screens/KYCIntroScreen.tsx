@@ -13,7 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
 import { TOKENS } from '@/core/design-system/tokens';
-import { MotiView } from 'moti';
+import { MotiView } from '@/core/components/MotiView';
 
 const STEPS = [
   {

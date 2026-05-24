@@ -22,8 +22,8 @@ function mapService(s: any): ServiceSummary {
       currency: s.price?.currency ?? s.currency ?? 'ARS',
       unit: s.price?.unit ?? 'hora',
     },
-    averageRating: s.provider?.rating ?? s.averageRating ?? 0,
-    reviewsCount: s.provider?.reviewsCount ?? s.reviewsCount ?? 0,
+    averageRating: parseFloat(s.provider?.rating ?? s.averageRating ?? 0) || 0,
+    reviewsCount: parseInt(s.provider?.reviewsCount ?? s.reviewsCount ?? 0, 10) || 0,
     isAvailable: s.provider?.isAvailable ?? s.isAvailable,
   };
 }
@@ -48,12 +48,12 @@ const CATEGORY_ICON_MAP: Record<string, string> = {
 };
 
 function getCategoryIcon(name: string, backendIcon?: string): string {
-  if (backendIcon && backendIcon !== '🔧') return backendIcon;
+  if (backendIcon) return backendIcon;
   const lower = name.toLowerCase();
   for (const [key, emoji] of Object.entries(CATEGORY_ICON_MAP)) {
     if (lower.includes(key)) return emoji;
   }
-  return backendIcon ?? '🔧';
+  return '🔧';
 }
 
 export async function fetchCategoriesService(): Promise<Category[]> {
