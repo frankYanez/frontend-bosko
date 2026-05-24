@@ -127,7 +127,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     router.push("/(tabs)/profile/ChangePassword");
   };
 
-  const initial = (formData.firstName ?? "U")[0].toUpperCase();
+  const initial = (formData.firstName?.[0] ?? formData.lastName?.[0] ?? 'U').toUpperCase();
 
   return (
     <Modal

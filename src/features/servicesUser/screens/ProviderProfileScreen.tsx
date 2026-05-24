@@ -19,6 +19,14 @@ import api from '@/core/api/axiosinstance';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
 
+interface ReviewItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  reviewer: { firstName: string; lastName: string; avatarUrl: string | null };
+}
+
 const C = {
   primary: '#850021',
   dark:    '#4A0F20',
@@ -37,7 +45,7 @@ interface PublicProvider {
   lastName: string;
   avatarUrl: string | null;
   isVerified: boolean;
-  kycApproved: boolean;
+  kycApproved?: boolean;
   rating: number | null;
   reviewsCount: number;
   location?: string;
@@ -85,6 +93,7 @@ export default function ProviderProfileScreen() {
 
   const [provider, setProvider] = useState<PublicProvider | null>(null);
   const [services, setServices] = useState<ServiceSummary[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<ServiceSummary | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -98,9 +107,10 @@ export default function ProviderProfileScreen() {
     const load = async () => {
       setLoading(true);
       try {
-        const [profileRes, servicesRes] = await Promise.all([
+        const [profileRes, servicesRes, reviewsRes] = await Promise.all([
           api.get<PublicProvider>(`/users/${id}/public`),
           api.get<any>(`/services`, { params: { providerId: id, limit: 20 } }),
+          api.get<any>(`/reviews/providers/${id}/reviews`, { params: { limit: 10 } }).catch(() => ({ data: { data: [] } })),
         ]);
 
         if (!mounted) return;
@@ -137,6 +147,19 @@ export default function ProviderProfileScreen() {
           },
           averageRating: Number(providerData.rating ?? 0),
           reviewsCount: providerData.reviewsCount ?? 0,
+        })));
+
+        const rawReviews: any[] = reviewsRes.data?.data ?? reviewsRes.data ?? [];
+        setReviews(rawReviews.map(r => ({
+          id: r.id,
+          rating: Number(r.rating ?? 0),
+          comment: r.comment ?? null,
+          createdAt: r.createdAt ?? '',
+          reviewer: {
+            firstName: r.reviewer?.firstName ?? '',
+            lastName: r.reviewer?.lastName ?? '',
+            avatarUrl: r.reviewer?.avatarUrl ?? null,
+          },
         })));
 
         Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
@@ -317,6 +340,43 @@ export default function ProviderProfileScreen() {
             <Text style={s.emptySub}>Este profesional aún no publicó servicios.</Text>
           </View>
         )}
+
+        {/* ── Reseñas ── */}
+        {reviews.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>
+              Reseñas
+              <Text style={s.sectionCount}> ({provider?.reviewsCount ?? reviews.length})</Text>
+            </Text>
+            {reviews.map(r => {
+              const name = [r.reviewer.firstName, r.reviewer.lastName].filter(Boolean).join(' ') || 'Usuario';
+              const initial = (r.reviewer.firstName[0] ?? r.reviewer.lastName[0] ?? 'U').toUpperCase();
+              const date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+              return (
+                <View key={r.id} style={s.reviewCard}>
+                  <View style={s.reviewHeader}>
+                    <View style={s.reviewAvatar}>
+                      {r.reviewer.avatarUrl
+                        ? <Image source={{ uri: r.reviewer.avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} contentFit="cover" />
+                        : <Text style={s.reviewInitial}>{initial}</Text>
+                      }
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.reviewName}>{name}</Text>
+                      <View style={s.starsRow}>
+                        {[1,2,3,4,5].map(i => (
+                          <Ionicons key={i} name="star" size={11} color={i <= r.rating ? C.amber : C.border} />
+                        ))}
+                        <Text style={s.reviewDate}>{date}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  {r.comment ? <Text style={s.reviewComment}>{r.comment}</Text> : null}
+                </View>
+              );
+            })}
+          </View>
+        )}
       </Animated.ScrollView>
 
       {/* ── Footer CTA ── */}
@@ -441,6 +501,19 @@ const s = StyleSheet.create({
   serviceTitle: { fontSize: 14, fontWeight: '600', color: C.text },
   serviceSummary: { fontSize: 12, color: C.sub, lineHeight: 17, marginTop: 2 },
   servicePrice: { fontSize: 13, fontWeight: '600', color: C.sub, marginTop: 4 },
+
+  // Reviews
+  reviewCard: { gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  reviewAvatar: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center',
+  },
+  reviewInitial: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  reviewName: { fontSize: 13, fontWeight: '600', color: C.text },
+  starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
+  reviewDate: { fontSize: 11, color: C.sub, marginLeft: 4 },
+  reviewComment: { fontSize: 13, color: C.sub, lineHeight: 19 },
 
   // Empty
   emptyServices: { alignItems: 'center', paddingVertical: 24 },
