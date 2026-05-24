@@ -222,9 +222,7 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
             <Text style={s.serviceStar}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
             <Text style={s.serviceReviews}> ({item.reviewsCount ?? 0})</Text>
           </View>
-          <Text style={s.servicePrice}>
-            {item.rate ? formatPrice(item.rate.amount, item.rate.currency) : '—'}
-          </Text>
+          <Text style={s.servicePrice}>Cotizar por chat</Text>
         </View>
       </Pressable>
     </Animated.View>
@@ -367,7 +365,7 @@ export default function DashboardScreen() {
   };
 
   const handleCategoryPress = (catId: string) => {
-    router.push({ pathname: '/(tabs)/services/category/[id]', params: { id: catId } });
+    router.push({ pathname: '/(tabs)/services/category/[id]', params: { id: catId, from: 'home' } });
   };
 
   return (

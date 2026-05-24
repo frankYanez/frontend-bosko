@@ -118,7 +118,6 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
             </View>
             <Text style={styles.heroLocation}>{provider.location}</Text>
             <View style={styles.heroActions}>
-              <Text style={styles.heroRate}>Desde {formatRate(provider.rate)}</Text>
               <PremiumButton
                 title="Cotizar servicio"
                 onPress={() => onRequestQuote && onRequestQuote()}

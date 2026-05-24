@@ -20,7 +20,7 @@ function mapService(s: any): ServiceSummary {
     rate: {
       amount: parseFloat(s.price?.amount ?? String(s.price ?? 0)) || 0,
       currency: s.price?.currency ?? s.currency ?? 'ARS',
-      unit: s.price?.unit ?? 'hora',
+      unit: s.price?.unit ?? undefined,
     },
     averageRating: parseFloat(s.provider?.rating ?? s.averageRating ?? 0) || 0,
     reviewsCount: parseInt(s.provider?.reviewsCount ?? s.reviewsCount ?? 0, 10) || 0,

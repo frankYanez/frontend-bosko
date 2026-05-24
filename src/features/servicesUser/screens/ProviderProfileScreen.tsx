@@ -37,6 +37,7 @@ interface PublicProvider {
   lastName: string;
   avatarUrl: string | null;
   isVerified: boolean;
+  kycApproved: boolean;
   rating: number | null;
   reviewsCount: number;
   location?: string;
@@ -46,7 +47,8 @@ interface PublicProvider {
 function formatRate(rate?: ServiceSummary['rate']) {
   if (!rate || !rate.amount) return 'Consultar';
   const sym = rate.currency === 'ARS' ? '$' : rate.currency === 'USD' ? 'US$' : rate.currency;
-  return `${sym}${Number(rate.amount).toLocaleString('es-AR')} / ${rate.unit}`;
+  const price = `${sym}${Number(rate.amount).toLocaleString('es-AR')}`;
+  return rate.unit ? `${price} / ${rate.unit}` : price;
 }
 
 function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => void }) {
@@ -68,7 +70,7 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
         <View style={{ flex: 1 }}>
           <Text style={s.serviceTitle} numberOfLines={1}>{item.title}</Text>
           <Text style={s.serviceSummary} numberOfLines={2}>{item.summary}</Text>
-          <Text style={s.servicePrice}>{formatRate(item.rate)}</Text>
+          <Text style={s.servicePrice}>Cotizar por chat</Text>
         </View>
         <Ionicons name="chevron-forward" size={16} color={C.border} />
       </Animated.View>
@@ -110,6 +112,7 @@ export default function ProviderProfileScreen() {
           lastName: providerData.lastName ?? '',
           avatarUrl: providerData.avatarUrl ?? null,
           isVerified: providerData.isVerified ?? false,
+          kycApproved: providerData.kycApproved ?? providerData.isVerified ?? false,
           rating: providerData.rating != null ? Number(providerData.rating) : null,
           reviewsCount: providerData.reviewsCount ?? 0,
           location: providerData.location ?? '',
@@ -130,7 +133,7 @@ export default function ProviderProfileScreen() {
           rate: {
             amount: parseFloat(s.price?.amount ?? 0) || 0,
             currency: s.price?.currency ?? 'ARS',
-            unit: 'hora',
+            unit: s.price?.unit ?? undefined,
           },
           averageRating: Number(providerData.rating ?? 0),
           reviewsCount: providerData.reviewsCount ?? 0,
@@ -173,6 +176,18 @@ export default function ProviderProfileScreen() {
     );
   }
 
+  const handleRequest = () => {
+    if (services.length === 0) return;
+    router.push({
+      pathname: '/(tabs)/orders/quote',
+      params: {
+        serviceId: services[0].id,
+        providerName: fullName,
+        serviceTitle: services[0].title,
+      },
+    });
+  };
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -186,9 +201,9 @@ export default function ProviderProfileScreen() {
       <Animated.ScrollView
         style={{ opacity: fadeAnim }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 110 }]}
       >
-        {/* ── Hero card ── */}
+        {/* ── Hero ── */}
         <LinearGradient
           colors={[C.primary, '#c0002f', C.dark]}
           start={{ x: 0, y: 0 }}
@@ -233,25 +248,40 @@ export default function ProviderProfileScreen() {
               </View>
             </View>
           </View>
-
-          {/* Cotizar desde el hero si hay servicios */}
-          {services.length > 0 && (
-            <Pressable
-              style={s.ctaBtn}
-              onPress={() => router.push({
-                pathname: '/(tabs)/orders/quote',
-                params: {
-                  serviceId: services[0].id,
-                  providerName: fullName,
-                  serviceTitle: services[0].title,
-                },
-              })}
-            >
-              <Text style={s.ctaBtnText}>Cotizar servicio</Text>
-              <Ionicons name="arrow-forward" size={14} color={C.primary} />
-            </Pressable>
-          )}
         </LinearGradient>
+
+        {/* ── Verificación ── */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Verificación</Text>
+          <View style={s.badgeRow}>
+            <View style={[s.badge, provider.kycApproved ? s.badgeOk : s.badgePending]}>
+              <Ionicons
+                name={provider.kycApproved ? 'shield-checkmark' : 'shield-outline'}
+                size={15}
+                color={provider.kycApproved ? '#16A34A' : C.sub}
+              />
+              <Text style={[s.badgeText, provider.kycApproved ? s.badgeTextOk : s.badgeTextPending]}>
+                {provider.kycApproved ? 'Identidad verificada' : 'Sin verificar'}
+              </Text>
+            </View>
+
+            {provider.isVerified && (
+              <View style={[s.badge, s.badgeOk]}>
+                <Ionicons name="checkmark-circle" size={15} color="#16A34A" />
+                <Text style={[s.badgeText, s.badgeTextOk]}>Profesional aprobado</Text>
+              </View>
+            )}
+
+            <View style={[s.badge, s.badgeInfo]}>
+              <Ionicons name="star" size={15} color={C.amber} />
+              <Text style={[s.badgeText, s.badgeTextInfo]}>
+                {provider.reviewsCount > 0
+                  ? `${Number(provider.rating ?? 0).toFixed(1)} · ${provider.reviewsCount} reseñas`
+                  : 'Sin reseñas aún'}
+              </Text>
+            </View>
+          </View>
+        </View>
 
         {/* ── Bio ── */}
         {provider.bio ? (
@@ -265,7 +295,7 @@ export default function ProviderProfileScreen() {
         {services.length > 0 && (
           <View style={s.section}>
             <Text style={s.sectionTitle}>
-              Servicios disponibles
+              Servicios
               <Text style={s.sectionCount}> ({services.length})</Text>
             </Text>
             {services.map(item => (
@@ -288,6 +318,16 @@ export default function ProviderProfileScreen() {
           </View>
         )}
       </Animated.ScrollView>
+
+      {/* ── Footer CTA ── */}
+      {services.length > 0 && (
+        <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
+          <Pressable style={s.ctaBtn} onPress={handleRequest}>
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+            <Text style={s.ctaBtnText}>Solicitar servicio</Text>
+          </Pressable>
+        </View>
+      )}
 
       <ServiceDetailModal
         visible={modalVisible}
@@ -347,12 +387,21 @@ const s = StyleSheet.create({
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statText: { fontSize: 13, fontWeight: '700', color: '#FFE082' },
   statSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)' },
-  ctaBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#FFFFFF', borderRadius: 12,
-    paddingVertical: 11, paddingHorizontal: 20, alignSelf: 'flex-start',
+  // Footer CTA
+  footer: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 16, paddingTop: 12,
+    backgroundColor: C.card,
+    borderTopWidth: 1, borderTopColor: C.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 8,
   },
-  ctaBtnText: { fontSize: 14, fontWeight: '700', color: C.primary },
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: C.primary, borderRadius: 16,
+    paddingVertical: 15,
+  },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
   // Sections
   section: {
@@ -364,6 +413,20 @@ const s = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.text },
   sectionCount: { fontWeight: '400', color: C.sub },
   bioText: { fontSize: 14, color: C.sub, lineHeight: 21 },
+
+  // Verification badges
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  badge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
+  },
+  badgeOk: { backgroundColor: '#DCFCE7' },
+  badgePending: { backgroundColor: '#F3F4F6' },
+  badgeInfo: { backgroundColor: '#FEF9C3' },
+  badgeText: { fontSize: 12, fontWeight: '600' },
+  badgeTextOk: { color: '#16A34A' },
+  badgeTextPending: { color: C.sub },
+  badgeTextInfo: { color: '#A16207' },
 
   // Service row
   serviceRow: {
@@ -377,7 +440,7 @@ const s = StyleSheet.create({
   },
   serviceTitle: { fontSize: 14, fontWeight: '600', color: C.text },
   serviceSummary: { fontSize: 12, color: C.sub, lineHeight: 17, marginTop: 2 },
-  servicePrice: { fontSize: 13, fontWeight: '700', color: C.primary, marginTop: 4 },
+  servicePrice: { fontSize: 13, fontWeight: '600', color: C.sub, marginTop: 4 },
 
   // Empty
   emptyServices: { alignItems: 'center', paddingVertical: 24 },

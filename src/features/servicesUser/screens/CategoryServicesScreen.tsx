@@ -168,7 +168,7 @@ function ServiceCard({
             <Text style={s.location} numberOfLines={1}>{item.location}</Text>
           </View>
 
-          <Text style={s.price}>Desde {formatRate(item.rate)}</Text>
+          <Text style={s.price}>Cotizar por chat</Text>
         </View>
 
         {/* Favorite + chevron */}
@@ -253,6 +253,7 @@ export default function CategoryServicesScreen() {
   } = useServices();
 
   const categoryId = typeof params.id === 'string' ? params.id : undefined;
+  const fromHome   = params.from === 'home';
   const category   = categories.find(c => c.id === categoryId);
   const catIndex   = categories.findIndex(c => c.id === categoryId);
   const services   = categoryId ? getServicesForCategory(categoryId) : [];
@@ -284,7 +285,7 @@ export default function CategoryServicesScreen() {
           <Hero
             category={category as any}
             gradientIndex={catIndex >= 0 ? catIndex : 2}
-            onBack={() => router.back()}
+            onBack={() => fromHome ? router.replace('/(tabs)') : router.back()}
           />
         </View>
 

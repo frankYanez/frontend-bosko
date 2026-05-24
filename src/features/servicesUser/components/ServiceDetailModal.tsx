@@ -50,8 +50,8 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                 : rate.currency === "USD"
                     ? "US$"
                     : `${rate.currency} `;
-        return `${symbol}${rate.amount} ${rate.unit !== "fixed" ? "/ " + rate.unit : ""
-            }`;
+        const price = `${symbol}${Number(rate.amount).toLocaleString('es-AR')}`;
+        return rate.unit ? `${price} / ${rate.unit}` : price;
     };
 
     return (
@@ -126,11 +126,6 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
                             {/* Content Body */}
                             <View style={styles.body}>
-                                <View style={styles.priceRow}>
-                                    <Text style={styles.priceLabel}>Precio estimado</Text>
-                                    <Text style={styles.priceValue}>{formatRate(service.rate)}</Text>
-                                </View>
-
                                 <View style={styles.divider} />
 
                                 <Text style={styles.sectionTitle}>Descripción</Text>
