@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+﻿import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import React, { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
+import { TOKENS } from '@/core/design-system/tokens';
 
 export default function EditPhoto() {
   const [photo, setPhoto] = useState<string | null>(null);
@@ -43,6 +44,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
     marginBottom: 16,
   },
-  btn: { padding: 12, backgroundColor: "#850021", borderRadius: 8 },
+  btn: { padding: 12, backgroundColor: TOKENS.color.primary, borderRadius: 8 },
   btnText: { color: "#fff", fontWeight: "600" },
 });

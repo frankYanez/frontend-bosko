@@ -47,7 +47,16 @@
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "expo-video",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/bosko-logo.png",
+          "color": "#850021",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

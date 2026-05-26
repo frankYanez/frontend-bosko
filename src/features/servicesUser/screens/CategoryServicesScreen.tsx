@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { memo, useCallback, useEffect, useRef } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
+  FlatList,
   Pressable,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -18,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useServices } from '../state/ServicesContext';
 import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const { width: W } = Dimensions.get('window');
 
@@ -28,14 +30,14 @@ const C = {
   sub:     '#6B7280',
   border:  '#EDEDF0',
   amber:   '#F59E0B',
-  primary: '#850021',
+  primary: TOKENS.color.primary,
 };
 
 // ── Curated gradients — must match ServicesScreen ────────────────────────────
 const GRADIENTS: [string, string, string][] = [
   ['#0f0c29', '#302b63', '#24243e'],
   ['#134e5e', '#71b280', '#134e5e'],
-  ['#4a0f20', '#850021', '#c0002f'],
+  [TOKENS.color.primaryDark, TOKENS.color.primary, '#c0002f'],
   ['#0d0d0d', '#2c3e50', '#4ca1af'],
   ['#1a1a2e', '#16213e', '#0f3460'],
   ['#2d1b69', '#553c9a', '#6d28d9'],
@@ -95,7 +97,7 @@ function formatRate(rate?: ServiceSummary['rate']) {
 }
 
 // ── Service card ──────────────────────────────────────────────────────────────
-function ServiceCard({
+const ServiceCard = memo(function ServiceCard({
   item,
   index,
   onPress,
@@ -121,7 +123,7 @@ function ServiceCard({
   const scaleA    = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const delay = index * 65;
+    const delay = Math.min(index, 6) * 65;
     Animated.parallel([
       Animated.timing(fadeAnim,  { toValue: 1, duration: 380, delay, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, delay, tension: 80, friction: 10, useNativeDriver: true }),
@@ -187,7 +189,7 @@ function ServiceCard({
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 // ── Hero header ───────────────────────────────────────────────────────────────
 function Hero({
@@ -247,82 +249,103 @@ export default function CategoryServicesScreen() {
   const params = useLocalSearchParams();
   const {
     fetchServicesByCategory,
+    loadMoreServicesByCategory,
     getServicesForCategory,
     categories,
     servicesStatus,
+    servicesHasMore,
+    servicesLoadingMore,
   } = useServices();
 
-  const categoryId = typeof params.id === 'string' ? params.id : undefined;
-  const fromHome   = params.from === 'home';
-  const category   = categories.find(c => c.id === categoryId);
-  const catIndex   = categories.findIndex(c => c.id === categoryId);
-  const services   = categoryId ? getServicesForCategory(categoryId) : [];
-  const status     = categoryId ? servicesStatus[categoryId] : undefined;
-  const isLoading  = Boolean(status?.loading && services.length === 0);
+  const categoryId    = typeof params.id === 'string' ? params.id : undefined;
+  const fromHome      = params.from === 'home';
+  const category      = categories.find(c => c.id === categoryId);
+  const catIndex      = categories.findIndex(c => c.id === categoryId);
+  const services      = categoryId ? getServicesForCategory(categoryId) : [];
+  const status        = categoryId ? servicesStatus[categoryId] : undefined;
+  const isLoading     = Boolean(status?.loading && services.length === 0);
+  const isLoadingMore = categoryId ? (servicesLoadingMore[categoryId] ?? false) : false;
+  const hasMore       = categoryId ? (servicesHasMore[categoryId] ?? false) : false;
 
   useEffect(() => {
     if (categoryId) fetchServicesByCategory(categoryId).catch(() => {});
   }, [categoryId]);
 
-  const handleProviderPress = (item: ServiceSummary) => {
+  const handleProviderPress = useCallback((item: ServiceSummary) => {
     router.push({
       pathname: '/(tabs)/services/provider/[id]',
       params: { id: item.providerId ?? item.id },
     });
-  };
+  }, [router]);
+
+  const handleEndReached = useCallback(() => {
+    if (categoryId && hasMore && !isLoadingMore) {
+      loadMoreServicesByCategory(categoryId).catch(() => {});
+    }
+  }, [categoryId, hasMore, isLoadingMore, loadMoreServicesByCategory]);
+
+  const ListHeader = (
+    <>
+      <View style={s.heroPad}>
+        <Hero
+          category={category as any}
+          gradientIndex={catIndex >= 0 ? catIndex : 2}
+          onBack={() => fromHome ? router.replace('/(tabs)') : router.back()}
+        />
+      </View>
+      {!isLoading && services.length > 0 && (
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>
+            {`${services.length} profesional${services.length !== 1 ? 'es' : ''}`}
+          </Text>
+          <Text style={s.sectionSub}>Tocá uno para ver su perfil completo</Text>
+        </View>
+      )}
+    </>
+  );
+
+  const ListEmpty = isLoading ? (
+    <SkeletonList />
+  ) : (
+    <View style={s.empty}>
+      <Text style={s.emptyIcon}>🔍</Text>
+      <Text style={s.emptyTitle}>Próximamente hay más</Text>
+      <Text style={s.emptySub}>Estamos sumando especialistas en esta categoría.</Text>
+    </View>
+  );
+
+  const ListFooter = isLoadingMore ? (
+    <ActivityIndicator color={C.primary} style={{ marginVertical: 20 }} />
+  ) : !hasMore && services.length > 0 ? (
+    <Text style={s.endLabel}>Eso es todo por ahora</Text>
+  ) : null;
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
-      <ScrollView
+      <FlatList
+        data={isLoading ? [] : services}
+        keyExtractor={item => item.id}
+        renderItem={({ item, index }) => (
+          <View style={s.itemWrap}>
+            <ServiceCard
+              item={item}
+              index={index}
+              onPress={() => handleProviderPress(item)}
+            />
+          </View>
+        )}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
+        ListFooterComponent={ListFooter}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.4}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 100 }]}
-      >
-        {/* Hero */}
-        <View style={s.heroPad}>
-          <Hero
-            category={category as any}
-            gradientIndex={catIndex >= 0 ? catIndex : 2}
-            onBack={() => fromHome ? router.replace('/(tabs)') : router.back()}
-          />
-        </View>
-
-        {/* Section header */}
-        {!isLoading && (
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>
-              {services.length > 0
-                ? `${services.length} profesional${services.length !== 1 ? 'es' : ''}`
-                : 'Profesionales'}
-            </Text>
-            <Text style={s.sectionSub}>Tocá uno para ver su perfil completo</Text>
-          </View>
-        )}
-
-        {/* Content */}
-        {isLoading ? (
-          <SkeletonList />
-        ) : services.length === 0 ? (
-          <View style={s.empty}>
-            <Text style={s.emptyIcon}>🔍</Text>
-            <Text style={s.emptyTitle}>Próximamente hay más</Text>
-            <Text style={s.emptySub}>Estamos sumando especialistas en esta categoría.</Text>
-          </View>
-        ) : (
-          <View style={s.list}>
-            {services.map((item, index) => (
-              <ServiceCard
-                key={item.id}
-                item={item}
-                index={index}
-                onPress={() => handleProviderPress(item)}
-              />
-            ))}
-          </View>
-        )}
-      </ScrollView>
+      />
     </View>
   );
 }
@@ -420,10 +443,17 @@ const s = StyleSheet.create({
     color: C.sub,
   },
 
-  // List
-  list: {
+  // List item wrapper
+  itemWrap: {
     paddingHorizontal: 16,
-    gap: 10,
+  },
+
+  // End of list label
+  endLabel: {
+    textAlign: 'center',
+    fontSize: 13,
+    color: C.sub,
+    paddingVertical: 20,
   },
 
   // Service card

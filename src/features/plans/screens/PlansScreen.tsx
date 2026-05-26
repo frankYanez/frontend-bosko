@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -160,7 +160,7 @@ export default function PlansScreen() {
           {isSubscribed && myPlan && (
             <Animated.View style={[s.currentPlanBanner, { opacity: bannerOpacity, transform: [{ scale: bannerScale }] }]}>
               <LinearGradient
-                colors={['#850021', '#4A0F20']}
+                colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={s.currentPlanGrad}
@@ -243,7 +243,7 @@ export default function PlansScreen() {
                       </View>
                     ) : (
                       <LinearGradient
-                        colors={isPopular ? ['#FFD700', '#FFA500'] : ['#850021', '#4A0F20']}
+                        colors={isPopular ? ['#FFD700', '#FFA500'] : [TOKENS.color.primary, TOKENS.color.primaryDark]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={s.subscribeBtn}
@@ -251,7 +251,7 @@ export default function PlansScreen() {
                         {subscribing === plan.id ? (
                           <ActivityIndicator color="#fff" size="small" />
                         ) : (
-                          <Text style={[s.subscribeBtnText, isPopular && { color: '#4A0F20' }]}>
+                          <Text style={[s.subscribeBtnText, isPopular && { color: TOKENS.color.primaryDark }]}>
                             {plan.price === 0 ? 'Gratuito' : 'Suscribirse'}
                           </Text>
                         )}
@@ -353,13 +353,13 @@ const s = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  popularText: { fontSize: 12, fontWeight: '800', color: '#4A0F20' },
+  popularText: { fontSize: 12, fontWeight: '800', color: TOKENS.color.primaryDark },
   planHeader: { gap: 8 },
   planName: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
-  planNamePopular: { color: '#850021' },
+  planNamePopular: { color: TOKENS.color.primary },
   planPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   planPriceAmount: { fontSize: 32, fontWeight: '800', color: TOKENS.color.text },
-  planPricePopular: { color: '#850021' },
+  planPricePopular: { color: TOKENS.color.primary },
   planPriceInterval: { fontSize: 14, color: TOKENS.color.sub },
   planDescription: { fontSize: 14, color: TOKENS.color.sub, lineHeight: 20 },
   featuresList: { gap: 10 },

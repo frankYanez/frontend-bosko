@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -18,6 +18,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
+import { TOKENS } from '@/core/design-system/tokens';
 
 interface ReviewItem {
   id: string;
@@ -28,8 +29,8 @@ interface ReviewItem {
 }
 
 const C = {
-  primary: '#850021',
-  dark:    '#4A0F20',
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
   bg:      '#F7F7FA',
   card:    '#FFFFFF',
   text:    '#1A1A1A',

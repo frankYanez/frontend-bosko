@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EditProfileScreen — Editar perfil con avatar upload.
  * PATCH /users/me + POST /users/me/avatar
  */
@@ -121,14 +121,14 @@ export default function EditProfileScreen() {
         >
           <Pressable onPress={pickImage} disabled={uploadingAvatar}>
             <LinearGradient
-              colors={['#850021', '#4A0F20']}
+              colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.avatarBorder}
             >
               <View style={styles.avatarContainer}>
                 {uploadingAvatar ? (
-                  <ActivityIndicator color="#850021" size="large" />
+                  <ActivityIndicator color={TOKENS.color.primary} size="large" />
                 ) : displayUri ? (
                   <Image source={{ uri: displayUri }} style={styles.avatarImage} />
                 ) : (
@@ -201,7 +201,7 @@ export default function EditProfileScreen() {
                   </View>
                 ) : (
                   <Pressable onPress={() => router.push('/(tabs)/profile/verify-phone')}>
-                    <Text style={{ fontSize: 12, color: '#850021', fontWeight: '600' }}>Verificar →</Text>
+                    <Text style={{ fontSize: 12, color: TOKENS.color.primary, fontWeight: '600' }}>Verificar →</Text>
                   </Pressable>
                 )}
               </View>
@@ -261,7 +261,7 @@ export default function EditProfileScreen() {
             ]}
           >
             <LinearGradient
-              colors={['#850021', '#4A0F20']}
+              colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.saveGrad}
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 36,
     fontWeight: '700',
-    color: '#850021',
+    color: TOKENS.color.primary,
   },
   cameraBadge: {
     position: 'absolute',
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#850021',
+    backgroundColor: TOKENS.color.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   saveBtn: {
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#850021',
+    shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

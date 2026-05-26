@@ -1,20 +1,13 @@
 /**
  * NotificationsContext — Estado global de notificaciones.
- * Carga notificaciones, marca como leídas y registra push token.
+ * Soporta iOS y Android (FCM via google-services.json).
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Platform } from 'react-native';
-
-let Notifications: any = null;
-let Device: any = null;
-
-if (Platform.OS === 'ios') {
-  try {
-    Notifications = require('expo-notifications');
-    Device = require('expo-device');
-  } catch {}
-}
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import {
   fetchNotifications,
   fetchUnreadCount,
@@ -26,6 +19,15 @@ import {
   Notification,
 } from '../services/notifications.service';
 import { useAuth } from '@/features/auth/state/AuthContext';
+
+// Notificaciones en foreground: mostrar siempre como alerta
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  } as Notifications.NotificationBehavior),
+});
 
 interface NotificationsState {
   notifications: Notification[];
@@ -51,22 +53,41 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Registrar push token cuando el usuario está autenticado
+  const notifListenerRef = useRef<Notifications.EventSubscription | null>(null);
+
   useEffect(() => {
     if (!token) return;
     registerDevicePushToken().catch(() => {});
   }, [token]);
 
-  // Cargar contador al autenticar
   useEffect(() => {
     if (!token) return;
-    fetchUnreadCount()
-      .then(setUnreadCount)
-      .catch(() => {});
+    fetchUnreadCount().then(setUnreadCount).catch(() => {});
   }, [token]);
 
+  // Actualiza unread count cuando llega una notificación con la app en primer plano
+  useEffect(() => {
+    notifListenerRef.current = Notifications.addNotificationReceivedListener(() => {
+      fetchUnreadCount().then(setUnreadCount).catch(() => {});
+    });
+    return () => notifListenerRef.current?.remove();
+  }, []);
+
   const registerDevicePushToken = async () => {
-    if (!Notifications || !Device || !Device.isDevice) return;
+    if (!Device.isDevice) return; // Simuladores no reciben push
+
+    // Android: configurar canal de notificaciones
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Bosko',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#850021',
+        sound: 'default',
+        enableVibrate: true,
+        showBadge: true,
+      });
+    }
 
     const { status: existing } = await Notifications.getPermissionsAsync();
     let finalStatus = existing;
@@ -78,7 +99,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     if (finalStatus !== 'granted') return;
 
-    const pushToken = (await Notifications.getExpoPushTokenAsync()).data;
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      (Constants as any).easConfig?.projectId;
+
+    if (!projectId) return;
+
+    const { data: pushToken } = await Notifications.getExpoPushTokenAsync({ projectId });
     const platform = Platform.OS as 'ios' | 'android';
     await registerPushToken(pushToken, platform);
   };
@@ -100,9 +127,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const markRead = async (id: string) => {
     await markNotificationRead(id);
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 

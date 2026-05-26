@@ -155,3 +155,8 @@ Real-time chat tied to orders (no free DMs).
 ### Tests
 
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
+
+## Recent Changes
+- **25/5/2026 10:56 p. m.** — Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json) (26 archivos)
+- **25/5/2026 10:55 p. m.** — Documentación CLAUDE.md, App Config (app.json), App Layout / Providers, Dependencias (package.json), Contextos Globales, API / Axios, Componentes Core, Chat / Mensajería, Favoritos, KYC / Antecedentes, Notificaciones Push, Órdenes, Planes, Perfil, Reseñas, Servicios / Marketplace, Usuarios (38 archivos)
+- **25/5/2026 10:52 p. m.** — App Config (app.json), App Layout / Providers, Dependencias (package.json), Contextos Globales, API / Axios, Componentes Core, Chat / Mensajería, Favoritos, KYC / Antecedentes, Notificaciones Push, Órdenes, Planes, Perfil, Reseñas, Servicios / Marketplace, Usuarios (37 archivos)

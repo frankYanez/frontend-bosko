@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ReviewScreen — Calificar orden completada.
  * POST /reviews con star rating + comentario.
  */
@@ -89,7 +89,7 @@ export default function ReviewScreen() {
           style={styles.iconWrap}
         >
           <LinearGradient
-            colors={['#850021', '#4A0F20']}
+            colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.iconGrad}
@@ -187,7 +187,7 @@ export default function ReviewScreen() {
             ]}
           >
             <LinearGradient
-              colors={['#850021', '#4A0F20']}
+              colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.submitGrad}
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#850021',
+    shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#850021',
+    shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

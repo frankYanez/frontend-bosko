@@ -86,6 +86,10 @@ type MarketplaceAction =
       payload: { categoryId: string; services: ServiceSummary[] };
     }
   | {
+      type: "APPEND_SERVICES";
+      payload: { categoryId: string; services: ServiceSummary[] };
+    }
+  | {
       type: "SET_SERVICES_STATUS";
       payload: { categoryId: string; status: Partial<ResourceState> };
     }
@@ -180,6 +184,19 @@ const marketplaceReducer = (
           ...state.servicesStatus,
           [categoryId]: mergeStatus(state.servicesStatus[categoryId], status),
         },
+      };
+    }
+    case "APPEND_SERVICES": {
+      const { categoryId, services } = action.payload;
+      const servicesById = { ...state.servicesById };
+      services.forEach((s) => { servicesById[s.id] = s; });
+      return {
+        ...state,
+        servicesByCategory: {
+          ...state.servicesByCategory,
+          [categoryId]: [...(state.servicesByCategory[categoryId] ?? []), ...services],
+        },
+        servicesById,
       };
     }
     case "SET_PROVIDER": {
@@ -328,8 +345,11 @@ interface ServicesContextValue {
   servicesStatus: Record<string, ResourceState>;
   providersStatus: Record<string, ResourceState>;
   reviewsStatus: Record<string, ResourceState>;
+  servicesHasMore: Record<string, boolean>;
+  servicesLoadingMore: Record<string, boolean>;
   fetchCategories: () => Promise<void>;
   fetchServicesByCategory: (categoryId: string) => Promise<ServiceSummary[]>;
+  loadMoreServicesByCategory: (categoryId: string) => Promise<void>;
   fetchProviderProfile: (
     providerId: string
   ) => Promise<ProviderProfile | undefined>;
@@ -388,6 +408,9 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
   const [myServices, setMyServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [myServicesLoading, setMyServicesLoading] = useState<boolean>(false);
+  const [servicesHasMore, setServicesHasMore] = useState<Record<string, boolean>>({});
+  const [servicesLoadingMore, setServicesLoadingMore] = useState<Record<string, boolean>>({});
+  const categoryPageRef = React.useRef<Record<string, number>>({});
 
   const currentPlan = useMemo<PlanType>(() => {
     const userPlan =
@@ -435,29 +458,22 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
         return state.servicesByCategory[categoryId] ?? [];
       }
 
+      categoryPageRef.current[categoryId] = 1;
       dispatch({
         type: "SET_SERVICES_STATUS",
         payload: { categoryId, status: { loading: true, error: null } },
       });
       try {
-        const data = await fetchServicesByCategoryService(categoryId);
-        dispatch({
-          type: "SET_SERVICES",
-          payload: { categoryId, services: data },
-        });
+        const { data, hasMore } = await fetchServicesByCategoryService(categoryId, 1);
+        dispatch({ type: "SET_SERVICES", payload: { categoryId, services: data } });
         dispatch({
           type: "SET_SERVICES_STATUS",
-          payload: {
-            categoryId,
-            status: { loading: false, loaded: true, error: null },
-          },
+          payload: { categoryId, status: { loading: false, loaded: true, error: null } },
         });
+        setServicesHasMore(prev => ({ ...prev, [categoryId]: hasMore }));
         return data;
       } catch (error) {
-        const message = getErrorMessage(
-          error,
-          "No se pudieron cargar los servicios"
-        );
+        const message = getErrorMessage(error, "No se pudieron cargar los servicios");
         dispatch({
           type: "SET_SERVICES_STATUS",
           payload: { categoryId, status: { loading: false, error: message } },
@@ -466,6 +482,28 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       }
     },
     [state.servicesByCategory, state.servicesStatus]
+  );
+
+  const loadMoreServicesByCategory = useCallback(
+    async (categoryId: string) => {
+      if (servicesLoadingMore[categoryId] || !servicesHasMore[categoryId]) return;
+
+      const nextPage = (categoryPageRef.current[categoryId] ?? 1) + 1;
+      setServicesLoadingMore(prev => ({ ...prev, [categoryId]: true }));
+      try {
+        const { data, hasMore } = await fetchServicesByCategoryService(categoryId, nextPage);
+        if (data.length > 0) {
+          dispatch({ type: "APPEND_SERVICES", payload: { categoryId, services: data } });
+          categoryPageRef.current[categoryId] = nextPage;
+        }
+        setServicesHasMore(prev => ({ ...prev, [categoryId]: hasMore }));
+      } catch {
+        // silently ignore — user can scroll up and trigger again
+      } finally {
+        setServicesLoadingMore(prev => ({ ...prev, [categoryId]: false }));
+      }
+    },
+    [servicesHasMore, servicesLoadingMore]
   );
 
   const fetchProviderProfile = useCallback(
@@ -726,10 +764,13 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       categories: state.categories,
       categoriesStatus: state.categoriesStatus,
       servicesStatus: state.servicesStatus,
+      servicesHasMore,
+      servicesLoadingMore,
       providersStatus: state.providersStatus,
       reviewsStatus: state.reviewsStatus,
       fetchCategories,
       fetchServicesByCategory,
+      loadMoreServicesByCategory,
       fetchProviderProfile,
       fetchServiceReviews,
       addReviewWithRating,
@@ -749,6 +790,9 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       fetchProviderProfile,
       fetchServiceReviews,
       fetchServicesByCategory,
+      loadMoreServicesByCategory,
+      servicesHasMore,
+      servicesLoadingMore,
       getProviderById,
       getProviderRating,
       getReviewsForService,

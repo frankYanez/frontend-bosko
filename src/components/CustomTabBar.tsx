@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnread } from '@/features/chat/state/UnreadContext';
+import { TOKENS } from '@/core/design-system/tokens';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const BAR_H   = 64;
@@ -16,7 +17,7 @@ const NOTCH_D = BR + 4;   // deeper than BR so notch fully receives bubble
 const EASE    = 20;
 const LIFT    = BR;       // center of bubble sits at bar top edge
 
-const C = { bar: '#141414', bordo: '#850021', white: '#FFFFFF' };
+const C = { bar: '#141414', bordo: TOKENS.color.primary, white: '#FFFFFF' };
 
 const SPRING = { tension: 120, friction: 10, useNativeDriver: true };
 

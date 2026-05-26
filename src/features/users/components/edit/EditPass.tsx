@@ -6,8 +6,7 @@ export default function EditPassword() {
   const [newPass, setNewPass] = useState("");
 
   const save = () => {
-    console.log("Password actualizado:", { oldPass, newPass });
-    // acá mandás request al backend
+    // TODO: conectar con backend PATCH /users/me/password
   };
 
   return (

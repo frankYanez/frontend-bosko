@@ -12,7 +12,7 @@ import { API_URL } from '@/core/config/env';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import { ApiResponse, AuthResponse } from '@/features/auth/types';
 
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 // ── Cola de refresh (evita múltiples refreshes concurrentes) ──────────────────
 let isRefreshing = false;

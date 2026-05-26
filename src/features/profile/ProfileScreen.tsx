@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -22,12 +22,13 @@ import { useKYC } from '@/features/kyc/state/KYCContext';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const { width: W } = Dimensions.get('window');
 
 const C = {
-  primary:  '#850021',
-  dark:     '#4A0F20',
+  primary:  TOKENS.color.primary,
+  dark:     TOKENS.color.primaryDark,
   bg:       '#F7F7FA',
   card:     '#FFFFFF',
   text:     '#1A1A1A',

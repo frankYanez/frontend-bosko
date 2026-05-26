@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+﻿import React, { useRef, useEffect, useCallback } from 'react';
 import {
   Animated,
   FlatList,
@@ -17,10 +17,11 @@ import { router } from 'expo-router';
 import { useFavorites } from '../state/FavoritesContext';
 import { EmptyState } from '@/core/components/EmptyState';
 import type { ServiceSummary } from '@/types/services';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const C = {
-  primary: '#850021',
-  dark:    '#4A0F20',
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
   bg:      '#F7F7FA',
   card:    '#FFFFFF',
   text:    '#1A1A1A',

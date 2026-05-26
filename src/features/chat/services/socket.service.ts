@@ -22,12 +22,14 @@ const SOCKET_URL = API_URL.replace(/\/api\/v\d+.*$/, '');
 type MessageCallback = (message: Message) => void;
 type TypingCallback = (data: { userId: string; isTyping: boolean }) => void;
 type ConnectionCallback = (connected: boolean) => void;
+type MessagesReadCallback = (data: { conversationId: string; readBy: string }) => void;
 
 class SocketService {
   private socket: Socket | null = null;
   private messageHandlers: Set<MessageCallback> = new Set();
   private typingHandlers: Set<TypingCallback> = new Set();
   private connectionHandlers: Set<ConnectionCallback> = new Set();
+  private readHandlers: Set<MessagesReadCallback> = new Set();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
 
@@ -69,6 +71,10 @@ class SocketService {
       this.typingHandlers.forEach(cb => cb(data));
     });
 
+    this.socket.on('messages_read', (data: { conversationId: string; readBy: string }) => {
+      this.readHandlers.forEach(cb => cb(data));
+    });
+
     this.socket.on('connect_error', (err) => {
       this.reconnectAttempts++;
       console.warn('[Socket] Connection error:', err.message);
@@ -85,6 +91,7 @@ class SocketService {
     this.messageHandlers.clear();
     this.typingHandlers.clear();
     this.connectionHandlers.clear();
+    this.readHandlers.clear();
   }
 
   /** Unirse a una sala de conversación */
@@ -123,6 +130,12 @@ class SocketService {
   onConnectionChange(cb: ConnectionCallback): () => void {
     this.connectionHandlers.add(cb);
     return () => this.connectionHandlers.delete(cb);
+  }
+
+  /** Suscribirse a confirmaciones de lectura del otro participante */
+  onMessagesRead(cb: MessagesReadCallback): () => void {
+    this.readHandlers.add(cb);
+    return () => this.readHandlers.delete(cb);
   }
 }
 

@@ -27,8 +27,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-// expo-image-manipulator requires a native rebuild — imported but used only after rebuild
-// import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import {
   useAudioPlayer,
@@ -317,9 +316,18 @@ function TypingBubble() {
   );
 }
 
-// Placeholder — replaced with ImageManipulator after rebuild
 async function compressImage(uri: string, mimeType: string): Promise<{ uri: string; mimeType: string }> {
-  return { uri, mimeType };
+  if (mimeType.startsWith('video/')) return { uri, mimeType };
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 1200 } }],
+      { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    return { uri: result.uri, mimeType: 'image/jpeg' };
+  } catch {
+    return { uri, mimeType };
+  }
 }
 
 // ── Pantalla principal ────────────────────────────────────────────────────────
@@ -443,9 +451,16 @@ export default function ChatScreen() {
         if (prev.some(m => m.id === msg.id)) return prev;
         return [msg, ...prev];
       });
+      const preview =
+        msg.messageType === 'audio' ? '🎤 Audio' :
+        msg.messageType === 'image' ? '📷 Imagen' :
+        msg.messageType === 'file'  ? '📎 Archivo' :
+        msg.content ?? '';
+      updateLastMessage(msg.conversationId, preview, msg.senderId);
+      markAsRead(msg.conversationId).catch(() => {});
     });
     return () => unsub();
-  }, []);
+  }, [updateLastMessage]);
 
   useEffect(() => {
     let active = true;
@@ -460,15 +475,23 @@ export default function ChatScreen() {
       await loadMessages(id);
       if (!active) return;
       setLoading(false);
-      if (pollRef.current) clearInterval(pollRef.current);
-      pollRef.current = setInterval(() => loadMessages(id), POLL_INTERVAL);
     };
     init();
-    return () => {
-      active = false;
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
+    return () => { active = false; };
   }, [loadConversation, loadMessages]);
+
+  // Polling como fallback — solo activo cuando socket no está conectado
+  useEffect(() => {
+    if (!convId) return;
+    if (socketReady) {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      return;
+    }
+    pollRef.current = setInterval(() => loadMessages(convId), POLL_INTERVAL);
+    return () => {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    };
+  }, [socketReady, convId, loadMessages]);
 
 
   // ── Audio recording ──────────────────────────────────────────────────────
@@ -690,6 +713,19 @@ export default function ChatScreen() {
     const unsub = socketService.onTypingIndicator((data) => {
       if (data.userId === profile?.id) return;
       setIsTyping(data.isTyping);
+    });
+    return () => unsub();
+  }, [profile?.id]);
+
+  // Read receipts en tiempo real — el otro leyó nuestros mensajes
+  useEffect(() => {
+    const myId = profile?.id;
+    if (!myId) return;
+    const unsub = socketService.onMessagesRead((data) => {
+      if (data.conversationId !== convIdRef.current) return;
+      setMessages(prev =>
+        prev.map(m => m.senderId === myId ? { ...m, isRead: true, isDelivered: true } : m),
+      );
     });
     return () => unsub();
   }, [profile?.id]);

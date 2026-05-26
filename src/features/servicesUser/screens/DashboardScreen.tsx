@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -22,14 +22,15 @@ import { useServices } from '@/features/servicesUser/state/ServicesContext';
 import { useNotifications } from '@/features/notifications/state/NotificationsContext';
 import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const { width: W } = Dimensions.get('window');
 
 // ── Paleta ───────────────────────────────────────────────────────────────────
 const C = {
-  primary:   '#850021',
+  primary:   TOKENS.color.primary,
   primaryMd: '#a8002a',
-  dark:      '#4A0F20',
+  dark:      TOKENS.color.primaryDark,
   bg:        '#F7F7FA',
   card:      '#FFFFFF',
   text:      '#1A1A1A',
@@ -46,7 +47,7 @@ const HERO_SLIDES_CLIENT = [
     subtitle: 'Miles de expertos cerca tuyo',
     cta: 'Explorar',
     icon: 'search' as const,
-    gradient: ['#850021', '#c0002f', '#850021'] as const,
+    gradient: [TOKENS.color.primary, '#c0002f', TOKENS.color.primary] as const,
     route: '/(tabs)/services' as const,
   },
   {
@@ -67,7 +68,7 @@ const HERO_SLIDES_PROVIDER = [
     subtitle: 'Miles de expertos cerca tuyo',
     cta: 'Explorar',
     icon: 'search' as const,
-    gradient: ['#850021', '#c0002f', '#850021'] as const,
+    gradient: [TOKENS.color.primary, '#c0002f', TOKENS.color.primary] as const,
     route: '/(tabs)/services' as const,
   },
   {

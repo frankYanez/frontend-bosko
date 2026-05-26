@@ -43,7 +43,7 @@ export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({
     setError(null);
     try {
       const data = await listCategories();
-      console.log(data, "data de categories");
+
 
       setCategories(data);
     } catch (err) {

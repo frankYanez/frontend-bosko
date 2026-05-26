@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const C = {
-  primary: '#850021',
-  dark:    '#4A0F20',
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
   text:    '#1A1A1A',
   sub:     '#6B7280',
   accent:  '#FFF0F3',

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -21,10 +21,11 @@ import {
   BackgroundCheckState,
 } from '../services/background-check.service';
 import type { KYCStatus } from '../types/kyc.types';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const C = {
-  primary: '#850021',
-  dark:    '#4A0F20',
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
   bg:      '#F7F7FA',
   card:    '#FFFFFF',
   text:    '#1A1A1A',

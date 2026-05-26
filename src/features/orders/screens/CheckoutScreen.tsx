@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -18,10 +18,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { usePayments } from '@/features/payments/state/PaymentContext';
 import type { Order } from '../types/orders.types';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const C = {
-  primary: '#850021',
-  dark:    '#4A0F20',
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
   bg:      '#F7F7FA',
   card:    '#FFFFFF',
   text:    '#1A1A1A',

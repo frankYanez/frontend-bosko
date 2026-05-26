@@ -1,10 +1,11 @@
-import type {
+﻿import type {
   Category,
   ProviderProfile,
   Review,
   ServiceSummary,
 } from "@/types/services";
 import api from "@/core/api/axiosinstance";
+import { TOKENS } from '@/core/design-system/tokens';
 
 function mapService(s: any): ServiceSummary {
   return {
@@ -77,7 +78,7 @@ export async function fetchCategoriesService(): Promise<Category[]> {
         name: cat.name ?? '',
         description: cat.description ?? '',
         icon: getCategoryIcon(cat.name ?? '', cat.icon),
-        accent: cat.accent ?? '#850021',
+        accent: cat.accent ?? TOKENS.color.primary,
         servicesCount: countMap[cat.id] ?? 0,
       });
     }
@@ -86,11 +87,13 @@ export async function fetchCategoriesService(): Promise<Category[]> {
 }
 
 export async function fetchServicesByCategoryService(
-  categoryId: string
-): Promise<ServiceSummary[]> {
-  const { data } = await api.get<any>('/services', { params: { categoryId } });
+  categoryId: string,
+  page = 1,
+  limit = 10
+): Promise<{ data: ServiceSummary[]; hasMore: boolean }> {
+  const { data } = await api.get<any>('/services', { params: { categoryId, page, limit } });
   const services: any[] = (data as any)?.data ?? [];
-  return services.map(mapService);
+  return { data: services.map(mapService), hasMore: services.length === limit };
 }
 
 export async function fetchProviderProfileService(

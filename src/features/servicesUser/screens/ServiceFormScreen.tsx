@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +20,7 @@ import type { Service, ServicePayload } from "@/features/servicesUser/services/s
 import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { fetchServiceById } from "../services/services";
+import { TOKENS } from '@/core/design-system/tokens';
 
 const BRAND = "#850021";
 const MIN_DESCRIPTION = 20;
@@ -381,7 +382,11 @@ export default function ServiceFormScreen() {
               disabled={uploadingImages}
             >
               {uploadingImages ? (
+<<<<<<< HEAD
                 <ActivityIndicator color={BRAND} size="small" />
+=======
+                <ActivityIndicator color={TOKENS.color.primary} size="small" />
+>>>>>>> 3529760 (refactor: technical debt sprint - quick wins, chat, design system, notifications, pagination)
               ) : (
                 <Text style={styles.outlineBtnText}>
                   Subir {galleryImages.length} imagen{galleryImages.length !== 1 ? "es" : ""}

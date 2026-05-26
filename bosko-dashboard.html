@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bosko — Project Dashboard</title>
+<style>
+  :root {
+    --brand: #850021;
+    --brand-dark: #5e0017;
+    --brand-light: #b5003d;
+    --brand-glow: rgba(133,0,33,0.18);
+    --brand-50: rgba(133,0,33,0.08);
+    --sidebar-bg: #111117;
+    --sidebar-w: 260px;
+    --bg: #16161e;
+    --surface: #1e1e2a;
+    --surface2: #252534;
+    --surface3: #2d2d40;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f0f7;
+    --text2: #a0a0b8;
+    --text3: #606078;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+    --orange: #f97316;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system,'Inter',sans-serif; background:var(--bg); color:var(--text); display:flex; height:100vh; overflow:hidden; font-size:14px; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width:var(--sidebar-w); min-width:var(--sidebar-w);
+    background:var(--sidebar-bg);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column; height:100vh; overflow-y:auto;
+    scrollbar-width:thin; scrollbar-color:var(--surface3) transparent;
+  }
+  .sidebar-logo {
+    padding:20px 18px 14px;
+    display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid var(--border);
+  }
+  .logo-icon {
+    width:34px; height:34px; border-radius:8px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:16px; color:#fff; letter-spacing:-1px;
+    box-shadow:0 0 14px var(--brand-glow);
+  }
+  .logo-text { font-weight:700; font-size:16px; letter-spacing:-0.3px; }
+  .logo-text span { color:var(--brand-light); }
+  .sidebar-section { padding:14px 10px 4px; }
+  .sidebar-label { font-size:10px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:1px; padding:0 8px 6px; }
+  .nav-item {
+    display:flex; align-items:center; gap:9px;
+    padding:7px 10px; border-radius:var(--radius-sm);
+    cursor:pointer; color:var(--text2); transition:all 0.15s; font-size:13px;
+    position:relative;
+  }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:var(--brand-50); color:var(--brand-light); }
+  .nav-item.active::before {
+    content:''; position:absolute; left:0; top:4px; bottom:4px;
+    width:3px; background:var(--brand); border-radius:0 3px 3px 0;
+  }
+  .nav-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .nav-count { margin-left:auto; font-size:11px; font-weight:600; background:var(--surface3); border-radius:9px; padding:1px 6px; color:var(--text2); }
+  .nav-count.alert { background:var(--brand-50); color:var(--brand-light); }
+  .sidebar-sprint {
+    margin:10px; border-radius:var(--radius); background:linear-gradient(135deg,var(--brand-dark),var(--brand));
+    padding:14px; color:#fff; position:relative; overflow:hidden;
+  }
+  .sidebar-sprint::after {
+    content:'🚀'; position:absolute; right:-4px; top:-4px; font-size:48px; opacity:0.12;
+  }
+  .sprint-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; opacity:0.75; }
+  .sprint-title { font-size:14px; font-weight:700; margin:4px 0 8px; }
+  .sprint-bar-bg { height:5px; background:rgba(255,255,255,0.2); border-radius:99px; }
+  .sprint-bar { height:5px; background:#fff; border-radius:99px; width:68%; }
+  .sprint-meta { font-size:11px; opacity:0.7; margin-top:6px; }
+
+  /* ─── MAIN ─── */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .topbar {
+    padding:0 28px;
+    height:56px; min-height:56px;
+    display:flex; align-items:center; gap:16px;
+    border-bottom:1px solid var(--border);
+    background:var(--sidebar-bg);
+  }
+  .topbar-title { font-size:17px; font-weight:700; flex:1; }
+  .topbar-title span { color:var(--brand-light); }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+  .badge-brand { background:var(--brand-50); color:var(--brand-light); border:1px solid rgba(133,0,33,0.3); }
+  .badge-green { background:rgba(34,197,94,0.12); color:var(--green); border:1px solid rgba(34,197,94,0.25); }
+  .badge-yellow { background:rgba(245,158,11,0.12); color:var(--yellow); border:1px solid rgba(245,158,11,0.25); }
+  .badge-red { background:rgba(239,68,68,0.12); color:var(--red); border:1px solid rgba(239,68,68,0.25); }
+  .badge-blue { background:rgba(59,130,246,0.12); color:var(--blue); border:1px solid rgba(59,130,246,0.25); }
+  .badge-purple { background:rgba(168,85,247,0.12); color:var(--purple); border:1px solid rgba(168,85,247,0.25); }
+  .badge-cyan { background:rgba(6,182,212,0.12); color:var(--cyan); border:1px solid rgba(6,182,212,0.25); }
+  .badge-orange { background:rgba(249,115,22,0.12); color:var(--orange); border:1px solid rgba(249,115,22,0.25); }
+  .tab-btn { padding:6px 14px; border-radius:var(--radius-sm); border:none; cursor:pointer; font-size:13px; font-weight:500; background:transparent; color:var(--text2); transition:all 0.15s; }
+  .tab-btn.active { background:var(--surface3); color:var(--text); }
+
+  .content { flex:1; overflow-y:auto; padding:24px 28px 40px; scrollbar-width:thin; scrollbar-color:var(--surface3) transparent; }
+
+  /* ─── STAT CARDS ─── */
+  .stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; position:relative; overflow:hidden;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  }
+  .stat-card.brand::before { background:linear-gradient(90deg,var(--brand),var(--brand-light)); }
+  .stat-card.green::before { background:var(--green); }
+  .stat-card.yellow::before { background:var(--yellow); }
+  .stat-card.red::before { background:var(--red); }
+  .stat-card.blue::before { background:var(--blue); }
+  .stat-num { font-size:30px; font-weight:800; letter-spacing:-1px; line-height:1; }
+  .stat-label { font-size:11px; color:var(--text3); margin-top:4px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+  .stat-sub { font-size:12px; color:var(--text2); margin-top:6px; }
+  .stat-icon { position:absolute; right:14px; top:14px; font-size:22px; opacity:0.3; }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-header { display:flex; align-items:center; gap:12px; margin:24px 0 14px; }
+  .section-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .section-title { font-size:15px; font-weight:700; flex:1; }
+  .section-meta { font-size:12px; color:var(--text3); }
+
+  /* ─── FEATURE BLOCKS ─── */
+  .feature-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .feature-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden;
+  }
+  .feature-head {
+    padding:14px 16px;
+    display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface2);
+  }
+  .feature-icon { font-size:18px; }
+  .feature-title { font-weight:700; font-size:14px; flex:1; }
+  .progress-ring { position:relative; width:38px; height:38px; flex-shrink:0; }
+  .progress-ring svg { transform:rotate(-90deg); }
+  .progress-ring .track { fill:none; stroke:var(--surface3); stroke-width:3; }
+  .progress-ring .fill { fill:none; stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset 1s; }
+  .progress-pct {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:800;
+  }
+  .feature-body { padding:14px 16px; }
+  .task-group-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text3); margin:10px 0 6px; }
+  .task-item {
+    display:flex; align-items:flex-start; gap:8px;
+    padding:5px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);
+    font-size:12.5px;
+  }
+  .task-item:last-child { border-bottom:none; }
+  .task-check {
+    width:14px; height:14px; border-radius:4px; flex-shrink:0; margin-top:1px;
+    display:flex; align-items:center; justify-content:center; font-size:9px;
+  }
+  .task-check.done { background:var(--green); color:#fff; }
+  .task-check.partial { background:var(--yellow); color:#fff; }
+  .task-check.todo { background:var(--surface3); border:1px solid var(--surface3); }
+  .task-check.bug { background:var(--red); color:#fff; }
+  .task-text { flex:1; line-height:1.4; }
+  .task-text.done { color:var(--text2); }
+  .task-prio { margin-left:auto; flex-shrink:0; }
+
+  /* ─── BUG TRACKER ─── */
+  .bugs-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .bugs-table th {
+    background:var(--surface2); padding:9px 12px; text-align:left;
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;
+    color:var(--text3); border-bottom:1px solid var(--border);
+  }
+  .bugs-table td { padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .bugs-table tr:hover td { background:var(--surface2); }
+  .severity { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; }
+  .sev-crit { color:var(--red); }
+  .sev-high { color:var(--orange); }
+  .sev-med { color:var(--yellow); }
+  .sev-low { color:var(--blue); }
+  .code-path { font-family:monospace; font-size:11px; color:var(--cyan); background:rgba(6,182,212,0.08); padding:1px 5px; border-radius:4px; }
+
+  /* ─── MVP ROADMAP ─── */
+  .phases { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .phase-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .phase-head { padding:14px 16px; font-weight:700; font-size:13px; display:flex; align-items:center; gap:8px; }
+  .phase-head.p1 { background:linear-gradient(90deg,rgba(239,68,68,0.15),transparent); border-bottom:1px solid rgba(239,68,68,0.2); }
+  .phase-head.p2 { background:linear-gradient(90deg,rgba(245,158,11,0.15),transparent); border-bottom:1px solid rgba(245,158,11,0.2); }
+  .phase-head.p3 { background:linear-gradient(90deg,rgba(34,197,94,0.12),transparent); border-bottom:1px solid rgba(34,197,94,0.2); }
+  .phase-body { padding:14px 16px; }
+  .phase-item { display:flex; gap:8px; padding:5px 0; font-size:12.5px; line-height:1.4; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .phase-item:last-child { border-bottom:none; }
+  .phase-num { width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; margin-top:1px; }
+  .ph1-num { background:rgba(239,68,68,0.2); color:var(--red); }
+  .ph2-num { background:rgba(245,158,11,0.2); color:var(--yellow); }
+  .ph3-num { background:rgba(34,197,94,0.15); color:var(--green); }
+  .item-label { font-weight:600; }
+  .item-desc { color:var(--text2); font-size:11.5px; }
+
+  /* ─── IDEAS ─── */
+  .ideas-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .idea-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; position:relative; overflow:hidden;
+  }
+  .idea-impact {
+    position:absolute; top:12px; right:12px;
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .idea-emoji { font-size:28px; margin-bottom:10px; }
+  .idea-title { font-size:13px; font-weight:700; margin-bottom:6px; }
+  .idea-desc { font-size:12px; color:var(--text2); line-height:1.5; }
+  .idea-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; }
+  .idea-tag { font-size:10px; padding:2px 7px; border-radius:99px; background:var(--surface3); color:var(--text3); font-weight:600; }
+
+  /* ─── BACKEND TASKS ─── */
+  .be-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .be-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+  }
+  .be-head { padding:12px 14px; border-bottom:1px solid var(--border); background:var(--surface2); display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; }
+  .be-body { padding:12px 14px; }
+  .be-item { display:flex; align-items:flex-start; gap:7px; padding:4px 0; font-size:12px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .be-item:last-child { border-bottom:none; }
+
+  /* ─── TABS ─── */
+  .view-tabs { display:flex; gap:4px; background:var(--surface2); border-radius:var(--radius-sm); padding:3px; width:fit-content; }
+
+  /* ─── FOOTER ─── */
+  .dash-footer { margin-top:32px; padding:20px 0 8px; border-top:1px solid var(--border); text-align:center; color:var(--text3); font-size:12px; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; }
+
+  /* ─── TOOLTIP-LIKE TITLES ─── */
+  [title] { cursor:default; }
+
+  /* ─── HIGHLIGHT ─── */
+  .highlight { background:var(--brand-50); border-radius:3px; padding:0 3px; color:var(--brand-light); font-weight:600; }
+
+  /* ─── DIVIDER ─── */
+  .divider { height:1px; background:var(--border); margin:20px 0; }
+
+  /* ─── FILTER CHIP ─── */
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .chip { padding:4px 12px; border-radius:99px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface2); color:var(--text2); cursor:pointer; }
+  .chip.active { background:var(--brand-50); border-color:rgba(133,0,33,0.4); color:var(--brand-light); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; display:inline-block; }
+
+  .brand-gradient { background:linear-gradient(135deg,var(--brand),var(--brand-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+</style>
+</head>
+<body>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">B</div>
+    <div>
+      <div class="logo-text">bosko<span>.</span></div>
+      <div style="font-size:10px;color:var(--text3);font-weight:500;">Project Dashboard</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Vistas</div>
+    <div class="nav-item active">
+      <span class="nav-dot" style="background:var(--brand)"></span>
+      Overview
+      <span class="nav-count alert">68%</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-dot" style="background:var(--yellow)"></span>
+      Tasks Board
+      <span class="nav-count">42</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-dot" style="background:var(--red)"></span>
+      Bugs & Issues
+      <span class="nav-count alert">11</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-dot" style="background:var(--green)"></span>
+      MVP Roadmap
+    </div>
+    <div class="nav-item">
+      <span class="nav-dot" style="background:var(--blue)"></span>
+      Backend Tasks
+      <span class="nav-count">18</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-dot" style="background:var(--purple)"></span>
+      Ideas Lab
+      <span class="nav-count">9</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Features</div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Auth <span class="nav-count">95%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Inicio / Dashboard <span class="nav-count">88%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Servicios <span class="nav-count">85%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Chat <span class="nav-count">82%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Órdenes <span class="nav-count">90%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Perfil <span class="nav-count">88%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Pagos <span class="nav-count">75%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--red)"></span> Reels <span class="nav-count alert">40%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> KYC <span class="nav-count">92%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Notificaciones <span class="nav-count">78%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Búsqueda <span class="nav-count">72%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--red)"></span> Planes <span class="nav-count alert">65%</span></div>
+  </div>
+
+  <div style="margin-top:auto; padding:12px;">
+    <div class="sidebar-sprint">
+      <div class="sprint-label">Sprint Activo</div>
+      <div class="sprint-title">MVP v1.0 Launch</div>
+      <div class="sprint-bar-bg"><div class="sprint-bar"></div></div>
+      <div class="sprint-meta">68% completado · ~3-4 semanas</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── MAIN CONTENT ─── -->
+<main class="main">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title">Bosko <span>— MVP Dashboard</span></div>
+    <span class="badge badge-brand">React Native · Expo 54</span>
+    <span class="badge badge-green"><span class="live-dot"></span> Dev Branch</span>
+    <span class="badge badge-yellow">⚡ Sprint 3</span>
+    <div class="view-tabs">
+      <button class="tab-btn active">Overview</button>
+      <button class="tab-btn">Kanban</button>
+      <button class="tab-btn">Timeline</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card brand">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-num" style="color:var(--brand-light)">68%</div>
+        <div class="stat-label">App Completada</div>
+        <div class="stat-sub">MVP a ~3-4 semanas</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-num" style="color:var(--green)">74</div>
+        <div class="stat-label">Tasks Done</div>
+        <div class="stat-sub">Frontend completadas</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-num" style="color:var(--yellow)">42</div>
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-sub">Front + Back</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">🐛</div>
+        <div class="stat-num" style="color:var(--red)">11</div>
+        <div class="stat-label">Bugs / Issues</div>
+        <div class="stat-sub">2 críticos, 3 altos</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">💡</div>
+        <div class="stat-num" style="color:var(--blue)">9</div>
+        <div class="stat-label">Ideas Lab</div>
+        <div class="stat-sub">Para post-MVP</div>
+      </div>
+    </div>
+
+    <!-- ─── FEATURE AUDIT ─── -->
+    <div class="section-header">
+      <div class="section-dot" style="background:var(--brand)"></div>
+      <div class="section-title">Estado por Feature — Frontend</div>
+      <div class="section-meta">✅ Implementado · ⚡ Parcial · ❌ Faltante · 🐛 Bug</div>
+    </div>
+
+    <div class="feature-grid">
+
+      <!-- AUTH -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">🔐</div>
+          <div>
+            <div class="feature-title">Auth & Onboarding</div>
+            <div style="font-size:11px;color:var(--text3)">app/login/ · src/features/auth/</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--green)"
+                stroke-dasharray="100.5" stroke-dashoffset="5"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--green)">95%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Login / Register con glassmorphism UI</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">OnBoarding carousel (5 slides, Lottie)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Token storage SecureStore + in-memory cache</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Auto-refresh JWT en 401 + retry request</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Auth guards (3 niveles: index, tabs, login)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Forgot password + Reset password flow</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Email OTP verification (6 dígitos)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Change password screen</div></div>
+          <div class="task-group-label">❌ Faltante</div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Login social (Google / Apple)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Biometric unlock (FaceID / Fingerprint)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">console.error debug en Login.ts:28,61</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">cleanup</span></div>
+        </div>
+      </div>
+
+      <!-- HOME -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">🏠</div>
+          <div>
+            <div class="feature-title">Inicio / Dashboard</div>
+            <div style="font-size:11px;color:var(--text3)">app/(tabs)/index.tsx · DashboardScreen</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--green)"
+                stroke-dasharray="100.5" stroke-dashoffset="12.5"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--green)">88%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Hero carousel dinámico (cliente vs proveedor)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Quick actions (search, post, orders, chat)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Featured services carousel desde API</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Saludo basado en hora del día</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Role-aware UI (cliente ≠ proveedor)</div></div>
+          <div class="task-group-label">❌ Faltante / Mejorar</div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Skeleton loader mientras carga featured services</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Error state UI si API falla</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Pull-to-refresh en Home</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Sección "Órdenes recientes" en home</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
+        </div>
+      </div>
+
+      <!-- SERVICIOS -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">🛠️</div>
+          <div>
+            <div class="feature-title">Servicios & Marketplace</div>
+            <div style="font-size:11px;color:var(--text3)">app/(tabs)/services/ · servicesUser/</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--green)"
+                stroke-dasharray="100.5" stroke-dashoffset="15"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--green)">85%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Grid servicios 2-col con shimmer skeleton</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Filtro por categoría (chips)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Service cards (thumb, precio, rating, badge)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Provider profile completo (bio, servicios, reviews)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">KYC verified badge en proveedor</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">ServiceFormScreen (crear servicio con imágenes)</div></div>
+          <div class="task-group-label">🐛 Bugs / Mejoras</div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Paginación falta — carga 100 servicios de golpe</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">perf</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">FlatList sin React.memo → re-renders innecesarios</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">perf</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Botón favorito en service card</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Compresión de imágenes antes de upload</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Filtros avanzados (precio, rating, distancia)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">💬</div>
+          <div>
+            <div class="feature-title">Chat & Mensajería</div>
+            <div style="font-size:11px;color:var(--text3)">app/chat/[id].tsx · src/features/chat/</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--yellow)"
+                stroke-dasharray="100.5" stroke-dashoffset="18"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--yellow)">82%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Chat WhatsApp-style (text, imagen, video, audio)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Long-press mic → grabación de audio .m4a</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Typing indicator (3 puntos animados)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Read receipts ✓✓</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Socket.io service singleton con JWT auth</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Fallback polling REST cada 10s</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Unread badge en tab + ConversationsContext</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Optimistic lastMessage update</div></div>
+          <div class="task-group-label">🐛 Issues Críticos</div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text"><strong>Socket no 100% integrado</strong> — mensajes entrantes aún via polling</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Typing no throttled — puede spamear red</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">med</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Toast error en fallo de envío</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">removeClippedSubviews + memo en FlatList mensajes</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">perf</span></div>
+        </div>
+      </div>
+
+      <!-- ÓRDENES -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">📋</div>
+          <div>
+            <div class="feature-title">Órdenes & Cotizaciones</div>
+            <div style="font-size:11px;color:var(--text3)">app/(tabs)/orders/ · src/features/orders/</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--green)"
+                stroke-dasharray="100.5" stroke-dashoffset="10"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--green)">90%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Lista órdenes (como cliente / como proveedor)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">OrderDetailScreen completo con timeline visual</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">QuoteRequestScreen con date picker + dirección</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Acciones por rol: accept, reject, start, complete, cancel</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Status badges con colores semánticos</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Link a chat desde orden</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Dispute flow (botón + endpoint)</div></div>
+          <div class="task-group-label">❌ Faltante</div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Optimistic UI en acciones de orden</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">UI de reembolso/cancelación con estado</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Notificación push en cambio de estado</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">OrderStatusScreen polling manual (no socket)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">med</span></div>
+        </div>
+      </div>
+
+      <!-- PERFIL -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">👤</div>
+          <div>
+            <div class="feature-title">Perfil & Cuenta</div>
+            <div style="font-size:11px;color:var(--text3)">app/(tabs)/profile/ · src/features/profile/</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--green)"
+                stroke-dasharray="100.5" stroke-dashoffset="12"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--green)">88%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">ProfileScreen completo con stats animados</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Avatar upload via ImagePicker</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">KYC status badge con colores semánticos</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Toggle "Disponible" para proveedores</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Mis servicios (lista + edit/delete)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Edit profile modal (nombre, bio, teléfono)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Delete account screen</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Verify phone (Firebase)</div></div>
+          <div class="task-group-label">❌ Faltante / Issues</div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">DeleteAccount sin paso de verificación por email</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">security</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Avatar upload sin compresión previa</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">perf</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Toast éxito al actualizar perfil</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Skeleton stats mientras carga getUserStats()</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+        </div>
+      </div>
+
+      <!-- REELS -->
+      <div class="feature-card" style="border-color:rgba(239,68,68,0.25);">
+        <div class="feature-head" style="background:rgba(239,68,68,0.06);">
+          <div class="feature-icon">🎬</div>
+          <div>
+            <div class="feature-title">Reels</div>
+            <div style="font-size:11px;color:var(--text3)">app/(tabs)/reels.tsx · src/features/reels/</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--red)"
+                stroke-dasharray="100.5" stroke-dashoffset="60"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--red)">40%</div>
+          </div>
+          <span class="badge badge-red">Alta Prioridad</span>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado (UI Only)</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">TikTok-style vertical FlatList</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Auto-play por visibilidad (viewabilityConfig)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Full-screen video con overlay de info</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Like/comment/share buttons (UI)</div></div>
+          <div class="task-group-label">❌ TODO CRITICO — Datos Mock</div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text"><strong>MOCK_REELS hardcoded</strong> — ninguna llamada API real</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Like/comment/share → solo console.log</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Conectar GET /reels (feed paginado)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">POST /reels (upload video para proveedores)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Like / comment / share reales</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Infinite scroll / paginación</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+        </div>
+      </div>
+
+      <!-- PAGOS -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">💳</div>
+          <div>
+            <div class="feature-title">Pagos & Ganancias</div>
+            <div style="font-size:11px;color:var(--text3)">src/features/payments/ · orders/checkout</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--yellow)"
+                stroke-dasharray="100.5" stroke-dashoffset="25"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--yellow)">75%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">PaymentsScreen (historial + ganancias)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">CheckoutScreen pre-pago</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">PaymentSuccessScreen</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">API: initiate, history, earnings</div></div>
+          <div class="task-group-label">❌ Faltante — BLOCKER MVP</div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text"><strong>No hay integración con pasarela</strong> (Stripe / MercadoPago)</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">blocker</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">UI de reembolsos</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Desglose ganancias por servicio</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Withdrawal / transferencia a banco</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+        </div>
+      </div>
+
+      <!-- KYC -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">🪪</div>
+          <div>
+            <div class="feature-title">KYC & Verificación</div>
+            <div style="font-size:11px;color:var(--text3)">src/features/kyc/ · Persona SDK</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--green)"
+                stroke-dasharray="100.5" stroke-dashoffset="8"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--green)">92%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Intro → Document → Status → Rejected flow</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Integración con Persona vía WebBrowser</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Max 3 intentos de reintento</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Lottie animations por estado</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Badge verificado en perfil proveedor</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">KYC gate en ServiceFormScreen</div></div>
+          <div class="task-group-label">❌ Mejoras</div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Countdown timer en pantalla rechazado</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">ux</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Soporte tipos doc: DNI, Cédula, Pasaporte, RUT</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
+        </div>
+      </div>
+
+      <!-- NOTIFICACIONES -->
+      <div class="feature-card">
+        <div class="feature-head">
+          <div class="feature-icon">🔔</div>
+          <div>
+            <div class="feature-title">Notificaciones</div>
+            <div style="font-size:11px;color:var(--text3)">src/features/notifications/ · expo-notifications</div>
+          </div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 38 38" width="38" height="38">
+              <circle class="track" cx="19" cy="19" r="16"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--yellow)"
+                stroke-dasharray="100.5" stroke-dashoffset="22"/>
+            </svg>
+            <div class="progress-pct" style="color:var(--yellow)">78%</div>
+          </div>
+        </div>
+        <div class="feature-body">
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Push notifications (iOS) vía expo-notifications</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">NotificationsScreen (list, read, delete)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Device token registration al login</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Mark all read / clear all</div></div>
+          <div class="task-group-label">❌ Faltante</div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text"><strong>Android push NO implementado</strong></div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">In-app notification banner / toast</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Filtros por tipo (órdenes, mensajes, reviews)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">ux</span></div>
+        </div>
+      </div>
+
+    </div><!-- /feature-grid -->
+
+    <!-- ─── BUG TRACKER ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--red)"></div>
+      <div class="section-title">Bug Tracker & Issues</div>
+      <span class="badge badge-red">2 Críticos</span>
+      <span class="badge badge-orange">3 Altos</span>
+      <span class="badge badge-yellow">6 Medios</span>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <table class="bugs-table">
+        <thead>
+          <tr>
+            <th style="width:30px">#</th>
+            <th>Descripción</th>
+            <th>Archivo</th>
+            <th>Severidad</th>
+            <th>Tipo</th>
+            <th>Fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--text3)">01</td>
+            <td><strong>Socket no integrado en ChatScreen</strong> — mensajes entrantes usan polling REST, no socket real</td>
+            <td><span class="code-path">chat/ChatScreen.tsx</span></td>
+            <td><span class="severity sev-crit">● Crítico</span></td>
+            <td><span class="badge badge-red">Backend</span></td>
+            <td>Cablear eventos socket `message_received` a setState messages</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">02</td>
+            <td><strong>Reels 100% mock data</strong> — like/share/comment no hacen nada real</td>
+            <td><span class="code-path">reels/ReelsScreen.tsx</span></td>
+            <td><span class="severity sev-crit">● Crítico</span></td>
+            <td><span class="badge badge-red">Full Stack</span></td>
+            <td>Conectar API /reels, implementar endpoints de interacción</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">03</td>
+            <td><strong>DeleteAccount sin verificación</strong> — delete directo sin confirm por email/token</td>
+            <td><span class="code-path">profile/DeleteAccountScreen.tsx</span></td>
+            <td><span class="severity sev-high">● Alto</span></td>
+            <td><span class="badge badge-orange">Security</span></td>
+            <td>Agregar paso de confirmación: email PIN o escribir "borrar mi cuenta"</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">04</td>
+            <td><strong>Android push notifications 0%</strong> — código gateado a iOS solamente</td>
+            <td><span class="code-path">notifications/NotificationsContext.tsx</span></td>
+            <td><span class="severity sev-high">● Alto</span></td>
+            <td><span class="badge badge-orange">Feature</span></td>
+            <td>Implementar FCM para Android con expo-notifications</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">05</td>
+            <td><strong>Sin pasarela de pago</strong> — CheckoutScreen sin Stripe/MercadoPago</td>
+            <td><span class="code-path">payments/CheckoutScreen.tsx</span></td>
+            <td><span class="severity sev-high">● Alto</span></td>
+            <td><span class="badge badge-orange">Blocker</span></td>
+            <td>Integrar MercadoPago SDK (LATAM) o Stripe con Stripe React Native</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">06</td>
+            <td>Services FlatList sin paginación — carga 100 registros at once</td>
+            <td><span class="code-path">services/catalog.ts:60</span></td>
+            <td><span class="severity sev-med">● Medio</span></td>
+            <td><span class="badge badge-yellow">Performance</span></td>
+            <td>Implementar cursor/offset pagination + FlatList onEndReached</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">07</td>
+            <td>FlatList mensajes sin React.memo ni removeClippedSubviews</td>
+            <td><span class="code-path">chat/ChatScreen.tsx</span></td>
+            <td><span class="severity sev-med">● Medio</span></td>
+            <td><span class="badge badge-yellow">Performance</span></td>
+            <td>Memoizar MessageItem component + add removeClippedSubviews</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">08</td>
+            <td>Typing indicator sin throttle — puede enviar 10+ eventos/seg</td>
+            <td><span class="code-path">chat/ChatScreen.tsx</span></td>
+            <td><span class="severity sev-med">● Medio</span></td>
+            <td><span class="badge badge-yellow">UX/Net</span></td>
+            <td>Throttle emit cada 2s, clear con setTimeout 3s</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">09</td>
+            <td>Axios sin timeout configurado — requests pueden colgar indefinidamente</td>
+            <td><span class="code-path">core/api/axiosinstance.tsx</span></td>
+            <td><span class="severity sev-med">● Medio</span></td>
+            <td><span class="badge badge-yellow">Reliability</span></td>
+            <td>Agregar `timeout: 30000` en config base de axios</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">10</td>
+            <td>Avatar y service images sin comprimir antes de upload</td>
+            <td><span class="code-path">profile/EditProfileModal.tsx</span></td>
+            <td><span class="severity sev-med">● Medio</span></td>
+            <td><span class="badge badge-yellow">Performance</span></td>
+            <td>Usar expo-image-manipulator, resize a max 800px, quality 0.8</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">11</td>
+            <td>console.log debug left in production code (Login.ts, EditPass, ServiceDetailModal)</td>
+            <td><span class="code-path">múltiples archivos</span></td>
+            <td><span class="severity sev-low">● Bajo</span></td>
+            <td><span class="badge badge-blue">Cleanup</span></td>
+            <td>Grep y eliminar todos console.log antes de release build</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ─── BACKEND TASKS ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--purple)"></div>
+      <div class="section-title">Backend Tasks Pendientes</div>
+      <div class="section-meta">Endpoints y lógica servidor para completar MVP</div>
+    </div>
+
+    <div class="be-grid">
+      <div class="be-card">
+        <div class="be-head"><span>🔴</span> Críticos / Blockers</div>
+        <div class="be-body">
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Pasarela de pago real</div><div style="color:var(--text3);font-size:11px">Integrar MercadoPago o Stripe server-side. Webhooks para confirmación. Escrow logic.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Socket.io rooms estables</div><div style="color:var(--text3);font-size:11px">Verificar que join/leave room funcione correctamente, que mensajes lleguen en tiempo real al cliente móvil.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Reels API completa</div><div style="color:var(--text3);font-size:11px">GET /reels (paginado), POST /reels (upload), POST /reels/:id/like, POST /reels/:id/comment, video processing/CDN.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">FCM / APNs tokens</div><div style="color:var(--text3);font-size:11px">Registrar device tokens, enviar push en eventos: nueva orden, mensaje, cambio de estado, review.</div></div></div>
+        </div>
+      </div>
+      <div class="be-card">
+        <div class="be-head"><span>🟡</span> Altos — Pre-MVP</div>
+        <div class="be-body">
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">GET /reels feed paginado</div><div style="color:var(--text3);font-size:11px">cursor-based pagination, filtrar por categoría, proveedor</div></div></div>
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Refund / cancel flow</div><div style="color:var(--text3);font-size:11px">PATCH /orders/:id/cancel debe triggear reembolso según política</div></div></div>
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Dispute resolution</div><div style="color:var(--text3);font-size:11px">Admin panel para ver disputas, asignar resolución manual</div></div></div>
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Geolocation search</div><div style="color:var(--text3);font-size:11px">GET /services?lat=&lng=&radius= para búsqueda cercana</div></div></div>
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Rate limiting</div><div style="color:var(--text3);font-size:11px">Throttle endpoints críticos: login, OTP, KYC, upload</div></div></div>
+        </div>
+      </div>
+      <div class="be-card">
+        <div class="be-head"><span>🟢</span> Post-MVP / Nice to Have</div>
+        <div class="be-body">
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Search con Elasticsearch</div><div style="color:var(--text3);font-size:11px">Full-text search avanzado, fuzzy match, synonyms en español</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Recommendations engine</div><div style="color:var(--text3);font-size:11px">Servicios sugeridos basados en historial de órdenes y categorías vistas</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Analytics events</div><div style="color:var(--text3);font-size:11px">Track: service_view, order_created, payment_complete, reel_view</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Withdrawal / payout</div><div style="color:var(--text3);font-size:11px">Proveedores pueden solicitar transferencia de ganancias a cuenta bancaria</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Image CDN / optimization</div><div style="color:var(--text3);font-size:11px">CloudFront + Sharp para servir imágenes redimensionadas por viewport</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MVP ROADMAP ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--brand)"></div>
+      <div class="section-title">Roadmap MVP — 3 Fases</div>
+      <div class="section-meta">~3-4 semanas para lanzar a producción</div>
+    </div>
+
+    <div class="phases">
+      <div class="phase-card">
+        <div class="phase-head p1">
+          <span>🔥</span>
+          <div>
+            <div>Fase 1 — Semana 1-2</div>
+            <div style="font-size:11px;font-weight:400;color:var(--text2)">Blockers & Seguridad</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="phase-item"><div class="phase-num ph1-num">1</div><div><div class="item-label">Integrar pasarela de pago</div><div class="item-desc">MercadoPago SDK (mejor para LATAM). Server-side webhooks para confirmar pago antes de activar orden.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph1-num">2</div><div><div class="item-label">Fijar Socket.io en ChatScreen</div><div class="item-desc">Cablear eventos `message_received` directo al state — eliminar dependencia del polling para mensajes.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph1-num">3</div><div><div class="item-label">Android Push Notifications</div><div class="item-desc">Implementar FCM. Sin esto, Android users no reciben alertas de órdenes ni mensajes.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph1-num">4</div><div><div class="item-label">DeleteAccount con verificación</div><div class="item-desc">Agregar paso de email PIN antes de eliminar cuenta. Es riesgo de seguridad/legal.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph1-num">5</div><div><div class="item-label">Axios timeout + error toasts</div><div class="item-desc">30s timeout global. Biblioteca de toasts (react-native-toast) para errores de red visibles al usuario.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph1-num">6</div><div><div class="item-label">Comprimir imágenes en upload</div><div class="item-desc">expo-image-manipulator: resize 800px max, quality 0.8 en avatares y servicios.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph1-num">7</div><div><div class="item-label">Eliminar console.logs</div><div class="item-desc">Grep y remover todos los console.log de producción. Login.ts, EditPass, ServiceDetailModal.</div></div></div>
+        </div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-head p2">
+          <span>⚡</span>
+          <div>
+            <div>Fase 2 — Semana 2-3</div>
+            <div style="font-size:11px;font-weight:400;color:var(--text2)">Features Incompletos</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="phase-item"><div class="phase-num ph2-num">1</div><div><div class="item-label">Conectar Reels a API real</div><div class="item-desc">Reemplazar MOCK_REELS. Implementar like/comment/share con endpoints reales. Upload video para proveedores.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">2</div><div><div class="item-label">Paginación en Servicios</div><div class="item-desc">Cambiar limit:100 → cursor pagination. FlatList onEndReached para cargar más. React.memo en ServiceCard.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">3</div><div><div class="item-label">Skeleton loaders faltantes</div><div class="item-desc">Agregar shimmer skeleton en: Home (featured), ProfileScreen (stats), OrderDetail.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">4</div><div><div class="item-label">Botón favorito en ServiceCard</div><div class="item-desc">Context de favoritos ya existe. Solo falta el botón ♡ en la card. Toggle optimista.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">5</div><div><div class="item-label">Typing indicator throttle</div><div class="item-desc">Debounce emit socket typing a cada 2s. Clear con timeout 3s.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">6</div><div><div class="item-label">Optimistic UI en órdenes</div><div class="item-desc">Al aceptar/rechazar/completar orden, actualizar UI antes de respuesta del servidor.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">7</div><div><div class="item-label">Plans — feature gating</div><div class="item-desc">Si usuario tiene plan básico, mostrar lock en features premium. Flujo upgrade.</div></div></div>
+        </div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-head p3">
+          <span>🚀</span>
+          <div>
+            <div>Fase 3 — Semana 3-4</div>
+            <div style="font-size:11px;font-weight:400;color:var(--text2)">Polish & Launch</div>
+          </div>
+        </div>
+        <div class="phase-body">
+          <div class="phase-item"><div class="phase-num ph3-num">1</div><div><div class="item-label">Testing end-to-end</div><div class="item-desc">Flujo completo: registro → KYC → publicar servicio → recibir orden → pago → review. iOS + Android.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">2</div><div><div class="item-label">Design system cleanup</div><div class="item-desc">Reemplazar todos #850021 hardcoded con TOKENS.color.primary. Unificar StyleSheets.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">3</div><div><div class="item-label">Accessibility básica</div><div class="item-desc">Agregar accessibilityLabel y accessibilityHint en botones principales y inputs.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">4</div><div><div class="item-label">EAS Build + OTA updates</div><div class="item-desc">Configurar EAS Build para iOS y Android. expo-updates para hotfixes post-launch.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">5</div><div><div class="item-label">App Store / Play Store assets</div><div class="item-desc">Screenshots, descripción, categorías, ratings. TestFlight + Internal track para beta.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">6</div><div><div class="item-label">Crash reporting</div><div class="item-desc">Sentry o Bugsnag integrado. Alert en Slack cuando crash rate > 1%.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">7</div><div><div class="item-label">Performance audit final</div><div class="item-desc">Profiler de React Native, medir TTI, FPS en listas, memory leaks. Target: 60fps en listas.</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── IDEAS LAB ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--purple)"></div>
+      <div class="section-title">Ideas Lab — Post MVP</div>
+      <div class="section-meta">Features que elevarían significativamente la propuesta de valor</div>
+    </div>
+
+    <div class="ideas-grid">
+
+      <div class="idea-card" style="border-color:rgba(168,85,247,0.2);background:linear-gradient(135deg,var(--surface),rgba(168,85,247,0.05));">
+        <span class="idea-impact badge badge-purple">Alto impacto</span>
+        <div class="idea-emoji">📍</div>
+        <div class="idea-title">Búsqueda por Geolocalización</div>
+        <div class="idea-desc">Mapa interactivo con proveedores cercanos al usuario. Filtrar por radio (5km, 10km, 20km). Providers muestran distancia en cards. El backend ya acepta lat/lng en los endpoints — solo falta la UI.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">expo-location</span>
+          <span class="idea-tag">react-native-maps</span>
+          <span class="idea-tag">UX +40%</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(133,0,33,0.2);background:linear-gradient(135deg,var(--surface),rgba(133,0,33,0.05));">
+        <span class="idea-impact badge badge-brand">Alto impacto</span>
+        <div class="idea-emoji">⭐</div>
+        <div class="idea-title">Sistema de Badges & Gamificación</div>
+        <div class="idea-desc">Proveedores ganan badges al alcanzar hitos: "10 órdenes completadas", "5 estrellas por 30 días", "Respuesta rápida". Clientes acumulan puntos de lealtad canjeables por descuentos. Genera engagement y retención.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">engagement</span>
+          <span class="idea-tag">retención</span>
+          <span class="idea-tag">brand</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(6,182,212,0.2);background:linear-gradient(135deg,var(--surface),rgba(6,182,212,0.05));">
+        <span class="idea-impact badge badge-cyan">Alto impacto</span>
+        <div class="idea-emoji">🤖</div>
+        <div class="idea-title">Assistant IA en Chat</div>
+        <div class="idea-desc">Bot inteligente que ayuda al cliente describir qué necesita antes de contactar al proveedor. Genera resumen estructurado para la cotización. También puede responder FAQs del servicio. Reduce fricción en primera interacción.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">Claude API</span>
+          <span class="idea-tag">conversión</span>
+          <span class="idea-tag">UX</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(34,197,94,0.2);background:linear-gradient(135deg,var(--surface),rgba(34,197,94,0.05));">
+        <span class="idea-impact badge badge-green">Medio impacto</span>
+        <div class="idea-emoji">📅</div>
+        <div class="idea-title">Calendario de Disponibilidad</div>
+        <div class="idea-desc">Proveedores definen su calendario: días disponibles, horarios, slots de agenda. Clientes ven disponibilidad real antes de cotizar. Integración con Google Calendar / iCal para providers avanzados.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">UX proveedor</span>
+          <span class="idea-tag">conversión</span>
+          <span class="idea-tag">diferenciador</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(249,115,22,0.2);background:linear-gradient(135deg,var(--surface),rgba(249,115,22,0.05));">
+        <span class="idea-impact badge badge-orange">Medio impacto</span>
+        <div class="idea-emoji">📊</div>
+        <div class="idea-title">Dashboard Analytics para Proveedores</div>
+        <div class="idea-desc">Pantalla de métricas: visitas a perfil, tasa de conversión cotización→orden, ingresos por semana/mes, top servicios, rating histórico. Charts con Victory Native o Recharts. Da valor real a suscripciones premium.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">revenue</span>
+          <span class="idea-tag">premium feature</span>
+          <span class="idea-tag">victory-native</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(59,130,246,0.2);background:linear-gradient(135deg,var(--surface),rgba(59,130,246,0.05));">
+        <span class="idea-impact badge badge-blue">Medio impacto</span>
+        <div class="idea-emoji">🎁</div>
+        <div class="idea-title">Sistema de Referidos</div>
+        <div class="idea-desc">Cada usuario tiene código único. Al referir a otro usuario que completa primera orden, ambos reciben crédito/descuento. Tracking de referidos, leaderboard opcional. Crecimiento viral orgánico para LATAM.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">growth</span>
+          <span class="idea-tag">viral loop</span>
+          <span class="idea-tag">LATAM</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(245,158,11,0.2);background:linear-gradient(135deg,var(--surface),rgba(245,158,11,0.05));">
+        <span class="idea-impact badge badge-yellow">Diferenciador</span>
+        <div class="idea-emoji">🔴</div>
+        <div class="idea-title">Live Sessions — Proveedor en Vivo</div>
+        <div class="idea-desc">Proveedores pueden hacer lives cortos mostrando su trabajo (plomero arreglando, chef cocinando). Clientes se conectan, ven calidad en tiempo real, contratan directamente desde el live. Diferenciador clave vs Workana/Fiverr.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">diferenciador</span>
+          <span class="idea-tag">Agora SDK</span>
+          <span class="idea-tag">engagement</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(168,85,247,0.2);background:linear-gradient(135deg,var(--surface),rgba(168,85,247,0.05));">
+        <span class="idea-impact badge badge-purple">Post-MVP</span>
+        <div class="idea-emoji">🌐</div>
+        <div class="idea-title">Multi-idioma (i18n)</div>
+        <div class="idea-desc">Soporte inicial ES + PT (Brasil). expo-localization + i18next. Detección automática del locale del dispositivo. Expansión a otros mercados LATAM sin rewrite. Crítico para escalar más allá de un solo país.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">i18next</span>
+          <span class="idea-tag">expansión</span>
+          <span class="idea-tag">PT-BR</span>
+        </div>
+      </div>
+
+      <div class="idea-card" style="border-color:rgba(34,197,94,0.2);background:linear-gradient(135deg,var(--surface),rgba(34,197,94,0.05));">
+        <span class="idea-impact badge badge-green">Post-MVP</span>
+        <div class="idea-emoji">🛡️</div>
+        <div class="idea-title">Seguro de Servicio / Garantía</div>
+        <div class="idea-desc">"Bosko Garantía": si el proveedor no cumple, Bosko reembolsa. Capa de confianza que diferencia vs marketplace directo. Financiado con % de transacción o plan premium. Reduce fricción de primera compra para nuevos clientes.</div>
+        <div class="idea-tags">
+          <span class="idea-tag">confianza</span>
+          <span class="idea-tag">conversión</span>
+          <span class="idea-tag">moat</span>
+        </div>
+      </div>
+
+    </div><!-- /ideas-grid -->
+
+    <!-- ─── DESIGN SYSTEM DEBT ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--orange)"></div>
+      <div class="section-title">Deuda Técnica — Design System</div>
+      <div class="section-meta">Unificar antes de escalar el equipo</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:var(--orange)">⚠️ Problemas actuales</div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text"><span class="code-path">#850021</span> hardcoded en ~50+ archivos — debería ser <span class="code-path">TOKENS.color.primary</span></div></div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text">No hay componentes base: <span class="code-path">Input</span>, <span class="code-path">Modal</span>, <span class="code-path">Dialog</span>, <span class="code-path">Toast</span></div></div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text">Iconos mezclados: @expo/vector-icons vs SVGs vs emojis</div></div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text">Context nesting 15 niveles profundo — puede afectar perf</div></div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text">No hay barrel exports en componentes (<span class="code-path">index.ts</span>)</div></div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text">9 TODOs en interfaces — campos backend sin confirmar</div></div>
+        <div class="task-item"><div class="task-check bug"></div><div class="task-text">PostsContext + ReviewsContext inicializados globalmente con ID "global" en vez de per-entity</div></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:var(--green)">✅ Quick wins recomendados</div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Crear <span class="code-path">src/core/components/Toast.tsx</span> con react-native-toast-message</div></div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Crear <span class="code-path">src/core/components/Input.tsx</span> estandarizado</div></div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Script de reemplazo: sed <span class="code-path">#850021</span> → <span class="code-path">TOKENS.color.primary</span></div></div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Mover todos los tipos compartidos a <span class="code-path">src/types/</span></div></div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Confirmar todos los TODO de interfaces con el backend team</div></div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Agregar <span class="code-path">timeout: 30000</span> en axiosinstance</div></div>
+        <div class="task-item"><div class="task-check todo"></div><div class="task-text">CI: lint + type-check en cada PR (GitHub Actions)</div></div>
+      </div>
+    </div>
+
+    <!-- ─── ARQUITECTURA ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--cyan)"></div>
+      <div class="section-title">Arquitectura — Estado Actual</div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;font-family:monospace;font-size:12px;line-height:1.7;color:var(--text2);">
+<span style="color:var(--text3)">// Context Provider Tree — app/_layout.tsx</span>
+<br><span style="color:var(--cyan)">AuthProvider</span>
+<br>&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ProfileProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">UsersProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">CategoriesProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ProvidersProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ServicesProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">SearchProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">PaymentsProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">OrdersProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--orange)">PostsProvider <span style="color:var(--red)">// ⚠ serviceId="global"</span></span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--orange)">ReviewsProvider <span style="color:var(--red)">// ⚠ providerId="global"</span></span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">KYCProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">NotificationsProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">FavoritesProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--text)">RootLayoutNav → Tabs</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--green)">ConversationsProvider</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--green)">UnreadProvider</span>
+    </div>
+
+    <!-- ─── AUTO-CHANGELOG ─── -->
+    <div class="section-header" style="margin-top:36px;">
+      <div class="section-dot" style="background:var(--green)"></div>
+      <div class="section-title">Changelog Automático</div>
+      <div class="section-meta">Actualizado por Claude Code al finalizar cada sesión</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:9px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Historial de sesiones · últimas 30</div>
+      <div id="changelog-entries">
+        <!-- ENTRIES_START -->
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>10:56 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">26 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>10:55 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Documentación CLAUDE.md, App Config (app.json), App Layout / Providers, Dependencias (package.json), Contextos Globales, API / Axios, Componentes Core, Chat / Mensajería, Favoritos, KYC / Antecedentes, Notificaciones Push, Órdenes, Planes, Perfil, Reseñas, Servicios / Marketplace, Usuarios</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">38 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>10:52 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Config (app.json), App Layout / Providers, Dependencias (package.json), Contextos Globales, API / Axios, Componentes Core, Chat / Mensajería, Favoritos, KYC / Antecedentes, Notificaciones Push, Órdenes, Planes, Perfil, Reseñas, Servicios / Marketplace, Usuarios</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">37 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+              <!-- ENTRIES_END -->
+      </div>
+    </div>
+
+    <div class="dash-footer">
+      <strong style="color:var(--brand-light)">Bosko</strong> — Internal Project Dashboard · React Native + Expo 54 · Branch: <span class="code-path">dev</span>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+</body>
+</html>

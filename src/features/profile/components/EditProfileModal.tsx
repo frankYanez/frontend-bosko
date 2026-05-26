@@ -15,6 +15,7 @@ import {
 import { TextInput } from "react-native-paper";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { UpdateProfilePayload, uploadAvatar } from "@/features/servicesUser/services/profile";
@@ -79,7 +80,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     if (result.canceled) return;
 
-    const uri = result.assets[0].uri;
+    const raw = result.assets[0].uri;
+    const compressed = await ImageManipulator.manipulateAsync(
+      raw,
+      [{ resize: { width: 800 } }],
+      { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+    ).catch(() => ({ uri: raw }));
+    const uri = compressed.uri;
     setAvatarUri(uri);
     setUploadingAvatar(true);
     try {

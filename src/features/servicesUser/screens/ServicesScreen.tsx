@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import { useServices } from '../state/ServicesContext';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
+import { TOKENS } from '@/core/design-system/tokens';
 
 const { width: W } = Dimensions.get('window');
 const CARD_GAP   = 12;
@@ -27,7 +28,7 @@ const HALF_W     = (W - H_PAD * 2 - CARD_GAP) / 2;
 const GRADIENTS: [string, string, string][] = [
   ['#0f0c29', '#302b63', '#24243e'],   // 0  deep violet
   ['#134e5e', '#71b280', '#134e5e'],   // 1  teal forest
-  ['#4a0f20', '#850021', '#c0002f'],   // 2  bosko red
+  [TOKENS.color.primaryDark, TOKENS.color.primary, '#c0002f'],   // 2  bosko red
   ['#0d0d0d', '#2c3e50', '#4ca1af'],   // 3  midnight steel
   ['#1a1a2e', '#16213e', '#0f3460'],   // 4  deep navy
   ['#2d1b69', '#553c9a', '#6d28d9'],   // 5  purple
@@ -264,7 +265,7 @@ function SearchBar({ anim }: { anim: Animated.Value }) {
         <Ionicons name="search-outline" size={16} color="#9CA3AF" />
         <Text style={s.searchPlaceholder}>Buscar servicios o profesionales…</Text>
         <View style={s.searchFilter}>
-          <Ionicons name="options-outline" size={15} color="#850021" />
+          <Ionicons name="options-outline" size={15} color={TOKENS.color.primary} />
         </View>
       </Pressable>
     </Animated.View>

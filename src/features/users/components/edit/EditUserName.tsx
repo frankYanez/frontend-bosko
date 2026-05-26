@@ -5,8 +5,7 @@ export default function EditUsername() {
   const [username, setUsername] = useState("usuarioActual");
 
   const save = () => {
-    console.log("Nuevo username:", username);
-    // acá llamás al backend
+    // TODO: conectar con backend PATCH /users/me
   };
 
   return (

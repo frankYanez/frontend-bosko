@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 
+import { TOKENS } from '@/core/design-system/tokens';
 import {
   BackgroundCheckState,
   BackgroundCheckStatus,
@@ -25,8 +26,8 @@ import {
 } from '../services/background-check.service';
 
 const C = {
-  primary: '#850021',
-  dark:    '#4A0F20',
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
   bg:      '#F7F7FA',
   card:    '#FFFFFF',
   text:    '#1A1A1A',
