@@ -27,6 +27,20 @@ import { useUnread } from '@/features/chat/state/UnreadContext';
 import { useConversations } from '@/features/chat/state/ConversationsContext';
 import { TOKENS } from '@/core/design-system/tokens';
 
+function formatLastMessage(content?: string | null): string {
+  if (!content) return 'Conversación iniciada';
+  if (content.startsWith('🎤') || content.startsWith('🖼') || content.startsWith('📷') ||
+      content.startsWith('🎥') || content.startsWith('📎')) return content;
+  if (content.startsWith('http://') || content.startsWith('https://')) {
+    if (/\.(mp3|m4a|aac|ogg|wav)/i.test(content)) return '🎤 Mensaje de voz';
+    if (/\.(mp4|mov|avi|webm)/i.test(content)) return '🎥 Video';
+    if (/\.(pdf|doc|docx|xls|xlsx)/i.test(content)) return '📎 Documento';
+    if (/\.(jpg|jpeg|png|gif|webp)/i.test(content)) return '📷 Foto';
+    return '📎 Archivo';
+  }
+  return content;
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -88,7 +102,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
               style={[styles.itemPreview, hasUnread && styles.itemPreviewBold]}
               numberOfLines={1}
             >
-              {item.lastMessage?.content || 'Conversación iniciada'}
+              {formatLastMessage(item.lastMessage?.content)}
             </Text>
             {hasUnread && (
               <View style={styles.unreadBadge}>

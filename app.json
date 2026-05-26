@@ -7,6 +7,11 @@
     "icon": "./assets/images/bosko-logo.png",
     "scheme": "bosko",
     "userInterfaceStyle": "light",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -20,7 +25,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "androidNavigationBar": {
+        "backgroundColor": "#000000",
+        "barStyle": "light"
+      }
     },
     "ios": {
       "bundleIdentifier": "com.boskoapp.mobile",
@@ -36,7 +45,9 @@
       "expo-font",
       "expo-secure-store",
       "@react-native-firebase/app",
-      "@react-native-firebase/auth"
+      "@react-native-firebase/auth",
+      "expo-video",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

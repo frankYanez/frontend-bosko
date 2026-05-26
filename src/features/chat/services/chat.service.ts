@@ -60,13 +60,16 @@ export async function fetchConversationByOrder(orderId: string): Promise<Convers
   return data;
 }
 
-/** Obtener mensajes de una conversación (paginados) */
+/** Obtener mensajes de una conversación (paginados, orden DESC) */
 export async function fetchMessages(
   conversationId: string,
   params?: { page?: number; limit?: number },
-): Promise<Message[]> {
-  const { data } = await api.get<any>(`/conversations/${conversationId}/messages`, { params });
-  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
+): Promise<{ messages: Message[]; total: number; hasMore: boolean }> {
+  const limit = params?.limit ?? 50;
+  const { data } = await api.get<any>(`/conversations/${conversationId}/messages`, { params: { ...params, limit } });
+  const messages: Message[] = (data as any)?.data ?? (Array.isArray(data) ? data : []);
+  const total: number = (data as any)?.total ?? messages.length;
+  return { messages, total, hasMore: messages.length === limit };
 }
 
 /** Enviar un mensaje de texto */
@@ -98,7 +101,7 @@ export async function sendMedia(conversationId: string, fileUri: string, mimeTyp
 /** Enviar un mensaje de audio */
 export async function sendAudio(conversationId: string, fileUri: string): Promise<Message> {
   const formData = new FormData();
-  formData.append('file', { uri: fileUri, type: 'audio/m4a', name: 'audio.m4a' } as any);
+  formData.append('file', { uri: fileUri, type: 'audio/aac', name: 'audio.aac' } as any);
 
   const { data } = await api.post<Message>(`/conversations/${conversationId}/media`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

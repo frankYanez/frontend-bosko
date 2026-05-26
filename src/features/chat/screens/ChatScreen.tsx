@@ -19,10 +19,25 @@ import {
   Alert,
   Animated,
   Keyboard,
+  Linking,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Audio, Video, ResizeMode } from 'expo-av';
+import * as DocumentPicker from 'expo-document-picker';
+// expo-image-manipulator requires a native rebuild — imported but used only after rebuild
+// import * as ImageManipulator from 'expo-image-manipulator';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import {
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  useAudioRecorder,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from 'expo-audio';
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -45,25 +60,6 @@ import { TOKENS } from '@/core/design-system/tokens';
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
 
-const RECORDING_OPTIONS: Audio.RecordingOptions = {
-  android: {
-    extension: '.m4a',
-    outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-    audioEncoder: Audio.AndroidAudioEncoder.AAC,
-    sampleRate: 44100,
-    numberOfChannels: 1,
-    bitRate: 128000,
-  },
-  ios: {
-    extension: '.m4a',
-    audioQuality: Audio.IOSAudioQuality.HIGH,
-    outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-    sampleRate: 44100,
-    numberOfChannels: 1,
-    bitRate: 128000,
-  },
-  web: { mimeType: 'audio/webm', bitsPerSecond: 128000 },
-};
 
 function formatDuration(ms: number): string {
   const total = Math.floor(ms / 1000);
@@ -76,64 +72,32 @@ const WAVE_BARS = [6, 10, 16, 8, 20, 12, 22, 10, 18, 8, 14, 10, 12, 20, 8, 10, 1
 
 // ── Burbuja de audio ──────────────────────────────────────────────────────────
 function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [positionMs, setPositionMs] = useState(0);
-  const [durationMs, setDurationMs] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const player = useAudioPlayer(msg.mediaUrl ?? null);
+  const status = useAudioPlayerStatus(player);
 
-  useEffect(() => {
-    if (!msg.mediaUrl) return;
-    let mounted = true;
+  const positionMs = status.currentTime * 1000;
+  const durationMs = status.duration * 1000;
+  const progress = durationMs > 0 ? positionMs / durationMs : 0;
 
-    Audio.Sound.createAsync(
-      { uri: msg.mediaUrl },
-      { shouldPlay: false },
-      (status) => {
-        if (!mounted || !status.isLoaded) return;
-        setIsPlaying(status.isPlaying ?? false);
-        if (status.durationMillis) setDurationMs(status.durationMillis);
-        setPositionMs(status.positionMillis ?? 0);
-        if (status.didJustFinish) {
-          setIsPlaying(false);
-          setPositionMs(0);
-          soundRef.current?.stopAsync().catch(() => {});
-        }
-      },
-    ).then(({ sound, status }) => {
-      if (!mounted) { sound.unloadAsync(); return; }
-      soundRef.current = sound;
-      if (status.isLoaded && status.durationMillis) setDurationMs(status.durationMillis);
-      setLoaded(true);
-    }).catch(() => {});
-
-    return () => {
-      mounted = false;
-      soundRef.current?.unloadAsync();
-      soundRef.current = null;
-    };
-  }, [msg.mediaUrl]);
-
-  const togglePlay = async () => {
-    if (!soundRef.current || !loaded) return;
-    if (isPlaying) {
-      await soundRef.current.pauseAsync();
+  const togglePlay = () => {
+    if (status.playing) {
+      player.pause();
     } else {
-      await soundRef.current.playAsync();
+      if (status.didJustFinish) player.seekTo(0);
+      player.play();
     }
   };
 
-  const progress = durationMs > 0 ? positionMs / durationMs : 0;
-  const timeLabel = !loaded || durationMs === 0
+  const timeLabel = !status.isLoaded || durationMs === 0
     ? '--:--'
-    : formatDuration(isPlaying || positionMs > 0 ? positionMs : durationMs);
+    : formatDuration(status.playing || positionMs > 0 ? positionMs : durationMs);
   const accent = isMine ? '#fff' : TOKENS.color.primary;
   const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(133,0,33,0.25)';
 
   return (
     <View style={[styles.audioBubble]}>
       <Pressable onPress={togglePlay} style={[styles.audioPlayBtn, { borderColor: accentDim }]}>
-        <MaterialIcons name={isPlaying ? 'pause' : 'play-arrow'} size={22} color={accent} />
+        <MaterialIcons name={status.playing ? 'pause' : 'play-arrow'} size={22} color={accent} />
       </Pressable>
       <View style={styles.waveform}>
         {WAVE_BARS.map((h, i) => (
@@ -153,20 +117,59 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
 
 // ── Burbuja de video ──────────────────────────────────────────────────────────
 function VideoBubble({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, p => { p.loop = false; });
   return (
-    <Video
-      source={{ uri }}
+    <VideoView
+      player={player}
       style={styles.bubbleVideo}
-      useNativeControls
-      resizeMode={ResizeMode.CONTAIN}
-      isLooping={false}
+      nativeControls
+      contentFit="contain"
     />
+  );
+}
+
+// ── Burbuja de documento ─────────────────────────────────────────────────────
+function DocumentBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
+  const filename = msg.mediaUrl?.split('/').pop()?.split('?')[0] ?? 'documento';
+  const accent = isMine ? 'rgba(255,255,255,0.9)' : TOKENS.color.primary;
+  return (
+    <Pressable
+      onPress={() => msg.mediaUrl && Linking.openURL(msg.mediaUrl)}
+      style={styles.docBubble}
+    >
+      <MaterialIcons name="insert-drive-file" size={28} color={accent} />
+      <Text style={[styles.docName, { color: accent }]} numberOfLines={2}>{decodeURIComponent(filename)}</Text>
+      <MaterialIcons name="open-in-new" size={16} color={accent} style={{ marginLeft: 4 }} />
+    </Pressable>
+  );
+}
+
+const SCREEN_W = Dimensions.get('window').width;
+const SCREEN_H = Dimensions.get('window').height;
+
+// ── Lightbox pantalla completa ────────────────────────────────────────────────
+function MediaLightbox({ uri, isVideo, visible, onClose }: { uri: string; isVideo: boolean; visible: boolean; onClose: () => void }) {
+  const player = useVideoPlayer(isVideo ? uri : null, p => { if (p) { p.loop = false; } });
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.lightboxBackdrop}>
+        <TouchableOpacity style={styles.lightboxClose} onPress={onClose} activeOpacity={0.8}>
+          <MaterialIcons name="close" size={28} color="#fff" />
+        </TouchableOpacity>
+        {isVideo ? (
+          <VideoView player={player} style={styles.lightboxVideo} nativeControls contentFit="contain" />
+        ) : (
+          <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
+        )}
+      </View>
+    </Modal>
   );
 }
 
 // ── Burbuja de mensaje ────────────────────────────────────────────────────────
 function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
   const isMine = msg.senderId === myUserId;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (msg.messageType === 'system_event') {
     return (
@@ -180,6 +183,44 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
     hour: '2-digit', minute: '2-digit',
   });
 
+  const isVideo = (msg.messageType === 'file' || msg.messageType === 'image') && !!msg.mediaUrl && /\.(mp4|mov|avi|webm)$/i.test(msg.mediaUrl);
+  const isImage = msg.messageType === 'image' && !!msg.mediaUrl && !isVideo;
+  const isMediaBubble = isVideo || isImage;
+  const statusText = msg.isRead || msg.isDelivered ? ' ✓✓' : ' ✓';
+
+  if (isMediaBubble) {
+    const mediaBorderStyle = isMine
+      ? { borderRadius: 18, borderBottomRightRadius: 4 }
+      : { borderRadius: 18, borderBottomLeftRadius: 4 };
+    return (
+      <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
+        {!isMine && (
+          <View style={styles.bubbleAvatar}>
+            <Text style={styles.bubbleAvatarText}>
+              {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
+        <Pressable
+          style={[styles.mediaThumbnail, mediaBorderStyle]}
+          onPress={() => setLightboxOpen(true)}
+        >
+          {isVideo ? (
+            <VideoBubble uri={msg.mediaUrl!} />
+          ) : (
+            <Image source={{ uri: msg.mediaUrl! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          )}
+          <View style={styles.mediaTimestampOverlay}>
+            <Text style={styles.mediaTimestampText}>
+              {timestamp}{isMine ? statusText : ''}
+            </Text>
+          </View>
+        </Pressable>
+        <MediaLightbox uri={msg.mediaUrl!} isVideo={isVideo} visible={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
       {!isMine && (
@@ -192,10 +233,8 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
       <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
         {msg.messageType === 'audio' ? (
           <AudioBubble msg={msg} isMine={isMine} />
-        ) : (msg.messageType === 'file' || msg.messageType === 'image') && msg.mediaUrl && /\.(mp4|mov|avi|webm)$/i.test(msg.mediaUrl) ? (
-          <VideoBubble uri={msg.mediaUrl} />
-        ) : msg.messageType === 'image' && msg.mediaUrl ? (
-          <Image source={{ uri: msg.mediaUrl }} style={styles.bubbleImage} resizeMode="cover" />
+        ) : msg.messageType === 'file' && msg.mediaUrl ? (
+          <DocumentBubble msg={msg} isMine={isMine} />
         ) : (
           <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>
             {msg.content}
@@ -210,7 +249,7 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
                 ? styles.statusDelivered
                 : styles.statusSent
             }>
-              {msg.isRead || msg.isDelivered ? '  ✓✓' : '  ✓'}
+              {statusText}
             </Text>
           )}
         </Text>
@@ -220,7 +259,7 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
 }
 
 // ── Indicador de grabación (reemplaza el TextInput) ───────────────────────────
-function RecordingIndicator({ duration }: { duration: number }) {
+function RecordingIndicator({ duration, locked, lockProgress }: { duration: number; locked?: boolean; lockProgress?: number }) {
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -233,11 +272,17 @@ function RecordingIndicator({ duration }: { duration: number }) {
     return () => anim.stop();
   }, []);
 
+  const progress = lockProgress ?? 0;
+
   return (
     <View style={styles.recordingBar}>
       <Animated.View style={[styles.recordingDot, { transform: [{ scale: pulse }] }]} />
       <Text style={styles.recordingTimer}>{formatDuration(duration * 1000)}</Text>
-      <Text style={styles.recordingHint}>Suelta para enviar</Text>
+      {locked ? null : progress > 0.1 ? (
+        <MaterialIcons name="lock" size={16} color={TOKENS.color.primary} style={{ opacity: progress }} />
+      ) : (
+        <Text style={styles.recordingHint}>← cancelar  ↑ bloquear</Text>
+      )}
     </View>
   );
 }
@@ -272,6 +317,11 @@ function TypingBubble() {
   );
 }
 
+// Placeholder — replaced with ImageManipulator after rebuild
+async function compressImage(uri: string, mimeType: string): Promise<{ uri: string; mimeType: string }> {
+  return { uri, mimeType };
+}
+
 // ── Pantalla principal ────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -289,12 +339,23 @@ export default function ChatScreen() {
   const [socketReady, setSocketReady] = useState(socketService.isConnected);
   const [convId, setConvId] = useState('');
 
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const hasMoreRef = useRef(false);
+  const nextPageRef = useRef(2);
+
   // Audio — usamos ref para el estado real (evita problemas de closure en onPressOut)
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingLocked, setRecordingLocked] = useState(false);
+  const [lockProgress, setLockProgress] = useState(0);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [sendingAudio, setSendingAudio] = useState(false);
   const isRecordingRef = useRef(false);
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const recordingLockedRef = useRef(false);
+  const recordingDurationRef = useRef(0);
+  const micStartYRef = useRef(0);
+  const micStartXRef = useRef(0);
   const durationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const listRef = useRef<FlatList>(null);
@@ -322,11 +383,10 @@ export default function ChatScreen() {
   const loadMessages = useCallback(async (convId: string) => {
     if (pollBackoffRef.current > Date.now()) return;
     try {
-      const data = await fetchMessages(convId);
-      setMessages(prev => {
-        if (prev.length === data.length && prev[prev.length - 1]?.id === data[data.length - 1]?.id) return prev;
-        return data;
-      });
+      const { messages: latest, hasMore } = await fetchMessages(convId, { page: 1, limit: 50 });
+      hasMoreRef.current = hasMore;
+      nextPageRef.current = 2;
+      setMessages(latest);
       await markAsRead(convId).catch(() => {});
     } catch (err: any) {
       if (err?.response?.status === 429) {
@@ -335,6 +395,25 @@ export default function ChatScreen() {
       console.error('Error loading messages:', err);
     }
   }, []);
+
+  const loadOlderMessages = useCallback(async (convId: string) => {
+    if (!hasMoreRef.current || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const { messages: older, hasMore } = await fetchMessages(convId, { page: nextPageRef.current, limit: 50 });
+      hasMoreRef.current = hasMore;
+      nextPageRef.current += 1;
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id));
+        const newOnes = older.filter(m => !existingIds.has(m.id));
+        return [...prev, ...newOnes];
+      });
+    } catch (err) {
+      console.error('Error loading older messages:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore]);
 
   useEffect(() => {
     const token = authState.token;
@@ -362,7 +441,7 @@ export default function ChatScreen() {
       if (msg.conversationId !== convIdRef.current) return;
       setMessages(prev => {
         if (prev.some(m => m.id === msg.id)) return prev;
-        return [...prev, msg];
+        return [msg, ...prev];
       });
     });
     return () => unsub();
@@ -372,6 +451,8 @@ export default function ChatScreen() {
     let active = true;
     const init = async () => {
       setLoading(true);
+      hasMoreRef.current = false;
+      nextPageRef.current = 2;
       const id = await loadConversation();
       if (!id || !active) { setLoading(false); return; }
       convIdRef.current = id;
@@ -392,78 +473,87 @@ export default function ChatScreen() {
 
   // ── Audio recording ──────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
+    setShowAttachMenu(false);
+    setRecordingLocked(false);
+    recordingLockedRef.current = false;
+    setLockProgress(0);
     try {
-      const { granted } = await Audio.requestPermissionsAsync();
+      const { granted } = await requestRecordingPermissionsAsync();
       if (!granted) {
         Alert.alert('Permiso requerido', 'Necesitamos acceso al micrófono.');
         return;
       }
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(RECORDING_OPTIONS);
-      recordingRef.current = recording;
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       isRecordingRef.current = true;
       setIsRecording(true);
+      recordingDurationRef.current = 0;
       setRecordingDuration(0);
       durationTimerRef.current = setInterval(() => {
+        recordingDurationRef.current += 1;
         setRecordingDuration(d => d + 1);
       }, 1000);
     } catch (err) {
       console.error('Error starting recording:', err);
     }
-  }, []);
+  }, [recorder]);
 
   const stopRecording = useCallback(async () => {
-    if (!isRecordingRef.current && !recordingRef.current) return;
+    if (!isRecordingRef.current) return;
     if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
     isRecordingRef.current = false;
+    recordingLockedRef.current = false;
     setIsRecording(false);
-
-    const recording = recordingRef.current;
-    recordingRef.current = null;
-    if (!recording) return;
-
+    setRecordingLocked(false);
+    setLockProgress(0);
+    const duration = recordingDurationRef.current;
     try {
-      await recording.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-      const uri = recording.getURI();
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
+      const uri = recorder.uri;
       if (!uri) return;
       const convId = conversationRef.current?.id ?? convIdRef.current;
       if (!convId) return;
       setSendingAudio(true);
       const newMsg = await sendAudio(convId, uri);
-      setMessages(prev => [...prev, newMsg]);
-      updateLastMessage(convId, '🎤 Audio', profile?.id ?? '');
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(convId, `🎤 Mensaje de voz (${formatDuration(duration * 1000)})`, profile?.id ?? '');
     } catch (err) {
       console.error('Error sending audio:', err);
       Alert.alert('Error', 'No se pudo enviar el audio. Intentá de nuevo.');
     } finally {
       setSendingAudio(false);
+      recordingDurationRef.current = 0;
       setRecordingDuration(0);
     }
-  }, []);
+  }, [recorder]);
 
   const cancelRecording = useCallback(async () => {
-    if (!isRecordingRef.current && !recordingRef.current) return;
+    if (!isRecordingRef.current) return;
     if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
     isRecordingRef.current = false;
+    recordingLockedRef.current = false;
     setIsRecording(false);
+    setRecordingLocked(false);
+    setLockProgress(0);
     try {
-      await recordingRef.current?.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
     } catch {}
-    recordingRef.current = null;
+    recordingDurationRef.current = 0;
     setRecordingDuration(0);
-  }, []);
+  }, [recorder]);
 
   useEffect(() => {
     return () => {
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
-      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
     };
   }, []);
 
-  // ── Media (imagen) ───────────────────────────────────────────────────────
+  // ── Media (galería) ──────────────────────────────────────────────────────
   const handlePickMedia = useCallback(async () => {
+    setShowAttachMenu(false);
     if (!conversation) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -472,22 +562,86 @@ export default function ChatScreen() {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images', 'videos'],
-      quality: 0.7,
+      quality: 0.4,
       allowsEditing: false,
       videoMaxDuration: 60,
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
     const isVideo = asset.type === 'video';
-    const mimeType = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
+    const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
     setSending(true);
     try {
-      const newMsg = await sendMedia(conversation.id, asset.uri, mimeType);
-      setMessages(prev => [...prev, newMsg]);
+      const { uri, mimeType } = await compressImage(asset.uri, rawMime);
+      const newMsg = await sendMedia(conversation.id, uri, mimeType);
+      setMessages(prev => [newMsg, ...prev]);
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Imagen', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending media:', err);
       Alert.alert('Error', 'No se pudo enviar el archivo.');
+    } finally {
+      setSending(false);
+    }
+  }, [conversation]);
+
+  // ── Cámara (helper compartido) ───────────────────────────────────────────
+  const launchCamera = useCallback(async (mediaTypes: ('images' | 'videos')[], isVideo: boolean) => {
+    setShowAttachMenu(false);
+    if (!conversation) return;
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu cámara.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes,
+      quality: 0.4,
+      videoMaxDuration: 60,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
+    setSending(true);
+    try {
+      const { uri, mimeType } = await compressImage(asset.uri, rawMime);
+      const newMsg = await sendMedia(conversation.id, uri, mimeType);
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Foto', profile?.id ?? '');
+    } catch (err) {
+      console.error('Error sending camera media:', err);
+      Alert.alert('Error', 'No se pudo enviar el archivo.');
+    } finally {
+      setSending(false);
+    }
+  }, [conversation]);
+
+  const handleCameraPhoto = useCallback(() => launchCamera(['images'], false), [launchCamera]);
+  const handleCameraVideo = useCallback(() => launchCamera(['videos'], true), [launchCamera]);
+
+  // ── Documento ────────────────────────────────────────────────────────────
+  const handlePickDocument = useCallback(async () => {
+    setShowAttachMenu(false);
+    if (!conversation) return;
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setSending(true);
+    try {
+      const newMsg = await sendMedia(conversation.id, asset.uri, asset.mimeType ?? 'application/pdf');
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(conversation.id, '📎 Documento', profile?.id ?? '');
+    } catch (err) {
+      console.error('Error sending document:', err);
+      Alert.alert('Error', 'No se pudo enviar el documento.');
     } finally {
       setSending(false);
     }
@@ -502,7 +656,7 @@ export default function ChatScreen() {
     cancelTyping();
     try {
       const newMsg = await sendMsgRest(conversation.id, text);
-      setMessages(prev => [...prev, newMsg]);
+      setMessages(prev => [newMsg, ...prev]);
       updateLastMessage(conversation.id, text, profile?.id ?? '');
     } catch (err) {
       setInput(text);
@@ -544,17 +698,13 @@ export default function ChatScreen() {
     return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
   }, []);
 
-  const sortedMessages = useMemo(
-    () => [...messages].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-    [messages],
-  );
-
   const myId = profile?.id;
   const other = conversation?.otherParty;
   const otherName = other
     ? `${other.firstName} ${other.lastName || ''}`.trim() || 'Chat'
     : 'Chat';
-  const showMicButton = !input.trim() && !sending && !sendingAudio;
+  const showMicButton = !input.trim() && !sending && !sendingAudio && !isRecording && !recordingLocked;
+  const LOCK_THRESHOLD = 80;
 
   if (loading) {
     return (
@@ -602,17 +752,19 @@ export default function ChatScreen() {
       {/* Mensajes */}
       <FlatList
         ref={listRef}
-        data={sortedMessages}
+        data={messages}
+        inverted
         keyExtractor={item => item.id}
         renderItem={({ item }) => <MessageBubble msg={item} myUserId={myId} />}
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-        onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
+        onEndReached={() => { if (convId) loadOlderMessages(convId); }}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.primary} style={{ padding: 12 }} /> : null}
         ListEmptyComponent={
-          <View style={styles.emptyChat}>
+          <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
             <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
             <Text style={styles.emptyChatText}>Todavía no hay mensajes</Text>
             <Text style={styles.emptyChatSubtext}>Enviá el primer mensaje para empezar</Text>
@@ -621,29 +773,53 @@ export default function ChatScreen() {
         style={styles.messagesList}
       />
 
-      {isTyping && <TypingBubble />}
+      {isTyping && <View style={{ transform: [{ scaleY: -1 }] }}><TypingBubble /></View>}
 
-      {/* Input bar — el botón derecho SIEMPRE está montado */}
+      {/* Menú de adjuntar */}
+      {showAttachMenu && (
+        <View style={styles.attachMenu}>
+          <Pressable onPress={handleCameraPhoto} style={styles.attachOption}>
+            <MaterialIcons name="camera-alt" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Foto</Text>
+          </Pressable>
+          <Pressable onPress={handleCameraVideo} style={styles.attachOption}>
+            <MaterialIcons name="videocam" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Video</Text>
+          </Pressable>
+          <Pressable onPress={handlePickMedia} style={styles.attachOption}>
+            <MaterialIcons name="photo-library" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Galería</Text>
+          </Pressable>
+          <Pressable onPress={handlePickDocument} style={styles.attachOption}>
+            <MaterialIcons name="insert-drive-file" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Documento</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Input bar */}
       <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.inputWrapper}>
-          {/* Botón izquierdo: galería o cancelar grabación */}
-          {isRecording ? (
+          {/* Botón izquierdo */}
+          {isRecording || recordingLocked ? (
             <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn}>
               <MaterialIcons name="delete" size={22} color="#dc2626" />
             </Pressable>
           ) : (
             <Pressable
-              onPress={handlePickMedia}
+              onPress={() => setShowAttachMenu(v => !v)}
               hitSlop={8}
               style={({ pressed }) => [styles.leftBtn, pressed && { opacity: 0.6 }]}
             >
-              <MaterialIcons name="add-photo-alternate" size={22} color={TOKENS.color.sub} />
+              <MaterialIcons name={showAttachMenu ? 'close' : 'attach-file'} size={22} color={TOKENS.color.sub} />
             </Pressable>
           )}
 
-          {/* Centro: input de texto o indicador de grabación */}
-          {isRecording ? (
-            <RecordingIndicator duration={recordingDuration} />
+          {/* Centro */}
+          {isRecording || recordingLocked ? (
+            <RecordingIndicator duration={recordingDuration} locked={recordingLocked} lockProgress={lockProgress} />
+          ) : sendingAudio ? (
+            <ActivityIndicator color={TOKENS.color.primary} size="small" style={{ flex: 1 }} />
           ) : (
             <TextInput
               style={styles.input}
@@ -657,34 +833,62 @@ export default function ChatScreen() {
             />
           )}
 
-          {/*
-           * Botón derecho SIEMPRE montado.
-           * - Sin texto + sin grabación: 🎤 long press para grabar, onPressOut para parar
-           * - Grabando: ⬛ stop (rojo)
-           * - Con texto: ➤ enviar
-           */}
-          <Pressable
-            onLongPress={showMicButton && !isRecording ? startRecording : undefined}
-            onPressOut={() => { if (isRecordingRef.current) stopRecording(); }}
-            onPress={!showMicButton && !isRecording ? handleSend : undefined}
-            delayLongPress={150}
-            style={({ pressed }) => [
-              styles.rightBtn,
-              isRecording && styles.rightBtnRecording,
-              (!showMicButton && !isRecording && (!input.trim() || sending)) && styles.rightBtnDisabled,
-              pressed && styles.rightBtnPressed,
-            ]}
-          >
-            {sendingAudio || (sending && !input.trim()) ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : isRecording ? (
-              <MaterialIcons name="stop" size={20} color="#fff" />
-            ) : showMicButton ? (
+          {/* Botón derecho */}
+          {recordingLocked ? (
+            // Modo bloqueado: checkmark verde para enviar
+            <Pressable onPress={stopRecording} style={[styles.rightBtn, styles.rightBtnSend]}>
+              <MaterialIcons name="check" size={22} color="#fff" />
+            </Pressable>
+          ) : !isRecording && !showMicButton ? (
+            // Tiene texto: enviar
+            <Pressable
+              onPress={handleSend}
+              disabled={!input.trim() || sending}
+              style={[styles.rightBtn, (!input.trim() || sending) && styles.rightBtnDisabled]}
+            >
+              {sending ? <ActivityIndicator color="#fff" size="small" /> : <MaterialIcons name="send" size={20} color="#fff" />}
+            </Pressable>
+          ) : (
+            // Micrófono: View con responder para gesture de slide
+            <View
+              style={[styles.rightBtn, isRecording && styles.rightBtnRecording]}
+              onStartShouldSetResponder={() => true}
+              onMoveShouldSetResponder={() => true}
+              onResponderGrant={(e) => {
+                micStartYRef.current = e.nativeEvent.pageY;
+                micStartXRef.current = e.nativeEvent.pageX;
+                startRecording();
+              }}
+              onResponderMove={(e) => {
+                if (recordingLockedRef.current) return;
+                const dy = micStartYRef.current - e.nativeEvent.pageY;
+                const dx = micStartXRef.current - e.nativeEvent.pageX;
+                // Slide left → cancel
+                if (dx >= 80 && isRecordingRef.current) {
+                  cancelRecording();
+                  return;
+                }
+                // Slide up → lock
+                const progress = Math.min(Math.max(dy / LOCK_THRESHOLD, 0), 1);
+                setLockProgress(progress);
+                if (dy >= LOCK_THRESHOLD) {
+                  recordingLockedRef.current = true;
+                  setRecordingLocked(true);
+                  setLockProgress(0);
+                }
+              }}
+              onResponderRelease={() => {
+                if (recordingLockedRef.current) return;
+                setLockProgress(0);
+                if (isRecordingRef.current) stopRecording();
+              }}
+              onResponderTerminate={() => {
+                if (!recordingLockedRef.current && isRecordingRef.current) cancelRecording();
+              }}
+            >
               <MaterialIcons name="mic" size={20} color="#fff" />
-            ) : (
-              <MaterialIcons name="send" size={20} color="#fff" />
-            )}
-          </Pressable>
+            </View>
+          )}
         </View>
       </BlurView>
     </KeyboardAvoidingView>
@@ -740,12 +944,39 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  bubbleImage: { width: 200, height: 150, borderRadius: 10 },
-  bubbleVideo: { width: 220, height: 160, borderRadius: 10, backgroundColor: '#000' },
+  mediaThumbnail: {
+    width: 220, height: 165,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+    borderWidth: 2.5,
+    borderColor: TOKENS.color.primary,
+  },
+  mediaTimestampOverlay: {
+    position: 'absolute', bottom: 6, right: 8,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 5, paddingVertical: 2,
+    borderRadius: 8,
+  },
+  mediaTimestampText: { color: '#fff', fontSize: 10 },
+  bubbleImage: { width: 220, height: 165 },
+  bubbleVideo: { width: 220, height: 165, backgroundColor: '#000' },
   bubbleText: { fontSize: 15, color: TOKENS.color.text, lineHeight: 20 },
   bubbleTextMine: { color: '#fff' },
   bubbleTime: { fontSize: 10, color: TOKENS.color.sub, alignSelf: 'flex-end' },
   bubbleTimeMine: { color: 'rgba(255,255,255,0.7)' },
+  lightboxBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  lightboxClose: {
+    position: 'absolute', top: 48, right: 20,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+    zIndex: 10,
+  },
+  lightboxImage: { width: SCREEN_W, height: SCREEN_H * 0.85 },
+  lightboxVideo: { width: SCREEN_W, height: SCREEN_H * 0.75 },
   // Audio bubble
   audioBubble: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2, minWidth: 180 },
   audioPlayBtn: {
@@ -755,6 +986,28 @@ const styles = StyleSheet.create({
   waveform: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 24 },
   waveBar: { width: 3, borderRadius: 2 },
   audioTime: { fontSize: 11, fontWeight: '600', minWidth: 32 },
+  // Document bubble
+  docBubble: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, minWidth: 160, maxWidth: 220 },
+  docName: { flex: 1, fontSize: 13, fontWeight: '500' },
+  // Attach menu
+  attachMenu: {
+    flexDirection: 'row',
+    backgroundColor: '#1a1a2e',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  attachOption: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  attachOptionText: { color: '#fff', fontSize: 11, fontWeight: '500' },
   // Input bar
   inputBar: {
     padding: 12,
@@ -781,6 +1034,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   rightBtnRecording: { backgroundColor: '#dc2626' },
+  rightBtnSend: { backgroundColor: '#22c55e' },
   rightBtnDisabled: { backgroundColor: '#ccc' },
   rightBtnPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
   // Recording
