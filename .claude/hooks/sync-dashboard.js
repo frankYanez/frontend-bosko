@@ -16,6 +16,53 @@ const DASHBOARD    = path.join(ROOT, 'bosko-dashboard.html');
 const CLAUDE_MD    = path.join(ROOT, 'CLAUDE.md');
 const CHANGELOG_DB = path.join(__dirname, '..', 'changelog.json');
 
+// ── Task auto-completion map ─────────────────────────────────────────────────
+// Maps edited file path patterns → task IDs that should be marked done.
+// Conservative: only fire when a specific file strongly implies a task is complete.
+const FILE_TASK_MAP = [
+  { re: /features[\\/]auth[\\/].*[Ll]ogin/,         tasks: ['auth-debug-logs'] },
+  { re: /features[\\/]home[\\/].*[Ss]creen/,         tasks: ['home-skeleton', 'home-error-state', 'home-pull-refresh'] },
+  { re: /features[\\/]orders[\\/].*[Ss]tatus/,       tasks: ['orders-status-socket'] },
+  { re: /features[\\/]orders[\\/].*[Ss]creen/,       tasks: ['orders-optimistic', 'orders-refund-ui'] },
+  { re: /features[\\/]notifications/,                tasks: ['notif-banner', 'notif-filters', 'orders-push-notify'] },
+  { re: /features[\\/]reels[\\/].*[Ss]ervice/,       tasks: ['reels-api-feed', 'reels-interactions'] },
+  { re: /features[\\/]reels[\\/].*[Ss]creen/,        tasks: ['reels-mock-data', 'reels-interactions-mock', 'reels-infinite'] },
+  { re: /features[\\/]reels[\\/].*[Uu]pload/,        tasks: ['reels-upload'] },
+  { re: /features[\\/]payments[\\/].*[Gg]ateway/,    tasks: ['payments-gateway'] },
+  { re: /features[\\/]payments[\\/].*[Rr]efund/,     tasks: ['payments-refund-ui'] },
+  { re: /features[\\/]payments[\\/].*[Bb]reakdown/,  tasks: ['payments-breakdown'] },
+  { re: /features[\\/]kyc/,                          tasks: ['kyc-countdown', 'kyc-doc-types'] },
+  { re: /\.github[\\/]workflows/,                    tasks: ['design-ci'] },
+  { re: /src[\\/]types[\\/]/,                        tasks: ['design-types-shared', 'design-types-confirm'] },
+];
+
+function taskIdsForFiles(files) {
+  const ids = new Set();
+  for (const fp of files) {
+    const p = fp.replace(/\\/g, '/');
+    for (const { re, tasks } of FILE_TASK_MAP) {
+      if (re.test(p)) tasks.forEach(t => ids.add(t));
+    }
+  }
+  return ids;
+}
+
+function markTasksDone(html, taskIds) {
+  if (!taskIds.size) return html;
+  const lines = html.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.includes('data-task-id')) continue;
+    const m = line.match(/data-task-id="([^"]+)"/);
+    if (!m || !taskIds.has(m[1])) continue;
+    if (line.includes('task-check done')) continue; // already done
+    lines[i] = line
+      .replace(/class="task-check (todo|bug)">\s*<\/div>/g, 'class="task-check done">✓</div>')
+      .replace(/class="task-text"/g, 'class="task-text done"');
+  }
+  return lines.join('\n');
+}
+
 // ── Feature map ──────────────────────────────────────────────────────────────
 const FEATURE_MAP = [
   { re: /features[\\/]auth/,          label: 'Auth' },
@@ -98,16 +145,24 @@ function entryHtml(e) {
         </div>`;
 }
 
-function updateDashboard(entries) {
+function updateDashboard(entries, taskIds = new Set()) {
   if (!fs.existsSync(DASHBOARD)) return;
   let html = fs.readFileSync(DASHBOARD, 'utf8');
+
+  // Mark tasks done
+  html = markTasksDone(html, taskIds);
+
+  // Update changelog section
   const S = '        <!-- ENTRIES_START -->';
   const E = '        <!-- ENTRIES_END -->';
-  if (!html.includes(S) || !html.includes(E)) return;
-  const before = html.substring(0, html.indexOf(S) + S.length);
-  const after  = html.substring(html.indexOf(E));
-  const inner  = entries.length ? '\n' + entries.map(entryHtml).join('\n') + '\n      ' : '';
-  fs.writeFileSync(DASHBOARD, before + inner + after, 'utf8');
+  if (html.includes(S) && html.includes(E)) {
+    const before = html.substring(0, html.indexOf(S) + S.length);
+    const after  = html.substring(html.indexOf(E));
+    const inner  = entries.length ? '\n' + entries.map(entryHtml).join('\n') + '\n      ' : '';
+    html = before + inner + after;
+  }
+
+  fs.writeFileSync(DASHBOARD, html, 'utf8');
 }
 
 // ── CLAUDE.md ─────────────────────────────────────────────────────────────────
@@ -169,8 +224,11 @@ process.stdin.on('end', () => {
   db = db.slice(0, 30);
   fs.writeFileSync(CHANGELOG_DB, JSON.stringify(db, null, 2), 'utf8');
 
+  // Mark tasks done based on edited files
+  const taskIds = taskIdsForFiles(edited);
+
   // Update outputs
-  updateDashboard(db);
+  updateDashboard(db, taskIds);
   updateClaudeMd(entry);
 
   process.exit(0);

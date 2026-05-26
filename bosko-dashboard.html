@@ -433,9 +433,9 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Email OTP verification (6 dígitos)</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Change password screen</div></div>
           <div class="task-group-label">❌ Faltante</div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Login social (Google / Apple)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Biometric unlock (FaceID / Fingerprint)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text">console.error debug en Login.ts:28,61</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">cleanup</span></div>
+          <div class="task-item" data-task-id="auth-social"><div class="task-check todo"></div><div class="task-text">Login social (Google / Apple)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item" data-task-id="auth-biometric"><div class="task-check todo"></div><div class="task-text">Biometric unlock (FaceID / Fingerprint)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item" data-task-id="auth-debug-logs"><div class="task-check bug"></div><div class="task-text">console.error debug en Login.ts:28,61</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">cleanup</span></div>
         </div>
       </div>
 
@@ -464,10 +464,10 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Saludo basado en hora del día</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Role-aware UI (cliente ≠ proveedor)</div></div>
           <div class="task-group-label">❌ Faltante / Mejorar</div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Skeleton loader mientras carga featured services</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Error state UI si API falla</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Pull-to-refresh en Home</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Sección "Órdenes recientes" en home</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
+          <div class="task-item" data-task-id="home-skeleton"><div class="task-check todo"></div><div class="task-text">Skeleton loader mientras carga featured services</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="home-error-state"><div class="task-check todo"></div><div class="task-text">Error state UI si API falla</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="home-pull-refresh"><div class="task-check todo"></div><div class="task-text">Pull-to-refresh en Home</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
+          <div class="task-item" data-task-id="home-recent-orders"><div class="task-check todo"></div><div class="task-text">Sección "Órdenes recientes" en home</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
         </div>
       </div>
 
@@ -499,9 +499,9 @@
           <div class="task-group-label">🐛 Bugs / Mejoras</div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Paginación — FlatList onEndReached + loadMore (10/page)</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">ServiceCard wrapped en React.memo</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Botón favorito en service card</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="services-favorites"><div class="task-check todo"></div><div class="task-text">Botón favorito en service card</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Compresión de imágenes antes de upload (expo-image-manipulator)</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Filtros avanzados (precio, rating, distancia)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item" data-task-id="services-filters"><div class="task-check todo"></div><div class="task-text">Filtros avanzados (precio, rating, distancia)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
         </div>
       </div>
 
@@ -535,8 +535,8 @@
           <div class="task-group-label">🐛 Issues Críticos</div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Socket adaptativo — polling se detiene cuando socket conecta</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Typing throttled — TYPING_THROTTLE=2000ms, lastTypingEmitRef</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Toast error en fallo de envío</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">removeClippedSubviews + memo en FlatList mensajes</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">perf</span></div>
+          <div class="task-item" data-task-id="chat-send-error-toast"><div class="task-check todo"></div><div class="task-text">Toast error en fallo de envío</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="chat-flatlist-perf"><div class="task-check todo"></div><div class="task-text">removeClippedSubviews + memo en FlatList mensajes</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">perf</span></div>
         </div>
       </div>
 
@@ -567,10 +567,10 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Link a chat desde orden</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Dispute flow (botón + endpoint)</div></div>
           <div class="task-group-label">❌ Faltante</div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Optimistic UI en acciones de orden</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">UI de reembolso/cancelación con estado</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Notificación push en cambio de estado</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text">OrderStatusScreen polling manual (no socket)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">med</span></div>
+          <div class="task-item" data-task-id="orders-optimistic"><div class="task-check todo"></div><div class="task-text">Optimistic UI en acciones de orden</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="orders-refund-ui"><div class="task-check todo"></div><div class="task-text">UI de reembolso/cancelación con estado</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="orders-push-notify"><div class="task-check todo"></div><div class="task-text">Notificación push en cambio de estado</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="orders-status-socket"><div class="task-check bug"></div><div class="task-text">OrderStatusScreen polling manual (no socket)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">med</span></div>
         </div>
       </div>
 
@@ -602,10 +602,10 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Delete account screen</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Verify phone (Firebase)</div></div>
           <div class="task-group-label">❌ Faltante / Issues</div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text">DeleteAccount sin paso de verificación por email</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">security</span></div>
+          <div class="task-item" data-task-id="profile-delete-verify"><div class="task-check bug"></div><div class="task-text">DeleteAccount sin paso de verificación por email</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">security</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Avatar comprimido — resize 800px, quality 0.8</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Toast éxito al actualizar perfil</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Skeleton stats mientras carga getUserStats()</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="profile-update-toast"><div class="task-check todo"></div><div class="task-text">Toast éxito al actualizar perfil</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="profile-stats-skeleton"><div class="task-check todo"></div><div class="task-text">Skeleton stats mientras carga getUserStats()</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
         </div>
       </div>
 
@@ -632,14 +632,14 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">TikTok-style vertical FlatList</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Auto-play por visibilidad (viewabilityConfig)</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Full-screen video con overlay de info</div></div>
-          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Like/comment/share buttons (UI)</div></div>
+          <div class="task-item" data-task-id="reels-interactions-mock"><div class="task-check done">✓</div><div class="task-text done">Like/comment/share buttons (UI)</div></div>
           <div class="task-group-label">❌ TODO CRITICO — Datos Mock</div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text"><strong>MOCK_REELS hardcoded</strong> — ninguna llamada API real</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
+          <div class="task-item" data-task-id="reels-mock-data"><div class="task-check bug"></div><div class="task-text"><strong>MOCK_REELS hardcoded</strong> — ninguna llamada API real</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
           <div class="task-item"><div class="task-check bug"></div><div class="task-text">Like/comment/share → solo console.log</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Conectar GET /reels (feed paginado)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">POST /reels (upload video para proveedores)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Like / comment / share reales</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Infinite scroll / paginación</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="reels-api-feed"><div class="task-check todo"></div><div class="task-text">Conectar GET /reels (feed paginado)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="reels-upload"><div class="task-check todo"></div><div class="task-text">POST /reels (upload video para proveedores)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="reels-interactions"><div class="task-check todo"></div><div class="task-text">Like / comment / share reales</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="reels-infinite"><div class="task-check todo"></div><div class="task-text">Infinite scroll / paginación</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
         </div>
       </div>
 
@@ -667,10 +667,10 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">PaymentSuccessScreen</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">API: initiate, history, earnings</div></div>
           <div class="task-group-label">❌ Faltante — BLOCKER MVP</div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text"><strong>No hay integración con pasarela</strong> (Stripe / MercadoPago)</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">blocker</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">UI de reembolsos</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Desglose ganancias por servicio</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Withdrawal / transferencia a banco</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item" data-task-id="payments-gateway"><div class="task-check bug"></div><div class="task-text"><strong>No hay integración con pasarela</strong> (Stripe / MercadoPago)</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">blocker</span></div>
+          <div class="task-item" data-task-id="payments-refund-ui"><div class="task-check todo"></div><div class="task-text">UI de reembolsos</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="payments-breakdown"><div class="task-check todo"></div><div class="task-text">Desglose ganancias por servicio</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
+          <div class="task-item" data-task-id="payments-withdrawal"><div class="task-check todo"></div><div class="task-text">Withdrawal / transferencia a banco</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">post-mvp</span></div>
         </div>
       </div>
 
@@ -700,8 +700,8 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Badge verificado en perfil proveedor</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">KYC gate en ServiceFormScreen</div></div>
           <div class="task-group-label">❌ Mejoras</div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Countdown timer en pantalla rechazado</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">ux</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Soporte tipos doc: DNI, Cédula, Pasaporte, RUT</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
+          <div class="task-item" data-task-id="kyc-countdown"><div class="task-check todo"></div><div class="task-text">Countdown timer en pantalla rechazado</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">ux</span></div>
+          <div class="task-item" data-task-id="kyc-doc-types"><div class="task-check todo"></div><div class="task-text">Soporte tipos doc: DNI, Cédula, Pasaporte, RUT</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">nice</span></div>
         </div>
       </div>
 
@@ -730,8 +730,8 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Mark all read / clear all</div></div>
           <div class="task-group-label">❌ Faltante</div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Android push — FCM channel, projectId EAS, tap navigation por tipo</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">In-app notification banner / toast</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Filtros por tipo (órdenes, mensajes, reviews)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">ux</span></div>
+          <div class="task-item" data-task-id="notif-banner"><div class="task-check todo"></div><div class="task-text">In-app notification banner / toast</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="notif-filters"><div class="task-check todo"></div><div class="task-text">Filtros por tipo (órdenes, mensajes, reviews)</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">ux</span></div>
         </div>
       </div>
 
@@ -1085,21 +1085,21 @@
         <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:var(--orange)">⚠️ Problemas actuales</div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done"><span class="code-path">#850021</span> reemplazado en 36 archivos → <span class="code-path">TOKENS.color.primary</span></div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Componentes base creados: <span class="code-path">Input.tsx</span>, <span class="code-path">Toast.tsx</span></div></div>
-        <div class="task-item"><div class="task-check bug"></div><div class="task-text">Iconos mezclados: @expo/vector-icons vs SVGs vs emojis</div></div>
-        <div class="task-item"><div class="task-check bug"></div><div class="task-text">Context nesting 15 niveles profundo — puede afectar perf</div></div>
+        <div class="task-item" data-task-id="design-icons-mixed"><div class="task-check bug"></div><div class="task-text">Iconos mezclados: @expo/vector-icons vs SVGs vs emojis</div></div>
+        <div class="task-item" data-task-id="design-context-nesting"><div class="task-check bug"></div><div class="task-text">Context nesting 15 niveles profundo — puede afectar perf</div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Barrel export creado: <span class="code-path">src/core/components/index.ts</span></div></div>
-        <div class="task-item"><div class="task-check bug"></div><div class="task-text">9 TODOs en interfaces — campos backend sin confirmar</div></div>
-        <div class="task-item"><div class="task-check bug"></div><div class="task-text">PostsContext + ReviewsContext inicializados globalmente con ID "global" en vez de per-entity</div></div>
+        <div class="task-item" data-task-id="design-types-todo"><div class="task-check bug"></div><div class="task-text">9 TODOs en interfaces — campos backend sin confirmar</div></div>
+        <div class="task-item" data-task-id="design-context-global"><div class="task-check bug"></div><div class="task-text">PostsContext + ReviewsContext inicializados globalmente con ID "global" en vez de per-entity</div></div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
         <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:var(--green)">✅ Quick wins recomendados</div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Crear <span class="code-path">src/core/components/Toast.tsx</span> con react-native-toast-message</div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Crear <span class="code-path">src/core/components/Input.tsx</span> estandarizado</div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Reemplazo ejecutado: 36 archivos <span class="code-path">#850021</span> → <span class="code-path">TOKENS.color.primary</span></div></div>
-        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Mover todos los tipos compartidos a <span class="code-path">src/types/</span></div></div>
-        <div class="task-item"><div class="task-check todo"></div><div class="task-text">Confirmar todos los TODO de interfaces con el backend team</div></div>
+        <div class="task-item" data-task-id="design-types-shared"><div class="task-check todo"></div><div class="task-text">Mover todos los tipos compartidos a <span class="code-path">src/types/</span></div></div>
+        <div class="task-item" data-task-id="design-types-confirm"><div class="task-check todo"></div><div class="task-text">Confirmar todos los TODO de interfaces con el backend team</div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Timeout <span class="code-path">30_000ms</span> en axiosinstance</div></div>
-        <div class="task-item"><div class="task-check todo"></div><div class="task-text">CI: lint + type-check en cada PR (GitHub Actions)</div></div>
+        <div class="task-item" data-task-id="design-ci"><div class="task-check todo"></div><div class="task-text">CI: lint + type-check en cada PR (GitHub Actions)</div></div>
       </div>
     </div>
 
@@ -1140,6 +1140,14 @@
       <div style="padding:9px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Historial de sesiones · últimas 30</div>
       <div id="changelog-entries">
         <!-- ENTRIES_START -->
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>11:23 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">26 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
           <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>11:14 p. m.</span>
           <div style="flex:1;">
