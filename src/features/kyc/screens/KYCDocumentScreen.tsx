@@ -93,7 +93,7 @@ export default function KYCDocumentScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.8,
       allowsEditing: true,
       aspect: type === 'selfie' ? [1, 1] : [4, 3],

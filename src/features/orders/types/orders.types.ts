@@ -44,10 +44,13 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
-  // Datos populados
+  // Datos populados (detalle)
   client?: OrderUser;
   provider?: OrderUser;
   service?: OrderService;
+  // Datos populados (lista — "la otra parte")
+  otherParty?: OrderUser;
+  role?: string;
 }
 
 /** Payload para crear una nueva orden (POST /orders) */

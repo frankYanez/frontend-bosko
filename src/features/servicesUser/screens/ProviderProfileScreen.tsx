@@ -78,7 +78,9 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
         <View style={{ flex: 1 }}>
           <Text style={s.serviceTitle} numberOfLines={1}>{item.title}</Text>
           <Text style={s.serviceSummary} numberOfLines={2}>{item.summary}</Text>
-          <Text style={s.servicePrice}>Cotizar por chat</Text>
+          {item.rate?.amount ? (
+            <Text style={s.servicePrice}>{formatRate(item.rate)}</Text>
+          ) : null}
         </View>
         <Ionicons name="chevron-forward" size={16} color={C.border} />
       </Animated.View>

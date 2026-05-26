@@ -15,6 +15,10 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
@@ -100,6 +104,14 @@ export default function OrderDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Modal de motivo (reemplaza Alert.prompt que no funciona en Android)
+  const [reasonModal, setReasonModal] = useState<{
+    title: string;
+    placeholder: string;
+    onConfirm: (reason: string) => void;
+  } | null>(null);
+  const [reasonText, setReasonText] = useState('');
+
   const anims = useRef(
     Array.from({ length: 4 }, () => new Animated.Value(0))
   ).current;
@@ -122,6 +134,7 @@ export default function OrderDetailScreen() {
   // Determinar si el usuario autenticado es el cliente o el proveedor
   const isClient   = profile?.id === order?.clientId;
   const isProvider = profile?.id === order?.providerId;
+
 
   const paymentPending = order?.paymentStatus === 'pending' || order?.paymentStatus === undefined;
   const needsPayment = isClient && paymentPending && ['accepted', 'in_progress', 'completed'].includes(order?.status || '');
@@ -148,22 +161,15 @@ export default function OrderDetailScreen() {
   };
 
   const promptAndRun = (label: string, placeholder: string, action: (reason: string) => Promise<void>) => {
-    Alert.prompt(
-      label,
+    setReasonText('');
+    setReasonModal({
+      title: label,
       placeholder,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          style: 'destructive',
-          onPress: reason => {
-            if (!reason?.trim()) return;
-            runAction(label, () => action(reason.trim()));
-          },
-        },
-      ],
-      'plain-text',
-    );
+      onConfirm: (reason: string) => {
+        setReasonModal(null);
+        runAction(label, () => action(reason));
+      },
+    });
   };
 
   if (loading) {
@@ -209,7 +215,11 @@ export default function OrderDetailScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={styles.backButton}
+          >
             <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
           </Pressable>
           <Text style={styles.headerTitle}>Detalle de orden</Text>
@@ -258,6 +268,21 @@ export default function OrderDetailScreen() {
           <Text style={styles.chatButtonText}>Abrir chat de esta orden</Text>
           <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.primary} />
         </Pressable>
+
+        {/* Banner de orden completada */}
+        {order.status === 'completed' && (
+          <View style={styles.completedBanner}>
+            <MaterialIcons name="check-circle" size={22} color="#16a34a" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.completedTitle}>Orden completada</Text>
+              <Text style={styles.completedSub}>
+                {isProvider
+                  ? 'El trabajo fue marcado como finalizado.'
+                  : 'El servicio fue completado. Podés calificarlo.'}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Acciones según rol y estado */}
         <Animated.View style={[styles.actionsContainer, { opacity: anims[3], transform: [{ translateY: anims[3].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }]}>
@@ -353,8 +378,8 @@ export default function OrderDetailScreen() {
             />
           )}
 
-          {/* CLIENTE o PROVEEDOR: puede disputar si in_progress o completed */}
-          {(isClient || isProvider) && ['in_progress', 'completed'].includes(order.status) && (
+          {/* CLIENTE o PROVEEDOR: puede disputar si in_progress; solo cliente si completed */}
+          {((isProvider && order.status === 'in_progress') || (isClient && ['in_progress', 'completed'].includes(order.status))) && (
             <ActionButton
               label="Abrir disputa"
               icon="gavel"
@@ -370,6 +395,50 @@ export default function OrderDetailScreen() {
           )}
         </Animated.View>
       </ScrollView>
+
+      {/* Modal de motivo — reemplaza Alert.prompt (no disponible en Android) */}
+      <Modal
+        visible={!!reasonModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReasonModal(null)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>{reasonModal?.title}</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder={reasonModal?.placeholder}
+              placeholderTextColor="#9CA3AF"
+              value={reasonText}
+              onChangeText={setReasonText}
+              multiline
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <Pressable
+                style={styles.modalCancel}
+                onPress={() => setReasonModal(null)}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalConfirm, !reasonText.trim() && { opacity: 0.4 }]}
+                onPress={() => {
+                  if (!reasonText.trim()) return;
+                  reasonModal?.onConfirm(reasonText.trim());
+                }}
+                disabled={!reasonText.trim()}
+              >
+                <Text style={styles.modalConfirmText}>Confirmar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -519,6 +588,26 @@ const styles = StyleSheet.create({
     color: TOKENS.color.text,
     fontWeight: '600',
   },
+  completedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#f0fdf4',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  completedTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#16a34a',
+  },
+  completedSub: {
+    fontSize: 13,
+    color: '#15803d',
+    marginTop: 2,
+  },
   cancelledBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -575,5 +664,62 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: TOKENS.color.primary,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    gap: 14,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: TOKENS.color.text,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    color: TOKENS.color.text,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    backgroundColor: '#FAFAFA',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TOKENS.color.sub,
+  },
+  modalConfirm: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: TOKENS.color.primary,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
   },
 });

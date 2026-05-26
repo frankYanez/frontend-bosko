@@ -19,6 +19,9 @@ import type {
 import { useAuth } from "@/features/auth/state/AuthContext";
 import {
   getMyServices,
+  createService,
+  updateService,
+  deleteService,
   PlanType,
   Service,
   ServicePayload,
@@ -629,7 +632,7 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
 
-      const newService = await createMyService(service);
+      const newService = await createService(service);
       setMyServices((prev) => [...prev, newService]);
       return newService;
     },
@@ -638,7 +641,7 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
 
   const editService = useCallback(
     async (id: string, updates: Partial<ServicePayload>) => {
-      const updated = await updateMyService(id, updates);
+      const updated = await updateService(id, updates);
       setMyServices((prev) => prev.map((s) => (s.id === id ? updated : s)));
       return updated;
     },
@@ -646,7 +649,7 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const removeService = useCallback(async (id: string) => {
-    await deleteMyService(id);
+    await deleteService(id);
     setMyServices((prev) => prev.filter((s) => s.id !== id));
   }, []);
 

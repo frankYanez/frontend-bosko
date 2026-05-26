@@ -764,7 +764,7 @@ export default function ChatScreen() {
         onEndReachedThreshold={0.2}
         ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.primary} style={{ padding: 12 }} /> : null}
         ListEmptyComponent={
-          <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
+          <View style={styles.emptyChat}>
             <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
             <Text style={styles.emptyChatText}>Todavía no hay mensajes</Text>
             <Text style={styles.emptyChatSubtext}>Enviá el primer mensaje para empezar</Text>

@@ -44,7 +44,10 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 }
 
 function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
-  const counterpart = order.service?.title || 'Servicio';
+  const otherName = order.otherParty
+    ? `${order.otherParty.firstName} ${order.otherParty.lastName ?? ''}`.trim()
+    : null;
+  const serviceTitle = order.service?.title || order.title || 'Servicio';
   const date = new Date(order.createdAt).toLocaleDateString('es-AR', {
     day: '2-digit', month: 'short', year: 'numeric',
   });
@@ -64,9 +67,14 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
 
         <View style={styles.orderContent}>
           <View style={styles.orderHeader}>
-            <Text style={styles.orderTitle} numberOfLines={1}>{counterpart}</Text>
+            <Text style={styles.orderTitle} numberOfLines={1}>
+              {otherName || serviceTitle}
+            </Text>
             <StatusBadge status={order.status} />
           </View>
+          {otherName ? (
+            <Text style={styles.orderService} numberOfLines={1}>{serviceTitle}</Text>
+          ) : null}
 
           <Text style={styles.orderMessage} numberOfLines={2}>{order.clientMessage}</Text>
 
@@ -122,7 +130,7 @@ export default function OrdersListScreen() {
         title="Sin solicitudes todavía"
         subtitle="Asegurate de tener tu perfil verificado y al menos un servicio publicado."
         cta={{ label: 'Ver mi perfil', onPress: () => router.push('/(tabs)/profile') }}
-        secondaryCta={{ label: 'Publicar un servicio', onPress: () => router.push('/(tabs)/profile/AddServices') }}
+        secondaryCta={{ label: 'Publicar un servicio', onPress: () => router.push('/service-form') }}
       />
     );
 
@@ -135,11 +143,7 @@ export default function OrdersListScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
-        </Pressable>
         <Text style={styles.headerTitle}>Mis órdenes</Text>
-        <View style={{ width: 40 }} />
       </View>
 
       {/* Tabs */}
@@ -201,20 +205,12 @@ export default function OrdersListScreen() {
 const styles = StyleSheet.create({
   background: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  backButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
     color: TOKENS.color.text,
   },
@@ -295,6 +291,12 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  orderService: {
+    fontSize: 12,
+    color: TOKENS.color.primary,
+    fontWeight: '500',
+    marginTop: -2,
   },
   orderMessage: {
     fontSize: 13,

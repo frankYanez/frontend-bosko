@@ -316,7 +316,7 @@ export function BecomeProviderScreen() {
         ? 'Tu cuenta está activa. Creá tu primer servicio y empezá a recibir clientes.'
         : 'Una vez aprobados ambos pasos, podrás publicar servicios.',
       state: publishStepState(),
-      action: isProvider ? () => router.push('/(tabs)/profile/AddServices') : undefined,
+      action: isProvider ? () => router.push('/service-form') : undefined,
       actionLabel: 'Crear servicio',
     },
   ];

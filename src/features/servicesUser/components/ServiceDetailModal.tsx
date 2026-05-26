@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { ServiceSummary } from "@/types/services";
 import Colors from "@/core/design-system/Colors";
 import { TOKENS } from "@/core/design-system/tokens";
@@ -151,7 +152,17 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
                         {/* Footer Action */}
                         <View style={styles.footer}>
-                            <Pressable style={styles.hireButton} onPress={() => console.log("Hire service", service.id)}>
+                            <Pressable style={styles.hireButton} onPress={() => {
+    onClose();
+    router.push({
+        pathname: "/(tabs)/orders/quote",
+        params: {
+            serviceId: service.id,
+            serviceTitle: service.title,
+            providerName: service.name,
+        },
+    });
+}}>
                                 <Text style={styles.hireButtonText}>Solicitar Servicio</Text>
                                 <Ionicons name="arrow-forward" size={20} color={Colors.premium.textPrimary} />
                             </Pressable>

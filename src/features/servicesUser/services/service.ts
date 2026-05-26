@@ -6,7 +6,7 @@ export interface Service {
   id?: string;
   title: string;
   description: string;
-  price: number;
+  price?: number | null;
   category: string | { id: string; name: string };
   image?: string | null;
   userId?: string;
@@ -17,9 +17,9 @@ export interface Service {
 export interface ServicePayload {
   title: string;
   description: string;
-  price: number;
-  category: string;
-  image?: string | null;
+  price?: number;
+  categoryId: string;
+  keywords?: string[];
 }
 
 export async function getMyServices(): Promise<Service[]> {

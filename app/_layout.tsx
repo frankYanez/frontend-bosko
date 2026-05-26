@@ -23,6 +23,7 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
+      <Stack.Screen name="service-form" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>
   );
 }

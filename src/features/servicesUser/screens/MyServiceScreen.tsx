@@ -11,14 +11,23 @@ import {
   Pressable,
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 
-const currencyFormatter = new Intl.NumberFormat("es-MX", {
-  style: "currency",
-  currency: "MXN",
-});
+const BRAND = '#850021';
+
+function formatPrice(price?: number | null): string {
+  if (!price) return 'A cotizar';
+  return `$${new Intl.NumberFormat('es-AR').format(price)}`;
+}
+
+function getCategoryLabel(category: Service['category']): string {
+  if (!category) return 'Sin categoría';
+  if (typeof category === 'object') return category.name ?? 'Sin categoría';
+  return category;
+}
 
 function ServiceCard({
   service,
@@ -29,9 +38,7 @@ function ServiceCard({
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }) {
-  const categoryLabel =
-    service.categoryName ?? service.categoryId ?? "Sin categoría";
-  const priceValue = service.price ?? 0;
+  const categoryLabel = getCategoryLabel(service.category);
   return (
     <View style={styles.card}>
       {service.image ? (
@@ -46,9 +53,7 @@ function ServiceCard({
         <Text style={styles.cardDescription}>{service.description}</Text>
         <View style={styles.cardMeta}>
           <Text style={styles.cardCategory}>{categoryLabel}</Text>
-          <Text style={styles.cardPrice}>
-            {currencyFormatter.format(priceValue)}
-          </Text>
+          <Text style={styles.cardPrice}>{formatPrice(service.price)}</Text>
         </View>
         <View style={styles.cardActions}>
           <Pressable style={styles.editButton} onPress={() => onEdit(service)}>
@@ -68,11 +73,12 @@ function ServiceCard({
 
 export default function MyServiceScreen() {
   const router = useRouter();
-  const { services, loading, loadServices, removeService } = useServices();
+  const insets = useSafeAreaInsets();
+  const { myServices: services, myServicesLoading: loading, loadMyServices: loadServices, removeService } = useServices();
 
   const handleEdit = (service: Service) => {
     router.push({
-      pathname: "/(tabs)/profile/AddServices",
+      pathname: "/service-form",
       params: { serviceId: service.id },
     });
   };
@@ -121,8 +127,21 @@ export default function MyServiceScreen() {
       : "Administra y actualiza tus servicios publicados.";
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Mis servicios</Text>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header con back */}
+      <View style={styles.headerRow}>
+        <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={10}>
+          <Text style={styles.backIcon}>‹</Text>
+        </Pressable>
+        <Text style={styles.header}>Mis servicios</Text>
+        <Pressable
+          style={styles.addBtn}
+          onPress={() => router.push('/service-form')}
+          hitSlop={8}
+        >
+          <Text style={styles.addBtnText}>+ Publicar</Text>
+        </Pressable>
+      </View>
       <Text style={styles.planMessage}>{planMessage}</Text>
 
       {loading && services.length === 0 ? (
@@ -138,7 +157,7 @@ export default function MyServiceScreen() {
           subtitle="Creá tu primer servicio para que los clientes puedan encontrarte y contratarte."
           cta={{
             label: 'Publicar primer servicio',
-            onPress: () => router.push("/(tabs)/profile/AddServices"),
+            onPress: () => router.push("/service-form"),
           }}
         />
       ) : (
@@ -165,12 +184,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 20,
+    paddingHorizontal: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  backIcon: {
+    fontSize: 28,
+    color: '#111',
+    lineHeight: 32,
+    marginTop: -2,
   },
   header: {
-    fontSize: 26,
+    flex: 1,
+    fontSize: 22,
     fontWeight: "700",
-    marginBottom: 8,
+  },
+  addBtn: {
+    backgroundColor: BRAND,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  addBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
   },
   planMessage: {
     fontSize: 14,
@@ -198,7 +248,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   primaryButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: BRAND,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -251,7 +301,7 @@ const styles = StyleSheet.create({
   },
   cardCategory: {
     fontSize: 13,
-    color: "#1D4ED8",
+    color: BRAND,
     fontWeight: "600",
     textTransform: "uppercase",
   },
@@ -271,10 +321,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#2563EB",
+    borderColor: BRAND,
   },
   editButtonText: {
-    color: "#2563EB",
+    color: BRAND,
     fontWeight: "600",
   },
   deleteButton: {

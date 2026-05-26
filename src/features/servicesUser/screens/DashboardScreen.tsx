@@ -361,7 +361,7 @@ export default function DashboardScreen() {
     if (id === 'search')  router.push('/search');
     if (id === 'orders')  router.push('/(tabs)/orders');
     if (id === 'chat')    router.push('/(tabs)/chat');
-    if (id === 'post')    router.push('/(tabs)/profile/AddServices');
+    if (id === 'post')    router.push('/service-form');
   };
 
   const handleCategoryPress = (catId: string) => {
