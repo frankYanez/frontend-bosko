@@ -382,11 +382,7 @@ export default function ServiceFormScreen() {
               disabled={uploadingImages}
             >
               {uploadingImages ? (
-<<<<<<< HEAD
                 <ActivityIndicator color={BRAND} size="small" />
-=======
-                <ActivityIndicator color={TOKENS.color.primary} size="small" />
->>>>>>> 3529760 (refactor: technical debt sprint - quick wins, chat, design system, notifications, pagination)
               ) : (
                 <Text style={styles.outlineBtnText}>
                   Subir {galleryImages.length} imagen{galleryImages.length !== 1 ? "es" : ""}

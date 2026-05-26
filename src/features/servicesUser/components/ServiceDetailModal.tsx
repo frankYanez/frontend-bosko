@@ -152,27 +152,20 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
                         {/* Footer Action */}
                         <View style={styles.footer}>
-<<<<<<< HEAD
-                            <Pressable style={styles.hireButton} onPress={() => {
-    onClose();
-    router.push({
-        pathname: "/(tabs)/orders/quote",
-        params: {
-            serviceId: service.id,
-            serviceTitle: service.title,
-            providerName: service.name,
-        },
-    });
-}}>
-=======
                             <Pressable
                                 style={styles.hireButton}
                                 onPress={() => {
                                     onClose();
-                                    router.push({ pathname: '/(tabs)/orders/quote', params: { serviceId: service.id } });
+                                    router.push({
+                                        pathname: '/(tabs)/orders/quote',
+                                        params: {
+                                            serviceId: service.id,
+                                            serviceTitle: service.title,
+                                            providerName: service.name,
+                                        },
+                                    });
                                 }}
                             >
->>>>>>> 3529760 (refactor: technical debt sprint - quick wins, chat, design system, notifications, pagination)
                                 <Text style={styles.hireButtonText}>Solicitar Servicio</Text>
                                 <Ionicons name="arrow-forward" size={20} color={Colors.premium.textPrimary} />
                             </Pressable>
