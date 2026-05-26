@@ -1,11 +1,10 @@
 /**
  * axiosinstance — Cliente HTTP centralizado de la aplicación.
  *
- * Incluye dos interceptores:
- *  1. Request: adjunta el Bearer token a cada solicitud saliente.
- *  2. Response: ante un 401, intenta renovar el access token con el refresh
- *     token y reintenta la request original. Si el refresh falla, fuerza el
- *     logout a través de tokenStorage (sin importar AuthContext directamente).
+ * Interceptores:
+ *  1. Request: adjunta Bearer token (desde cache en memoria), headers anti-caché.
+ *  2. Response: unwrap { success, data }, refresh automático con cola para
+ *     requests concurrentes, logout forzado si el refresh falla.
  */
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
@@ -13,30 +12,50 @@ import { API_URL } from '@/core/config/env';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import { ApiResponse, AuthResponse } from '@/features/auth/types';
 
-// Instancia base compartida por toda la app
-const api = axios.create({ baseURL: API_URL });
+const REQUEST_TIMEOUT_MS = 15000;
 
-// ── Interceptor de solicitudes ───────────────────────────────────────────────
-// Adjunta el access token desde el cache en memoria (lectura síncrona, sin
-// impacto en performance). No toca rutas públicas de autenticación.
+// ── Cola de refresh (evita múltiples refreshes concurrentes) ──────────────────
+let isRefreshing = false;
+let refreshQueue: {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}[] = [];
+
+const resolveRefreshQueue = (token: string) => {
+  refreshQueue.forEach(({ resolve }) => resolve(token));
+  refreshQueue = [];
+};
+
+const rejectRefreshQueue = (error: unknown) => {
+  refreshQueue.forEach(({ reject }) => reject(error));
+  refreshQueue = [];
+};
+
+// ── Instancia base ────────────────────────────────────────────────────────────
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: REQUEST_TIMEOUT_MS,
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+});
+
+// ── Tipos ─────────────────────────────────────────────────────────────────────
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/refresh-token'];
+
+// ── Interceptor de solicitudes ─────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+  config.headers['Pragma'] = 'no-cache';
   return config;
 });
 
-// ── Interceptor de respuestas ────────────────────────────────────────────────
-// Tipo extendido para marcar requests que ya intentaron un retry
-type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
-
-// Rutas que NO deben disparar un intento de refresh (evitar loops infinitos)
-const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/refresh-token'];
-
-// El servidor envuelve TODAS las respuestas en { success, timestamp, data: T }.
-// Este interceptor desempaqueta automáticamente ese wrapper para que el resto
-// del código reciba directamente el payload esperado.
+// ── Interceptor de respuestas ─────────────────────────────────────────────────
+// Desempaqueta el wrapper del servidor { success, timestamp, data: T }
 const unwrapResponse = (response: any) => {
   if (
     response?.data &&
@@ -54,31 +73,36 @@ api.interceptors.response.use(
 
   async (error: AxiosError) => {
     const original = error.config as RetryableConfig | undefined;
-
     if (!original) return Promise.reject(error);
 
-    // Si el error viene de una ruta pública de auth, rechazar directamente
     const isAuthRoute = AUTH_ROUTES.some((url) => original.url?.includes(url));
     if (isAuthRoute) return Promise.reject(error);
 
-    // Solo manejar 401 y solo un intento de retry por request
     if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }
 
-    original._retry = true;
-
-    const refreshToken = tokenStorage.getRefreshToken();
-    if (!refreshToken) {
-      // No hay refresh token → sesión inválida, forzar logout
-      tokenStorage.triggerForceLogout();
-      return Promise.reject(error);
+    // Si ya hay un refresh en curso, encolar esta request
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({
+          resolve: (token: string) => {
+            original.headers.Authorization = `Bearer ${token}`;
+            original._retry = true;
+            resolve(api(original));
+          },
+          reject,
+        });
+      });
     }
 
+    original._retry = true;
+    isRefreshing = true;
+
     try {
-      // Usar axios directamente (no la instancia) para evitar que este request
-      // pase por el interceptor de response y genere un loop.
-      // Como no pasa por unwrapResponse, desempaquetamos manualmente.
+      const refreshToken = tokenStorage.getRefreshToken();
+      if (!refreshToken) throw new Error('No refresh token');
+
       const { data: refreshRaw } = await axios.post<ApiResponse<AuthResponse>>(
         `${API_URL}/auth/refresh-token`,
         { refreshToken },
@@ -87,14 +111,22 @@ api.interceptors.response.use(
 
       await tokenStorage.save(refreshed.accessToken, refreshed.refreshToken);
 
-      // Reintentar la request original con el nuevo access token
+      resolveRefreshQueue(refreshed.accessToken);
+
       original.headers.Authorization = `Bearer ${refreshed.accessToken}`;
       return api(original);
-    } catch {
-      // El refresh token expiró o es inválido → limpiar sesión y forzar logout
-      await tokenStorage.clear();
-      tokenStorage.triggerForceLogout();
-      return Promise.reject(error);
+    } catch (refreshError) {
+      rejectRefreshQueue(refreshError);
+
+      const status = (refreshError as any)?.response?.status;
+      if (status === 401 || status === 403) {
+        await tokenStorage.clear();
+        tokenStorage.triggerForceLogout();
+      }
+
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
     }
   },
 );
