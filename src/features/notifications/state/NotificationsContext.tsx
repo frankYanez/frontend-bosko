@@ -1,6 +1,7 @@
 /**
  * NotificationsContext — Estado global de notificaciones.
  * Soporta iOS y Android (FCM via google-services.json).
+ * En Expo Go las notificaciones push están deshabilitadas (SDK 53+).
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
@@ -20,14 +21,19 @@ import {
 } from '../services/notifications.service';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
-// Notificaciones en foreground: mostrar siempre como alerta
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  } as Notifications.NotificationBehavior),
-});
+// Expo Go no soporta push remotas desde SDK 53 — saltear todo lo nativo
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Notificaciones en foreground: solo en dev build
+if (!isExpoGo) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    } as Notifications.NotificationBehavior),
+  });
+}
 
 interface NotificationsState {
   notifications: Notification[];
@@ -56,7 +62,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const notifListenerRef = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || isExpoGo) return;
     registerDevicePushToken().catch(() => {});
   }, [token]);
 
@@ -66,7 +72,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   // Actualiza unread count cuando llega una notificación con la app en primer plano
+  // Solo en dev build — Expo Go no soporta listeners de notificaciones remotas
   useEffect(() => {
+    if (isExpoGo) return;
     notifListenerRef.current = Notifications.addNotificationReceivedListener(() => {
       fetchUnreadCount().then(setUnreadCount).catch(() => {});
     });
