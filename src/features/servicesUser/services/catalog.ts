@@ -57,7 +57,7 @@ function getCategoryIcon(name: string, backendIcon?: string): string {
   return '🔧';
 }
 
-function mapCategory(cat: any): Category {
+export function mapCategory(cat: any): Category {
   return {
     id: cat.id,
     name: cat.name ?? '',
@@ -69,28 +69,9 @@ function mapCategory(cat: any): Category {
 }
 
 export async function fetchCategoriesService(): Promise<Category[]> {
-  // Try the dedicated endpoint first
-  try {
-    const { data } = await api.get<any>('/categories');
-    const raw: any[] = Array.isArray(data) ? data : (data?.data ?? []);
-    if (raw.length > 0) return raw.map(mapCategory);
-  } catch {
-    // fall through to fallback
-  }
-
-  // Fallback: extract unique categories from /services
-  const { data: servData } = await api.get<any>('/services', { params: { limit: 100 } });
-  const services: any[] = (servData as any)?.data ?? (Array.isArray(servData) ? servData : []);
-  const seen = new Set<string>();
-  const categories: Category[] = [];
-  for (const svc of services) {
-    const cat = svc.category;
-    if (cat?.id && !seen.has(cat.id)) {
-      seen.add(cat.id);
-      categories.push(mapCategory({ ...cat, servicesCount: 0 }));
-    }
-  }
-  return categories;
+  const { data } = await api.get<any>('/categories');
+  const raw: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+  return raw.map(mapCategory);
 }
 
 export async function fetchServicesByCategoryService(
