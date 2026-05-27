@@ -270,6 +270,12 @@
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; display:inline-block; }
 
+  /* ─── RESOLVED BUG ROW ─── */
+  .row-resolved td { color:var(--text3); }
+  .row-resolved td strong { text-decoration:line-through; opacity:0.55; }
+  .row-resolved .code-path { opacity:0.5; }
+  .row-resolved:hover td { background:transparent; }
+
   .brand-gradient { background:linear-gradient(135deg,var(--brand),var(--brand-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 </style>
 </head>
@@ -300,7 +306,7 @@
     <div class="nav-item">
       <span class="nav-dot" style="background:var(--red)"></span>
       Bugs & Issues
-      <span class="nav-count alert">11</span>
+      <span class="nav-count alert">3</span>
     </div>
     <div class="nav-item">
       <span class="nav-dot" style="background:var(--green)"></span>
@@ -384,9 +390,9 @@
       </div>
       <div class="stat-card red">
         <div class="stat-icon">🐛</div>
-        <div class="stat-num" style="color:var(--red)">6</div>
+        <div class="stat-num" style="color:var(--red)">3</div>
         <div class="stat-label">Bugs / Issues</div>
-        <div class="stat-sub">1 crítico, 2 altos</div>
+        <div class="stat-sub">1 crítico, 2 altos abiertos</div>
       </div>
       <div class="stat-card blue">
         <div class="stat-icon">💡</div>
@@ -536,7 +542,7 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Socket adaptativo — polling se detiene cuando socket conecta</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Typing throttled — TYPING_THROTTLE=2000ms, lastTypingEmitRef</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
           <div class="task-item" data-task-id="chat-send-error-toast"><div class="task-check todo"></div><div class="task-text">Toast error en fallo de envío</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item" data-task-id="chat-flatlist-perf"><div class="task-check todo"></div><div class="task-text">removeClippedSubviews + memo en FlatList mensajes</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">perf</span></div>
+          <div class="task-item" data-task-id="chat-flatlist-perf"><div class="task-check done">✓</div><div class="task-text done">removeClippedSubviews + React.memo en FlatList mensajes</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
         </div>
       </div>
 
@@ -633,13 +639,13 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Auto-play por visibilidad (viewabilityConfig)</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Full-screen video con overlay de info</div></div>
           <div class="task-item" data-task-id="reels-interactions-mock"><div class="task-check done">✓</div><div class="task-text done">Like/comment/share buttons (UI)</div></div>
-          <div class="task-group-label">❌ TODO CRITICO — Datos Mock</div>
-          <div class="task-item" data-task-id="reels-mock-data"><div class="task-check done">✓</div><div class="task-text done"><strong>MOCK_REELS hardcoded</strong> — ninguna llamada API real</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Like/comment/share → solo console.log</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">critical</span></div>
-          <div class="task-item" data-task-id="reels-api-feed"><div class="task-check done">✓</div><div class="task-text done">Conectar GET /reels (feed paginado)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item" data-task-id="reels-upload"><div class="task-check todo"></div><div class="task-text">POST /reels (upload video para proveedores)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item" data-task-id="reels-interactions"><div class="task-check done">✓</div><div class="task-text done">Like / comment / share reales</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item" data-task-id="reels-infinite"><div class="task-check done">✓</div><div class="task-text done">Infinite scroll / paginación</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-group-label">🔴 En progreso — Backend OK, Frontend roto</div>
+          <div class="task-item" data-task-id="reels-mock-data"><div class="task-check partial">~</div><div class="task-text done"><strong>Pantalla en negro</strong> — backend /reels implementado, ReelsScreen no renderiza video</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">activo</span></div>
+          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Like/comment/share → pendiente conectar a API real</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">pendiente</span></div>
+          <div class="task-item" data-task-id="reels-api-feed"><div class="task-check done">✓</div><div class="task-text done">Backend GET /reels feed paginado — implementado</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">backend ok</span></div>
+          <div class="task-item" data-task-id="reels-upload"><div class="task-check todo"></div><div class="task-text">POST /reels upload video para proveedores</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="reels-interactions"><div class="task-check done">✓</div><div class="task-text done">Like / comment / share reales — conectar frontend</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item" data-task-id="reels-infinite"><div class="task-check done">✓</div><div class="task-text done">Infinite scroll / paginación en frontend</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
         </div>
       </div>
 
@@ -741,9 +747,9 @@
     <div class="section-header" style="margin-top:36px;">
       <div class="section-dot" style="background:var(--red)"></div>
       <div class="section-title">Bug Tracker & Issues</div>
-      <span class="badge badge-red">2 Críticos</span>
-      <span class="badge badge-orange">3 Altos</span>
-      <span class="badge badge-yellow">6 Medios</span>
+      <span class="badge badge-red">1 Crítico</span>
+      <span class="badge badge-orange">2 Altos</span>
+      <span class="badge badge-green">8 Resueltos</span>
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
@@ -759,13 +765,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">01</td>
             <td><strong>Socket no integrado en ChatScreen</strong> — mensajes entrantes usan polling REST, no socket real</td>
             <td><span class="code-path">chat/ChatScreen.tsx</span></td>
-            <td><span class="severity sev-crit">● Crítico</span></td>
-            <td><span class="badge badge-red">Backend</span></td>
-            <td>Cablear eventos socket `message_received` a setState messages</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Falso positivo</span></td>
+            <td style="color:var(--green);font-size:11px">Socket ya integrado. Polling solo activo como fallback cuando socket desconectado.</td>
           </tr>
           <tr>
             <td style="color:var(--text3)">02</td>
@@ -783,13 +789,13 @@
             <td><span class="badge badge-orange">Security</span></td>
             <td>Agregar paso de confirmación: email PIN o escribir "borrar mi cuenta"</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">04</td>
             <td><strong>Android push notifications 0%</strong> — código gateado a iOS solamente</td>
             <td><span class="code-path">notifications/NotificationsContext.tsx</span></td>
-            <td><span class="severity sev-high">● Alto</span></td>
-            <td><span class="badge badge-orange">Feature</span></td>
-            <td>Implementar FCM para Android con expo-notifications</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Falso positivo</span></td>
+            <td style="color:var(--green);font-size:11px">Android ya soportado: setNotificationChannelAsync + FCM token cross-platform.</td>
           </tr>
           <tr>
             <td style="color:var(--text3)">05</td>
@@ -799,53 +805,53 @@
             <td><span class="badge badge-orange">Blocker</span></td>
             <td>Integrar MercadoPago SDK (LATAM) o Stripe con Stripe React Native</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">06</td>
-            <td>Services FlatList sin paginación — carga 100 registros at once</td>
+            <td><strong>Services FlatList sin paginación</strong> — carga 100 registros at once</td>
             <td><span class="code-path">services/catalog.ts:60</span></td>
-            <td><span class="severity sev-med">● Medio</span></td>
-            <td><span class="badge badge-yellow">Performance</span></td>
-            <td>Implementar cursor/offset pagination + FlatList onEndReached</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Esta sesión</span></td>
+            <td style="color:var(--green);font-size:11px">GET /categories en backend (con _count). fetchCategoriesService usa endpoint dedicado.</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">07</td>
-            <td>FlatList mensajes sin React.memo ni removeClippedSubviews</td>
+            <td><strong>FlatList mensajes sin React.memo ni removeClippedSubviews</strong></td>
             <td><span class="code-path">chat/ChatScreen.tsx</span></td>
-            <td><span class="severity sev-med">● Medio</span></td>
-            <td><span class="badge badge-yellow">Performance</span></td>
-            <td>Memoizar MessageItem component + add removeClippedSubviews</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Esta sesión</span></td>
+            <td style="color:var(--green);font-size:11px">MessageBubble envuelto en React.memo. FlatList con removeClippedSubviews, windowSize=10, maxToRenderPerBatch=15.</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">08</td>
-            <td>Typing indicator sin throttle — puede enviar 10+ eventos/seg</td>
+            <td><strong>Typing indicator sin throttle</strong> — puede enviar 10+ eventos/seg</td>
             <td><span class="code-path">chat/ChatScreen.tsx</span></td>
-            <td><span class="severity sev-med">● Medio</span></td>
-            <td><span class="badge badge-yellow">UX/Net</span></td>
-            <td>Throttle emit cada 2s, clear con setTimeout 3s</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Falso positivo</span></td>
+            <td style="color:var(--green);font-size:11px">TYPING_THROTTLE=2000ms ya implementado con lastTypingEmitRef guard y setTimeout clear.</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">09</td>
-            <td>Axios sin timeout configurado — requests pueden colgar indefinidamente</td>
+            <td><strong>Axios sin timeout configurado</strong> — requests pueden colgar indefinidamente</td>
             <td><span class="code-path">core/api/axiosinstance.tsx</span></td>
-            <td><span class="severity sev-med">● Medio</span></td>
-            <td><span class="badge badge-yellow">Reliability</span></td>
-            <td>Agregar `timeout: 30000` en config base de axios</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Falso positivo</span></td>
+            <td style="color:var(--green);font-size:11px">REQUEST_TIMEOUT_MS=30_000 ya configurado en instancia axios (línea 37).</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">10</td>
-            <td>Avatar y service images sin comprimir antes de upload</td>
+            <td><strong>Avatar y service images sin comprimir antes de upload</strong></td>
             <td><span class="code-path">profile/EditProfileModal.tsx</span></td>
-            <td><span class="severity sev-med">● Medio</span></td>
-            <td><span class="badge badge-yellow">Performance</span></td>
-            <td>Usar expo-image-manipulator, resize a max 800px, quality 0.8</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Falso positivo</span></td>
+            <td style="color:var(--green);font-size:11px">expo-image-manipulator ya integrado: avatar 800px/0.8, chat media 1200px/0.75.</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">11</td>
-            <td>console.log debug left in production code (Login.ts, EditPass, ServiceDetailModal)</td>
+            <td><strong>console.log debug left in production code</strong></td>
             <td><span class="code-path">múltiples archivos</span></td>
-            <td><span class="severity sev-low">● Bajo</span></td>
-            <td><span class="badge badge-blue">Cleanup</span></td>
-            <td>Grep y eliminar todos console.log antes de release build</td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Esta sesión</span></td>
+            <td style="color:var(--green);font-size:11px">0 console.log/warn activos. Removidos de ServiceFormScreen y socket.service. Solo quedan console.error en catch blocks.</td>
           </tr>
         </tbody>
       </table>
@@ -929,7 +935,7 @@
           <div class="phase-item"><div class="phase-num ph3-num">✓</div><div><div class="item-label" style="color:var(--green)">Paginación en Servicios</div><div class="item-desc">page/limit params, FlatList + onEndReached, APPEND_SERVICES reducer, loadMoreServicesByCategory, React.memo.</div></div></div>
           <div class="phase-item"><div class="phase-num ph2-num">3</div><div><div class="item-label">Skeleton loaders faltantes</div><div class="item-desc">Agregar shimmer skeleton en: Home (featured), ProfileScreen (stats), OrderDetail.</div></div></div>
           <div class="phase-item"><div class="phase-num ph2-num">4</div><div><div class="item-label">Botón favorito en ServiceCard</div><div class="item-desc">Context de favoritos ya existe. Solo falta el botón ♡ en la card. Toggle optimista.</div></div></div>
-          <div class="phase-item"><div class="phase-num ph2-num">5</div><div><div class="item-label">Typing indicator throttle</div><div class="item-desc">Debounce emit socket typing a cada 2s. Clear con timeout 3s.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph3-num">✓</div><div><div class="item-label" style="color:var(--green)">Typing indicator throttle</div><div class="item-desc">TYPING_THROTTLE=2000ms ya implementado con lastTypingEmitRef guard. Falso positivo confirmado.</div></div></div>
           <div class="phase-item"><div class="phase-num ph2-num">6</div><div><div class="item-label">Optimistic UI en órdenes</div><div class="item-desc">Al aceptar/rechazar/completar orden, actualizar UI antes de respuesta del servidor.</div></div></div>
           <div class="phase-item"><div class="phase-num ph2-num">7</div><div><div class="item-label">Plans — feature gating</div><div class="item-desc">Si usuario tiene plan básico, mostrar lock en features premium. Flujo upgrade.</div></div></div>
         </div>
@@ -1141,6 +1147,46 @@
       <div id="changelog-entries">
         <!-- ENTRIES_START -->
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:11 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:08 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería, Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">10 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:07 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:04 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">9 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:04 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
           <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:03 p. m.</span>
           <div style="flex:1;">
             <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería</div>
@@ -1334,46 +1380,6 @@
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
           <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>01:49 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>01:48 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>01:48 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>01:47 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>01:45 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>01:45 p. m.</span>
           <div style="flex:1;">
             <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>

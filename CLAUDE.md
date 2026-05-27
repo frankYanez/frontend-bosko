@@ -157,6 +157,11 @@ Real-time chat tied to orders (no free DMs).
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
 
 ## Recent Changes
+- **26/5/2026 10:11 p. m.** — Reels (17 archivos)
+- **26/5/2026 10:08 p. m.** — Servicios / Marketplace, Chat / Mensajería, Dashboard HTML (10 archivos)
+- **26/5/2026 10:07 p. m.** — Reels (17 archivos)
+- **26/5/2026 10:04 p. m.** — Servicios / Marketplace, Chat / Mensajería (9 archivos)
+- **26/5/2026 10:04 p. m.** — Reels (17 archivos)
 - **26/5/2026 10:03 p. m.** — Servicios / Marketplace, Chat / Mensajería (9 archivos)
 - **26/5/2026 10:03 p. m.** — Reels (17 archivos)
 - **26/5/2026 09:59 p. m.** — Reels (17 archivos)
@@ -172,8 +177,3 @@ Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image
 - **26/5/2026 09:21 p. m.** — Documentación CLAUDE.md, App Config (app.json), Dashboard HTML (3 archivos)
 - **26/5/2026 09:13 p. m.** — Documentación CLAUDE.md, App Config (app.json), Dashboard HTML (3 archivos)
 - **26/5/2026 02:01 p. m.** — Servicios / Marketplace, Dependencias (package.json) (3 archivos)
-- **26/5/2026 01:59 p. m.** — Servicios / Marketplace, Dependencias (package.json) (3 archivos)
-- **26/5/2026 01:57 p. m.** — Servicios / Marketplace, Dependencias (package.json) (3 archivos)
-- **26/5/2026 01:55 p. m.** — Servicios / Marketplace, Dependencias (package.json) (2 archivos)
-- **26/5/2026 01:53 p. m.** — Servicios / Marketplace (1 archivos)
-- **26/5/2026 01:52 p. m.** — Servicios / Marketplace (1 archivos)
