@@ -5,6 +5,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   FlatList,
@@ -15,90 +16,14 @@ import {
   View,
   ViewToken,
 } from 'react-native';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getReelsFeed, toggleLikeReel, Reel } from '@/features/reels/services/reels.service';
 
 const { width: W, height: H } = Dimensions.get('window');
-
-// ── Mock data (replace with API when ready) ───────────────────────────────────
-interface ReelUser {
-  id: string;
-  name: string;
-  username: string;
-  avatar: string;
-}
-interface Reel {
-  id: string;
-  videoUrl: string;
-  user: ReelUser;
-  description: string;
-  tags: string[];
-  music: string;
-  likes: number;
-  comments: number;
-  isLiked: boolean;
-}
-
-const MOCK_REELS: Reel[] = [
-  {
-    id: '1',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    user: { id: 'u1', name: 'Martín García', username: 'martingarcia', avatar: 'https://i.pravatar.cc/150?img=11' },
-    description: 'Instalación de plomería en 30 minutos ⚡️ Así trabajo yo día a día',
-    tags: ['#plomeria', '#hogar', '#profesional'],
-    music: 'Beat Trabajo — Local Mix',
-    likes: 1240,
-    comments: 89,
-    isLiked: false,
-  },
-  {
-    id: '2',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    user: { id: 'u2', name: 'Laura Méndez', username: 'lauramendez', avatar: 'https://i.pravatar.cc/150?img=47' },
-    description: 'Renovación de cocina completa 🏠 6 horas de trabajo resumidas en 30 segundos',
-    tags: ['#remodelacion', '#cocina', '#diseño'],
-    music: 'Ambient Chill — No Copyright',
-    likes: 3890,
-    comments: 214,
-    isLiked: true,
-  },
-  {
-    id: '3',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    user: { id: 'u3', name: 'Diego Ramos', username: 'diegoramos_elec', avatar: 'https://i.pravatar.cc/150?img=33' },
-    description: 'Instalación eléctrica domiciliaria ✅ Seguridad ante todo, así se hace bien',
-    tags: ['#electricista', '#seguridad', '#instalacion'],
-    music: 'Power Up — Free Beat',
-    likes: 678,
-    comments: 41,
-    isLiked: false,
-  },
-  {
-    id: '4',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    user: { id: 'u4', name: 'Carolina Vega', username: 'caro_diseño', avatar: 'https://i.pravatar.cc/150?img=56' },
-    description: '¿Cuánto cuesta rediseñar un logo? 🎨 Proceso completo de branding',
-    tags: ['#diseño', '#branding', '#logo'],
-    music: 'Creative Flow — Lofi',
-    likes: 5200,
-    comments: 430,
-    isLiked: false,
-  },
-  {
-    id: '5',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-    user: { id: 'u5', name: 'Roberto Silva', username: 'rob_techrepair', avatar: 'https://i.pravatar.cc/150?img=15' },
-    description: 'Reparé esta notebook en 20 minutos 💻 Problema de disco SSD',
-    tags: ['#tecnologia', '#reparacion', '#notebook'],
-    music: 'Tech Vibes — Instrumental',
-    likes: 920,
-    comments: 73,
-    isLiked: true,
-  },
-];
 
 // ── Format number helper ──────────────────────────────────────────────────────
 function fmtNum(n: number): string {
@@ -212,13 +137,14 @@ const ReelItem = React.memo(function ReelItem({
   isActive: boolean;
 }) {
   const insets = useSafeAreaInsets();
-  const videoRef   = useRef<Video>(null);
-  const [isMuted,   setIsMuted]   = useState(true);
-  const [isPaused,  setIsPaused]  = useState(false);
-  const [position,  setPosition]  = useState(0);
-  const [duration,  setDuration]  = useState(0);
-  const [liked,     setLiked]     = useState(reel.isLiked);
-  const [likeCount, setLikeCount] = useState(reel.likes);
+
+  const [isMuted,     setIsMuted]     = useState(true);
+  const [isPaused,    setIsPaused]    = useState(false);
+  const [position,    setPosition]    = useState(0);
+  const [duration,    setDuration]    = useState(0);
+  const [isBuffering, setIsBuffering] = useState(true);
+  const [liked,       setLiked]       = useState(reel.isLiked ?? false);
+  const [likeCount,   setLikeCount]   = useState(reel.likes ?? 0);
 
   // Heart animation state
   const [heartVisible, setHeartVisible] = useState(false);
@@ -227,21 +153,49 @@ const ReelItem = React.memo(function ReelItem({
   // Double-tap detection
   const lastTap = useRef(0);
 
-  // Reset position when reel leaves viewport
+  // ── expo-video player ─────────────────────────────────────────────────────
+  const player = useVideoPlayer({ uri: reel.videoUrl }, (p) => {
+    p.loop = true;
+    p.muted = true;
+  });
+
+  // Play / pause según visibilidad
   useEffect(() => {
-    if (!isActive) {
-      setIsPaused(false);
-      setPosition(0);
-      videoRef.current?.setPositionAsync(0).catch(() => {});
+    if (isActive && !isPaused) {
+      player.play();
+    } else {
+      player.pause();
+      if (!isActive) {
+        player.currentTime = 0;
+        setIsPaused(false);
+        setPosition(0);
+      }
     }
-  }, [isActive]);
+  }, [isActive, isPaused, player]);
 
-  const handlePlaybackUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    setPosition(status.positionMillis);
-    setDuration(status.durationMillis ?? 0);
-  }, []);
+  // Sincronizar mute con el player
+  useEffect(() => {
+    player.muted = isMuted;
+  }, [isMuted, player]);
 
+  // Escuchar progreso y buffering
+  useEffect(() => {
+    const sub = player.addListener('timeUpdate', (e) => {
+      setPosition(e.currentTime * 1000);
+      setDuration((player.duration ?? 0) * 1000);
+      setIsBuffering(false);
+    });
+    return () => sub.remove();
+  }, [player]);
+
+  useEffect(() => {
+    const sub = player.addListener('statusChange', ({ status }) => {
+      setIsBuffering(status === 'loading');
+    });
+    return () => sub.remove();
+  }, [player]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handlePress = useCallback((evt: any) => {
     const now = Date.now();
     if (now - lastTap.current < 280) {
@@ -266,14 +220,19 @@ const ReelItem = React.memo(function ReelItem({
       setLikeCount(c => l ? c - 1 : c + 1);
       return !l;
     });
-  }, []);
+    toggleLikeReel(reel.id).catch(() => {
+      setLiked(l => {
+        setLikeCount(c => l ? c - 1 : c + 1);
+        return !l;
+      });
+    });
+  }, [reel.id]);
 
-  const muteScale  = useRef(new Animated.Value(0)).current;
+  const muteScale   = useRef(new Animated.Value(0)).current;
   const muteOpacity = useRef(new Animated.Value(0)).current;
 
   const handleMuteToggle = () => {
     setIsMuted(m => !m);
-    // Brief icon flash
     muteOpacity.setValue(1);
     muteScale.setValue(0.5);
     Animated.parallel([
@@ -289,15 +248,11 @@ const ReelItem = React.memo(function ReelItem({
     <View style={s.reel}>
       {/* ── Video ──────────────────────────────────────────────────────── */}
       <Pressable onPress={handlePress} style={StyleSheet.absoluteFill}>
-        <Video
-          ref={videoRef}
-          source={{ uri: reel.videoUrl }}
+        <VideoView
+          player={player}
           style={StyleSheet.absoluteFill}
-          resizeMode={ResizeMode.COVER}
-          isLooping
-          isMuted={isMuted}
-          shouldPlay={isActive && !isPaused}
-          onPlaybackStatusUpdate={handlePlaybackUpdate}
+          contentFit="cover"
+          nativeControls={false}
         />
       </Pressable>
 
@@ -313,8 +268,15 @@ const ReelItem = React.memo(function ReelItem({
         pointerEvents="none"
       />
 
+      {/* ── Buffering spinner ──────────────────────────────────────────── */}
+      {isBuffering && isActive && (
+        <View style={s.pauseIcon} pointerEvents="none">
+          <ActivityIndicator size="large" color="rgba(255,255,255,0.8)" />
+        </View>
+      )}
+
       {/* ── Pause icon flash ────────────────────────────────────────────── */}
-      {isPaused && (
+      {isPaused && !isBuffering && (
         <View style={s.pauseIcon} pointerEvents="none">
           <Ionicons name="pause" size={60} color="rgba(255,255,255,0.75)" />
         </View>
@@ -336,7 +298,7 @@ const ReelItem = React.memo(function ReelItem({
         {/* Avatar + follow button */}
         <View style={s.avatarWrap}>
           <Image
-            source={{ uri: reel.user.avatar }}
+            source={reel.user.avatar ? { uri: reel.user.avatar } : undefined}
             style={s.avatar}
             contentFit="cover"
           />
@@ -400,8 +362,49 @@ function TopBar({ insetTop }: { insetTop: number }) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
-  const insets = useSafeAreaInsets();
+  const insets       = useSafeAreaInsets();
+  const [reels,      setReels]      = useState<Reel[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page,       setPage]       = useState(1);
+  const [hasMore,    setHasMore]    = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Carga inicial
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getReelsFeed(1, 10);
+        setReels(data);
+        setHasMore(data.length === 10);
+      } catch {
+        // Si falla la API, la lista queda vacía (sin crash)
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Carga paginada al final del feed
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const data = await getReelsFeed(nextPage, 10);
+      if (data.length === 0) {
+        setHasMore(false);
+      } else {
+        setReels(prev => [...prev, ...data]);
+        setPage(nextPage);
+        setHasMore(data.length === 10);
+      }
+    } catch {
+      // silenciar error de paginación
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, page]);
 
   // viewabilityConfigCallbackPairs must be stable (useRef, never recreated)
   const viewabilityConfigCallbackPairs = useRef([
@@ -434,12 +437,20 @@ export default function ReelsScreen() {
     [],
   );
 
+  if (loading) {
+    return (
+      <View style={[s.root, s.center]}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
+
   return (
     <View style={s.root}>
       <StatusBar hidden />
 
       <FlatList
-        data={MOCK_REELS}
+        data={reels}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         pagingEnabled
@@ -452,6 +463,20 @@ export default function ReelsScreen() {
         windowSize={3}
         maxToRenderPerBatch={2}
         initialNumToRender={1}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={s.footerLoader}>
+              <ActivityIndicator color="#fff" />
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={s.center}>
+            <Text style={s.emptyText}>No hay reels todavía</Text>
+          </View>
+        }
       />
 
       {/* Floating top bar */}
@@ -465,6 +490,21 @@ const s = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+  },
+  emptyText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 16,
+  },
+  footerLoader: {
+    height: H,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Reel item

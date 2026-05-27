@@ -56,7 +56,8 @@
           "defaultChannel": "default",
           "sounds": []
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

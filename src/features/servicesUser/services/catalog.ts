@@ -58,32 +58,16 @@ function getCategoryIcon(name: string, backendIcon?: string): string {
 }
 
 export async function fetchCategoriesService(): Promise<Category[]> {
-  const { data } = await api.get<any>('/services', { params: { limit: 100 } });
-  const services: any[] = (data as any)?.data ?? [];
-
-  const seen = new Set<string>();
-  const countMap: Record<string, number> = {};
-  for (const s of services) {
-    const catId = s.category?.id;
-    if (catId) countMap[catId] = (countMap[catId] ?? 0) + 1;
-  }
-
-  const categories: Category[] = [];
-  for (const s of services) {
-    const cat = s.category;
-    if (cat?.id && !seen.has(cat.id)) {
-      seen.add(cat.id);
-      categories.push({
-        id: cat.id,
-        name: cat.name ?? '',
-        description: cat.description ?? '',
-        icon: getCategoryIcon(cat.name ?? '', cat.icon),
-        accent: cat.accent ?? TOKENS.color.primary,
-        servicesCount: countMap[cat.id] ?? 0,
-      });
-    }
-  }
-  return categories;
+  const { data } = await api.get<any>('/categories');
+  const raw: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+  return raw.map((cat: any) => ({
+    id: cat.id,
+    name: cat.name ?? '',
+    description: cat.description ?? '',
+    icon: getCategoryIcon(cat.name ?? '', cat.icon),
+    accent: cat.accent ?? TOKENS.color.primary,
+    servicesCount: cat.servicesCount ?? 0,
+  }));
 }
 
 export async function fetchServicesByCategoryService(

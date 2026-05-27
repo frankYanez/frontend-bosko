@@ -183,16 +183,16 @@ export default function ServiceFormScreen() {
           try {
             const imageUris = [imageUri];
             await uploadServiceImages(service.id, imageUris);
-          } catch (imgErr: any) {
-            console.warn("Image upload failed, service created:", imgErr?.message);
+          } catch {
+            // Upload fallback — el servicio ya fue creado, el proveedor puede subir la foto después
           }
         }
         // Upload gallery if any
         if (service.id && galleryImages.length > 0) {
           try {
             await uploadServiceImages(service.id, galleryImages);
-          } catch (imgErr: any) {
-            console.warn("Gallery upload failed:", imgErr?.message);
+          } catch {
+            // Ídem — galería no es bloqueante para la creación del servicio
           }
         }
         Alert.alert("¡Publicado!", "Tu servicio ya está disponible.");

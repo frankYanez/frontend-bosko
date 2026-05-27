@@ -77,7 +77,6 @@ class SocketService {
 
     this.socket.on('connect_error', (err) => {
       this.reconnectAttempts++;
-      console.warn('[Socket] Connection error:', err.message);
       if (err.message === 'Invalid namespace') {
         this.socket?.disconnect();
       }

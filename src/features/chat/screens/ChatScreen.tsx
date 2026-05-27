@@ -166,7 +166,7 @@ function MediaLightbox({ uri, isVideo, visible, onClose }: { uri: string; isVide
 }
 
 // ── Burbuja de mensaje ────────────────────────────────────────────────────────
-function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
+const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
   const isMine = msg.senderId === myUserId;
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -255,7 +255,7 @@ function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
       </View>
     </View>
   );
-}
+});
 
 // ── Indicador de grabación (reemplaza el TextInput) ───────────────────────────
 function RecordingIndicator({ duration, locked, lockProgress }: { duration: number; locked?: boolean; lockProgress?: number }) {
@@ -796,6 +796,9 @@ export default function ChatScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
+        removeClippedSubviews
+        maxToRenderPerBatch={15}
+        windowSize={10}
         onEndReached={() => { if (convId) loadOlderMessages(convId); }}
         onEndReachedThreshold={0.2}
         ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.primary} style={{ padding: 12 }} /> : null}
