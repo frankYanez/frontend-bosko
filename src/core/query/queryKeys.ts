@@ -22,6 +22,8 @@ export const QUERY_KEYS = {
   orderPayment:     (orderId: string) => ['payments', 'order', orderId]   as const,
 
   conversations:    ['conversations']                                    as const,
+  conversationByOrder: (orderId: string) =>
+                      ['conversations', 'order', orderId]                as const,
   messages:         (convId: string, page = 1) =>
                       ['messages', convId, page]                         as const,
 

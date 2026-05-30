@@ -82,7 +82,7 @@ export function useUpdateService() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<ServicePayload> }) =>
-      updateService(id, payload as ServicePayload),
+      updateService(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.myServices });
     },
@@ -123,6 +123,12 @@ export function useLikePost(serviceId: string) {
     },
     onError: (_err, _vars, ctx) => {
       qc.setQueryData(QUERY_KEYS.servicePosts(serviceId), ctx?.previous);
+    },
+    onSuccess: (result, postId) => {
+      // Sincronizar con el valor real del servidor
+      qc.setQueryData(QUERY_KEYS.servicePosts(serviceId), (old: any[]) =>
+        old?.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p)),
+      );
     },
   });
 }

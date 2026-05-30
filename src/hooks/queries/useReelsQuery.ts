@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
 import {
   getReelsFeed,
   toggleLikeReel,
@@ -6,9 +7,11 @@ import {
   type CreateReelPayload,
 } from '@/features/reels/services/reels.service';
 
+const REELS_KEY = ['reels'] as const;
+
 export function useReelsFeed() {
   return useInfiniteQuery({
-    queryKey: ['reels'],
+    queryKey: REELS_KEY,
     queryFn: ({ pageParam = 1 }) => getReelsFeed(pageParam as number, 10),
     initialPageParam: 1,
     getNextPageParam: (lastPage: any[], allPages) =>
@@ -21,15 +24,15 @@ export function useToggleLikeReel() {
   return useMutation({
     mutationFn: (reelId: string) => toggleLikeReel(reelId),
     onMutate: async (reelId) => {
-      await qc.cancelQueries({ queryKey: ['reels'] });
-      const previous = qc.getQueryData(['reels']);
+      await qc.cancelQueries({ queryKey: REELS_KEY });
+      const previous = qc.getQueryData(REELS_KEY);
 
-      qc.setQueryData(['reels'], (old: any) => {
+      qc.setQueryData(REELS_KEY, (old: any) => {
         if (!old) return old;
         return {
           ...old,
           pages: old.pages.map((page: any[]) =>
-            page.map((reel) =>
+            page.map((reel: any) =>
               reel.id === reelId
                 ? {
                     ...reel,
@@ -45,7 +48,10 @@ export function useToggleLikeReel() {
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      qc.setQueryData(['reels'], ctx?.previous);
+      qc.setQueryData(REELS_KEY, ctx?.previous);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: REELS_KEY });
     },
   });
 }
@@ -55,7 +61,7 @@ export function useCreateReel() {
   return useMutation({
     mutationFn: (payload: CreateReelPayload) => createReel(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['reels'] });
+      qc.invalidateQueries({ queryKey: REELS_KEY });
     },
   });
 }

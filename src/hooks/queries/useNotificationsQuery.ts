@@ -51,7 +51,7 @@ export function useMarkAllNotificationsRead() {
     mutationFn: markAllNotificationsRead,
     onSuccess: () => {
       qc.setQueryData(QUERY_KEYS.unreadCount, 0);
-      qc.invalidateQueries({ queryKey: ['notifications'] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.notifications()[0]] });
     },
   });
 }
@@ -61,7 +61,7 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: (id: string) => deleteNotification(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notifications'] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.notifications()[0]] });
     },
   });
 }

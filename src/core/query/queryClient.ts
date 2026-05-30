@@ -6,7 +6,7 @@ export const queryClient = new QueryClient({
       staleTime: 2 * 60 * 1000,
       gcTime: 5 * 60 * 1000,
       retry: 1,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false, // React Native no tiene concepto de window focus
     },
     mutations: {
       retry: 0,

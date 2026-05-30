@@ -25,7 +25,7 @@ export function useConversationsQuery() {
 
 export function useConversationByOrder(orderId: string | undefined) {
   return useQuery({
-    queryKey: ['conversations', 'order', orderId],
+    queryKey: QUERY_KEYS.conversationByOrder(orderId!),
     queryFn: () => fetchConversationByOrder(orderId!),
     enabled: !!orderId,
   });

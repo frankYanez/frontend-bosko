@@ -230,6 +230,13 @@ Real-time chat tied to orders (no free DMs).
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
 
 ## Recent Changes
+- **29/5/2026 11:13 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
+- **29/5/2026 11:09 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
+- **29/5/2026 10:53 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
+- **29/5/2026 10:52 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
+- **29/5/2026 10:51 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
+- **29/5/2026 10:45 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
+- **29/5/2026 10:41 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
 - **29/5/2026 10:40 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
 - **29/5/2026 10:37 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
 - **29/5/2026 10:36 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
@@ -243,10 +250,3 @@ Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image
 - **26/5/2026 10:27 p. m.** — Reels, Notificaciones Push (19 archivos)
 - **26/5/2026 10:21 p. m.** — Documentación CLAUDE.md, Dashboard HTML (2 archivos)
 - **26/5/2026 10:20 p. m.** — Reels, Notificaciones Push (18 archivos)
-- **26/5/2026 10:19 p. m.** — Documentación CLAUDE.md, Dashboard HTML (2 archivos)
-- **26/5/2026 10:16 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:15 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:14 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:13 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:13 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:12 p. m.** — Reels (17 archivos)
