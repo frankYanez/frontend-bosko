@@ -6,13 +6,20 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
   Pressable,
+  Share,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   View,
   ViewToken,
 } from 'react-native';
@@ -21,7 +28,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getReelsFeed, toggleLikeReel, Reel } from '@/features/reels/services/reels.service';
+import { router } from 'expo-router';
+import { toggleLikeReel, commentOnReel, Reel } from '@/features/reels/services/reels.service';
+import { useReelsFeed } from '@/hooks/queries/useReelsQuery';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -128,6 +137,125 @@ function FloatingHeart({ visible, x, y }: { visible: boolean; x: number; y: numb
   );
 }
 
+// ── Comments sheet ────────────────────────────────────────────────────────────
+function CommentsSheet({
+  reelId,
+  onClose,
+  onCommentPosted,
+}: {
+  reelId: string;
+  onClose: () => void;
+  onCommentPosted: () => void;
+}) {
+  const insets      = useSafeAreaInsets();
+  const [text,    setText]    = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!text.trim() || sending) return;
+    setSending(true);
+    try {
+      await commentOnReel(reelId, text.trim());
+      setText('');
+      onCommentPosted();
+    } catch {
+      Alert.alert('Error', 'No se pudo enviar el comentario. Intentá de nuevo.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Modal
+      visible
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        {/* Backdrop */}
+        <Pressable style={[StyleSheet.absoluteFill, s.commentsBackdrop]} onPress={onClose} />
+
+        <View style={[s.commentsSheet, { paddingBottom: insets.bottom + 8 }]}>
+          {/* Handle */}
+          <View style={s.commentsHandle} />
+          <Text style={s.commentsTitle}>Comentarios</Text>
+
+          {/* Placeholder — no GET /comments endpoint aún */}
+          <View style={s.commentsEmpty}>
+            <Ionicons name="chatbubbles-outline" size={44} color="rgba(255,255,255,0.25)" />
+            <Text style={s.commentsEmptyText}>Sé el primero en comentar</Text>
+          </View>
+
+          {/* Input */}
+          <View style={s.commentsInputRow}>
+            <TextInput
+              style={s.commentsInput}
+              placeholder="Escribí un comentario..."
+              placeholderTextColor="rgba(255,255,255,0.35)"
+              value={text}
+              onChangeText={setText}
+              multiline
+              maxLength={500}
+            />
+            <Pressable onPress={handleSend} disabled={!text.trim() || sending} style={s.commentsSendBtn}>
+              {sending
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Ionicons name="send" size={20} color={text.trim() ? '#fff' : 'rgba(255,255,255,0.25)'} />
+              }
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ── Before / After comparison slider ─────────────────────────────────────────
+function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
+  const dividerX = useRef(new Animated.Value(W / 2)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, { dx, dy }) => Math.abs(dx) > Math.abs(dy),
+      onPanResponderMove: (_, { moveX }) => {
+        dividerX.setValue(Math.max(30, Math.min(W - 30, moveX)));
+      },
+    }),
+  ).current;
+
+  return (
+    <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
+      {/* DESPUÉS — visible siempre, detrás */}
+      <Image source={{ uri: after }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <View style={[s.baLabel, s.baLabelRight]}>
+        <Text style={s.baLabelText}>DESPUÉS</Text>
+      </View>
+
+      {/* ANTES — clippeado por la posición del divider */}
+      <Animated.View style={[StyleSheet.absoluteFill, { width: dividerX, overflow: 'hidden' }]}>
+        <Image source={{ uri: before }} style={{ width: W, height: H }} contentFit="cover" />
+        <View style={[s.baLabel, s.baLabelLeft]}>
+          <Text style={s.baLabelText}>ANTES</Text>
+        </View>
+      </Animated.View>
+
+      {/* Divider — línea vertical + handle */}
+      <Animated.View style={[s.baDividerLine, { left: dividerX }]} pointerEvents="none">
+        <View style={s.baDividerHandle}>
+          <Ionicons name="chevron-back"    size={11} color="#fff" />
+          <Ionicons name="chevron-forward" size={11} color="#fff" />
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
 // ── Single reel item ──────────────────────────────────────────────────────────
 const ReelItem = React.memo(function ReelItem({
   reel,
@@ -138,13 +266,18 @@ const ReelItem = React.memo(function ReelItem({
 }) {
   const insets = useSafeAreaInsets();
 
+  const isBeforeAfter = reel.type === 'before_after';
+
   const [isMuted,     setIsMuted]     = useState(true);
   const [isPaused,    setIsPaused]    = useState(false);
   const [position,    setPosition]    = useState(0);
   const [duration,    setDuration]    = useState(0);
-  const [isBuffering, setIsBuffering] = useState(true);
-  const [liked,       setLiked]       = useState(reel.isLiked ?? false);
-  const [likeCount,   setLikeCount]   = useState(reel.likes ?? 0);
+  const [isBuffering, setIsBuffering] = useState(!isBeforeAfter);
+  const [liked,         setLiked]         = useState(reel.isLiked ?? false);
+  const [likeCount,     setLikeCount]     = useState(reel.likes ?? 0);
+  const [commentCount,  setCommentCount]  = useState(reel.comments ?? 0);
+  const [isFollowing,   setIsFollowing]   = useState(reel.user.isFollowing ?? false);
+  const [showComments,  setShowComments]  = useState(false);
 
   // Heart animation state
   const [heartVisible, setHeartVisible] = useState(false);
@@ -153,14 +286,15 @@ const ReelItem = React.memo(function ReelItem({
   // Double-tap detection
   const lastTap = useRef(0);
 
-  // ── expo-video player ─────────────────────────────────────────────────────
-  const player = useVideoPlayer({ uri: reel.videoUrl }, (p) => {
+  // ── expo-video player — always called (hook rule), ignored for before_after ─
+  const player = useVideoPlayer({ uri: reel.videoUrl ?? '' }, (p) => {
     p.loop = true;
     p.muted = true;
   });
 
-  // Play / pause según visibilidad
+  // Play / pause según visibilidad (video only)
   useEffect(() => {
+    if (isBeforeAfter) return;
     if (isActive && !isPaused) {
       player.play();
     } else {
@@ -171,32 +305,36 @@ const ReelItem = React.memo(function ReelItem({
         setPosition(0);
       }
     }
-  }, [isActive, isPaused, player]);
+  }, [isActive, isPaused, player, isBeforeAfter]);
 
-  // Sincronizar mute con el player
+  // Sincronizar mute con el player (video only)
   useEffect(() => {
+    if (isBeforeAfter) return;
     player.muted = isMuted;
-  }, [isMuted, player]);
+  }, [isMuted, player, isBeforeAfter]);
 
-  // Escuchar progreso y buffering
+  // Escuchar progreso y buffering (video only)
   useEffect(() => {
+    if (isBeforeAfter) return;
     const sub = player.addListener('timeUpdate', (e) => {
       setPosition(e.currentTime * 1000);
       setDuration((player.duration ?? 0) * 1000);
       setIsBuffering(false);
     });
     return () => sub.remove();
-  }, [player]);
+  }, [player, isBeforeAfter]);
 
   useEffect(() => {
+    if (isBeforeAfter) return;
     const sub = player.addListener('statusChange', ({ status }) => {
       setIsBuffering(status === 'loading');
     });
     return () => sub.remove();
-  }, [player]);
+  }, [player, isBeforeAfter]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handlePress = useCallback((evt: any) => {
+    if (isBeforeAfter) return;
     const now = Date.now();
     if (now - lastTap.current < 280) {
       // Double tap → like + floating heart
@@ -213,7 +351,7 @@ const ReelItem = React.memo(function ReelItem({
       setIsPaused(p => !p);
     }
     lastTap.current = now;
-  }, [liked]);
+  }, [liked, isBeforeAfter]);
 
   const handleLikePress = useCallback(() => {
     setLiked(l => {
@@ -227,6 +365,47 @@ const ReelItem = React.memo(function ReelItem({
       });
     });
   }, [reel.id]);
+
+  const handleQuote = useCallback(() => {
+    router.push({
+      pathname: '/(tabs)/services/provider/[id]',
+      params: { id: reel.user.id },
+    });
+  }, [reel.user.id]);
+
+  const handleFollow = useCallback(() => {
+    setIsFollowing(f => !f);
+    // TODO: conectar a API follow/unfollow cuando exista el endpoint
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    try {
+      await Share.share({
+        message: `Mirá el trabajo de @${reel.user.username} en Bosko`,
+        url: `https://boskoapp.site/provider/${reel.user.id}`,
+      });
+    } catch {}
+  }, [reel.user.username, reel.user.id]);
+
+  const handleMore = useCallback(() => {
+    Alert.alert('Opciones', undefined, [
+      {
+        text: 'No me interesa',
+        onPress: () => {},
+      },
+      {
+        text: 'Reportar contenido',
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert('Reporte enviado', 'Gracias por ayudarnos a mantener la comunidad.'),
+      },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  }, []);
+
+  const handleCommentPosted = useCallback(() => {
+    setCommentCount(c => c + 1);
+  }, []);
 
   const muteScale   = useRef(new Animated.Value(0)).current;
   const muteOpacity = useRef(new Animated.Value(0)).current;
@@ -246,15 +425,22 @@ const ReelItem = React.memo(function ReelItem({
 
   return (
     <View style={s.reel}>
-      {/* ── Video ──────────────────────────────────────────────────────── */}
-      <Pressable onPress={handlePress} style={StyleSheet.absoluteFill}>
-        <VideoView
-          player={player}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          nativeControls={false}
+      {/* ── Media ──────────────────────────────────────────────────────── */}
+      {isBeforeAfter ? (
+        <BeforeAfterSlider
+          before={reel.beforeImageUrl!}
+          after={reel.afterImageUrl!}
         />
-      </Pressable>
+      ) : (
+        <Pressable onPress={handlePress} style={StyleSheet.absoluteFill}>
+          <VideoView
+            player={player}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            nativeControls={false}
+          />
+        </Pressable>
+      )}
 
       {/* ── Dark gradient overlays ──────────────────────────────────────── */}
       <LinearGradient
@@ -268,44 +454,46 @@ const ReelItem = React.memo(function ReelItem({
         pointerEvents="none"
       />
 
-      {/* ── Buffering spinner ──────────────────────────────────────────── */}
-      {isBuffering && isActive && (
+      {/* ── Video-only overlays ─────────────────────────────────────────── */}
+      {!isBeforeAfter && isBuffering && isActive && (
         <View style={s.pauseIcon} pointerEvents="none">
           <ActivityIndicator size="large" color="rgba(255,255,255,0.8)" />
         </View>
       )}
-
-      {/* ── Pause icon flash ────────────────────────────────────────────── */}
-      {isPaused && !isBuffering && (
+      {!isBeforeAfter && isPaused && !isBuffering && (
         <View style={s.pauseIcon} pointerEvents="none">
           <Ionicons name="pause" size={60} color="rgba(255,255,255,0.75)" />
         </View>
       )}
-
-      {/* ── Mute indicator ─────────────────────────────────────────────── */}
-      <Animated.View
-        style={[s.muteIndicator, { opacity: muteOpacity, transform: [{ scale: muteScale }] }]}
-        pointerEvents="none"
-      >
-        <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={32} color="#fff" />
-      </Animated.View>
-
-      {/* ── Floating heart (double-tap) ─────────────────────────────────── */}
-      <FloatingHeart visible={heartVisible} x={heartPos.x} y={heartPos.y} />
+      {!isBeforeAfter && (
+        <Animated.View
+          style={[s.muteIndicator, { opacity: muteOpacity, transform: [{ scale: muteScale }] }]}
+          pointerEvents="none"
+        >
+          <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={32} color="#fff" />
+        </Animated.View>
+      )}
+      {!isBeforeAfter && (
+        <FloatingHeart visible={heartVisible} x={heartPos.x} y={heartPos.y} />
+      )}
 
       {/* ── Right sidebar ───────────────────────────────────────────────── */}
       <View style={[s.sidebar, { paddingBottom: insets.bottom + 80 }]}>
         {/* Avatar + follow button */}
-        <View style={s.avatarWrap}>
+        <Pressable onPress={handleFollow} style={s.avatarWrap}>
           <Image
             source={reel.user.avatar ? { uri: reel.user.avatar } : undefined}
             style={s.avatar}
             contentFit="cover"
           />
-          <View style={s.followDot}>
-            <Ionicons name="add" size={12} color="#fff" />
+          <View style={[s.followDot, isFollowing && s.followDotActive]}>
+            <Ionicons
+              name={isFollowing ? 'checkmark' : 'add'}
+              size={12}
+              color="#fff"
+            />
           </View>
-        </View>
+        </Pressable>
 
         <ActionBtn
           icon={liked ? 'heart' : 'heart-outline'}
@@ -313,27 +501,62 @@ const ReelItem = React.memo(function ReelItem({
           color={liked ? '#FF2D55' : '#FFFFFF'}
           onPress={handleLikePress}
         />
-        <ActionBtn icon="chatbubble-ellipses" label={fmtNum(reel.comments)} />
-        <ActionBtn icon="arrow-redo" label="Compartir" />
-        <ActionBtn icon="ellipsis-horizontal" />
-        <Pressable onPress={handleMuteToggle} style={s.actionBtn}>
-          <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={24} color="#fff" />
-        </Pressable>
+        <ActionBtn
+          icon="chatbubble-ellipses"
+          label={fmtNum(commentCount)}
+          onPress={() => setShowComments(true)}
+        />
+        <ActionBtn icon="arrow-redo" label="Compartir" onPress={handleShare} />
+        <ActionBtn
+          icon="pricetag-outline"
+          label="Cotizar"
+          onPress={handleQuote}
+        />
+        <ActionBtn icon="ellipsis-horizontal" onPress={handleMore} />
+        {!isBeforeAfter && (
+          <Pressable onPress={handleMuteToggle} style={s.actionBtn}>
+            <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={24} color="#fff" />
+          </Pressable>
+        )}
       </View>
 
       {/* ── Bottom info ─────────────────────────────────────────────────── */}
       <View style={[s.bottomInfo, { paddingBottom: insets.bottom + 72 }]}>
+        {reel.user.isAvailable && (
+          <View style={s.availableBadge}>
+            <View style={s.availableDot} />
+            <Text style={s.availableText}>Disponible hoy</Text>
+          </View>
+        )}
         <Text style={s.username}>@{reel.user.username}</Text>
         <Text style={s.description} numberOfLines={2}>{reel.description}</Text>
         <Text style={s.tags}>{reel.tags.join(' ')}</Text>
-        <View style={s.musicRow}>
-          <Ionicons name="musical-notes" size={13} color="rgba(255,255,255,0.8)" />
-          <Text style={s.musicText} numberOfLines={1}>{reel.music}</Text>
-        </View>
+        {!isBeforeAfter && reel.music && (
+          <View style={s.musicRow}>
+            <Ionicons name="musical-notes" size={13} color="rgba(255,255,255,0.8)" />
+            <Text style={s.musicText} numberOfLines={1}>{reel.music}</Text>
+          </View>
+        )}
 
-        {/* Progress bar */}
-        <ProgressBar position={position} duration={duration} />
+        {isBeforeAfter && (
+          <View style={s.beforeAfterBadge}>
+            <Ionicons name="swap-horizontal" size={12} color="#fff" />
+            <Text style={s.beforeAfterBadgeText}>Arrastrá para comparar</Text>
+          </View>
+        )}
+
+        {/* Progress bar (video only) */}
+        {!isBeforeAfter && <ProgressBar position={position} duration={duration} />}
       </View>
+
+      {/* ── Comments sheet ──────────────────────────────────────────────── */}
+      {showComments && (
+        <CommentsSheet
+          reelId={reel.id}
+          onClose={() => setShowComments(false)}
+          onCommentPosted={handleCommentPosted}
+        />
+      )}
     </View>
   );
 });
@@ -362,49 +585,14 @@ function TopBar({ insetTop }: { insetTop: number }) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
-  const insets       = useSafeAreaInsets();
-  const [reels,      setReels]      = useState<Reel[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page,       setPage]       = useState(1);
-  const [hasMore,    setHasMore]    = useState(true);
+  const insets = useSafeAreaInsets();
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useReelsFeed();
+  const reels = data?.pages.flat() ?? [];
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Carga inicial
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getReelsFeed(1, 10);
-        setReels(data);
-        setHasMore(data.length === 10);
-      } catch {
-        // Si falla la API, la lista queda vacía (sin crash)
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  // Carga paginada al final del feed
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      const data = await getReelsFeed(nextPage, 10);
-      if (data.length === 0) {
-        setHasMore(false);
-      } else {
-        setReels(prev => [...prev, ...data]);
-        setPage(nextPage);
-        setHasMore(data.length === 10);
-      }
-    } catch {
-      // silenciar error de paginación
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [loadingMore, hasMore, page]);
+  const loadMore = useCallback(() => {
+    if (hasNextPage) fetchNextPage();
+  }, [hasNextPage, fetchNextPage]);
 
   // viewabilityConfigCallbackPairs must be stable (useRef, never recreated)
   const viewabilityConfigCallbackPairs = useRef([
@@ -437,7 +625,7 @@ export default function ReelsScreen() {
     [],
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={[s.root, s.center]}>
         <ActivityIndicator size="large" color="#fff" />
@@ -466,7 +654,7 @@ export default function ReelsScreen() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={
-          loadingMore ? (
+          isFetchingNextPage ? (
             <View style={s.footerLoader}>
               <ActivityIndicator color="#fff" />
             </View>
@@ -584,6 +772,76 @@ const s = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#000',
   },
+  followDotActive: {
+    backgroundColor: '#22c55e',
+  },
+
+  // Comments sheet
+  commentsBackdrop: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  commentsSheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#1a1a2e',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    maxHeight: '65%',
+  },
+  commentsHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  commentsTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  commentsEmpty: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 32,
+  },
+  commentsEmptyText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
+  },
+  commentsInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingTop: 12,
+  },
+  commentsInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: '#fff',
+    fontSize: 14,
+    maxHeight: 100,
+  },
+  commentsSendBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   actionBtn: {
     alignItems: 'center',
     gap: 3,
@@ -635,6 +893,90 @@ const s = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
     flex: 1,
+  },
+
+  // Before / After slider
+  baLabel: {
+    position: 'absolute',
+    top: 90,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 6,
+  },
+  baLabelLeft:  { left: 12 },
+  baLabelRight: { right: 12 },
+  baLabelText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  baDividerLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2,
+    backgroundColor: '#fff',
+    marginLeft: -1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  baDividerHandle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+  },
+  beforeAfterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 99,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
+  beforeAfterBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+  },
+
+  // Available badge
+  availableBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(34,197,94,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.4)',
+    borderRadius: 99,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
+  availableDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22c55e',
+  },
+  availableText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#22c55e',
+    letterSpacing: 0.2,
   },
 
   // Progress bar

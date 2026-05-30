@@ -617,8 +617,8 @@
       </div>
 
       <!-- REELS -->
-      <div class="feature-card" style="border-color:rgba(239,68,68,0.25);">
-        <div class="feature-head" style="background:rgba(239,68,68,0.06);">
+      <div class="feature-card" style="border-color:rgba(245,158,11,0.25);">
+        <div class="feature-head" style="background:rgba(245,158,11,0.06);">
           <div class="feature-icon">🎬</div>
           <div>
             <div class="feature-title">Reels</div>
@@ -627,26 +627,34 @@
           <div class="progress-ring">
             <svg viewBox="0 0 38 38" width="38" height="38">
               <circle class="track" cx="19" cy="19" r="16"/>
-              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--red)"
-                stroke-dasharray="100.5" stroke-dashoffset="60"/>
+              <circle class="fill" cx="19" cy="19" r="16" stroke="var(--yellow)"
+                stroke-dasharray="100.5" stroke-dashoffset="20"/>
             </svg>
-            <div class="progress-pct" style="color:var(--red)">40%</div>
+            <div class="progress-pct" style="color:var(--yellow)">80%</div>
           </div>
-          <span class="badge badge-red">Alta Prioridad</span>
+          <span class="badge badge-yellow">Media Prioridad</span>
         </div>
         <div class="feature-body">
-          <div class="task-group-label">✅ Implementado (UI Only)</div>
-          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">TikTok-style vertical FlatList</div></div>
-          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Auto-play por visibilidad (viewabilityConfig)</div></div>
-          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Full-screen video con overlay de info</div></div>
-          <div class="task-item" data-task-id="reels-interactions-mock"><div class="task-check done">✓</div><div class="task-text done">Like/comment/share buttons (UI)</div></div>
-          <div class="task-group-label">🔴 En progreso — Backend OK, Frontend roto</div>
-          <div class="task-item" data-task-id="reels-mock-data"><div class="task-check partial">~</div><div class="task-text done"><strong>Pantalla en negro</strong> — backend /reels implementado, ReelsScreen no renderiza video</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">activo</span></div>
-          <div class="task-item"><div class="task-check bug"></div><div class="task-text">Like/comment/share → pendiente conectar a API real</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">pendiente</span></div>
-          <div class="task-item" data-task-id="reels-api-feed"><div class="task-check done">✓</div><div class="task-text done">Backend GET /reels feed paginado — implementado</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">backend ok</span></div>
-          <div class="task-item" data-task-id="reels-upload"><div class="task-check todo"></div><div class="task-text">POST /reels upload video para proveedores</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item" data-task-id="reels-interactions"><div class="task-check done">✓</div><div class="task-text done">Like / comment / share reales — conectar frontend</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item" data-task-id="reels-infinite"><div class="task-check done">✓</div><div class="task-text done">Infinite scroll / paginación en frontend</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-group-label">✅ Implementado</div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Feed paginado con useReelsFeed() — useInfiniteQuery + TanStack cache</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">TikTok-style vertical FlatList — autoplay por visibilidad, pause/play tap, loop</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Like + doble-tap con corazón flotante animado — optimistic local</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">CommentsSheet (Modal sobre tab bar) — input + commentOnReel()</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Share nativo — Share.share() con URL perfil proveedor</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Cotizar → navega a ProviderProfileScreen</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Badge "Disponible hoy" — verde cuando reel.user.isAvailable</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Follow toggle visual (rojo→verde con checkmark)</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Ellipsis → Alert: "No me interesa" / "Reportar"</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Before/After slider — PanResponder drag horizontal, clip animado</div></div>
+          <div class="task-group-label">🐛 Bug bloqueante</div>
+          <div class="task-item"><div class="task-check bug">!</div><div class="task-text"><strong>Videos en negro</strong> — backend no retorna videoUrl válida en GET /reels. isBuffering queda en true indefinido. Ver bug #02.</div><span class="badge badge-red" style="font-size:10px;padding:1px 6px">back</span></div>
+          <div class="task-group-label">❌ Pendiente</div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">"No me interesa" funcional — filtrar reel de lista localmente con Set de IDs ignoradas</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">frontend</span></div>
+          <div class="task-item" data-task-id="reels-upload"><div class="task-check todo"></div><div class="task-text">Upload de reels para proveedores — pantalla nueva (grabar/seleccionar + formulario descripción/tags)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Tab "Siguiendo" funcional — espera GET /reels?feed=following del backend</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">back</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Lista de comentarios en CommentsSheet — espera GET /reels/:id/comments del backend</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">back</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Follow real — espera POST/DELETE /users/:id/follow del backend</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">back</span></div>
+          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Reportar reel — espera POST /reels/:id/report del backend</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">back</span></div>
         </div>
       </div>
 
@@ -748,9 +756,9 @@
     <div class="section-header" style="margin-top:36px;">
       <div class="section-dot" style="background:var(--red)"></div>
       <div class="section-title">Bug Tracker & Issues</div>
-      <span class="badge badge-red">1 Crítico</span>
       <span class="badge badge-orange">2 Altos</span>
-      <span class="badge badge-green">8 Resueltos</span>
+      <span class="badge badge-yellow">1 Medio</span>
+      <span class="badge badge-green">9 Resueltos</span>
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
@@ -774,13 +782,21 @@
             <td><span style="font-size:11px;color:var(--text3)">Falso positivo</span></td>
             <td style="color:var(--green);font-size:11px">Socket ya integrado. Polling solo activo como fallback cuando socket desconectado.</td>
           </tr>
-          <tr>
+          <tr class="row-resolved">
             <td style="color:var(--text3)">02</td>
-            <td><strong>Reels: backend OK, frontend roto</strong> — ReelsScreen usa MOCK_REELS. Backend tiene GET/POST /reels, like, comment implementados. Queda conectar frontend a API real.</td>
+            <td><strong>Reels: no usaba useReelsFeed() de TanStack Query</strong> — usaba useState+getReelsFeed directo.</td>
             <td><span class="code-path">reels/ReelsScreen.tsx</span></td>
+            <td><span class="badge badge-green" style="font-size:11px">✓ Resuelto</span></td>
+            <td><span style="font-size:11px;color:var(--text3)">Esta sesión</span></td>
+            <td style="color:var(--green);font-size:11px">Migrado a useReelsFeed() (useInfiniteQuery). loadMore → fetchNextPage. isLoading/isFetchingNextPage del hook.</td>
+          </tr>
+          <tr>
+            <td style="color:var(--text3)">02b</td>
+            <td><strong>Videos en negro en ReelsScreen</strong> — backend no retorna <code>videoUrl</code> válida en <code>GET /reels</code>. Player recibe string vacío → <code>isBuffering</code> queda en <code>true</code> indefinidamente. Spinner gira para siempre.</td>
+            <td><span class="code-path">GET /reels → videoUrl</span></td>
             <td><span class="severity sev-high">● Alto</span></td>
-            <td><span class="badge badge-orange">Frontend</span></td>
-            <td>Reemplazar MOCK_REELS con useReelsQuery. Backend ya expone endpoints.</td>
+            <td><span class="badge badge-orange">Backend</span></td>
+            <td>Backend debe retornar <code>videoUrl</code> como URL absoluta válida (S3/CDN). También incluir <code>isAvailable</code>, <code>isFollowing</code>, <code>type</code>, <code>beforeImageUrl</code>, <code>afterImageUrl</code> en el objeto user/reel.</td>
           </tr>
           <tr>
             <td style="color:var(--text3)">03</td>
@@ -871,7 +887,11 @@
         <div class="be-body">
           <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Pasarela de pago real</div><div style="color:var(--text3);font-size:11px">Backend: MercadoPago adapter implementado (mercadopago.service.ts, PaymentModule). Frontend: CheckoutScreen sin integración nativa. Conectar SDK React Native de MercadoPago.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Socket.io rooms estables</div><div style="color:var(--text3);font-size:11px">Backend: ChatGateway completo con Redis adapter, WsJwtGuard, join/leave room, events: message_received, messages_delivered, messages_read, typing_indicator. Frontend: socket.service.ts + chat.store.ts conectados.</div></div></div>
-          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Frontend Reels → conectar API real</div><div style="color:var(--text3);font-size:11px">Backend: GET /reels, POST /reels, like, comment implementados (ReelsModule, ReelsController, use cases). Frontend: ReelsScreen usa MOCK_REELS, pantalla en negro con datos reales. Queda conectar.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">GET /reels — campos faltantes en response</div><div style="color:var(--text3);font-size:11px">Frontend listo y conectado con useReelsFeed(). Backend debe incluir en response: <strong>videoUrl</strong> (URL absoluta S3/CDN — hoy vacía, causa pantalla negra), <strong>user.isAvailable</strong> (badge verde), <strong>user.isFollowing</strong> (estado follow), <strong>type</strong> ('video'|'before_after'), <strong>beforeImageUrl</strong>, <strong>afterImageUrl</strong>.</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">GET /reels/:id/comments</div><div style="color:var(--text3);font-size:11px">Frontend tiene CommentsSheet con input funcional (POST ya conectado). Falta endpoint GET para mostrar lista de comentarios existentes.</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">POST + DELETE /users/:id/follow</div><div style="color:var(--text3);font-size:11px">Frontend tiene follow toggle visual listo. Falta endpoint para persistir follow/unfollow. También necesita isFollowing en GET /reels response.</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">GET /reels?feed=following (o endpoint separado)</div><div style="color:var(--text3);font-size:11px">Frontend tiene tab "Siguiendo" en TopBar pero carga el mismo feed. Necesita endpoint para feed personalizado por follows.</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">POST /reels/:id/report</div><div style="color:var(--text3);font-size:11px">Frontend tiene opción "Reportar contenido" en ellipsis → Alert. Hoy solo muestra confirmación local. Falta endpoint para persistir el reporte.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">FCM / APNs push tokens</div><div style="color:var(--text3);font-size:11px">Backend: expo-push.adapter + firebase.service + NotificationModule + order-reminder cron job. Frontend: usePushNotificationSetup hook con canal Android y projectId EAS.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Rate limiting</div><div style="color:var(--text3);font-size:11px">Backend: ThrottlerGuard global (100 req/min general, 10 req/min auth). Frontend: axios timeout 30s, retry 1 en TanStack Query.</div></div></div>
         </div>
@@ -933,7 +953,7 @@
           </div>
         </div>
         <div class="phase-body">
-          <div class="phase-item"><div class="phase-num ph2-num">1</div><div><div class="item-label">Conectar Reels a API real</div><div class="item-desc">Reemplazar MOCK_REELS. Implementar like/comment/share con endpoints reales. Upload video para proveedores.</div></div></div>
+          <div class="phase-item"><div class="phase-num ph2-num">1</div><div><div class="item-label">Migrar Reels a useReelsFeed()</div><div class="item-desc">ReelsScreen ya llama API real. Reemplazar useState+getReelsFeed con useReelsFeed() (useInfiniteQuery). Conectar useToggleLikeReel para optimistic like. Upload video para proveedores.</div></div></div>
           <div class="phase-item"><div class="phase-num ph3-num">✓</div><div><div class="item-label" style="color:var(--green)">Paginación en Servicios</div><div class="item-desc">page/limit params, FlatList + onEndReached, APPEND_SERVICES reducer, loadMoreServicesByCategory, React.memo.</div></div></div>
           <div class="phase-item"><div class="phase-num ph2-num">3</div><div><div class="item-label">Skeleton loaders faltantes</div><div class="item-desc">Agregar shimmer skeleton en: Home (featured), ProfileScreen (stats), OrderDetail.</div></div></div>
           <div class="phase-item"><div class="phase-num ph2-num">4</div><div><div class="item-label">Botón favorito en ServiceCard</div><div class="item-desc">Context de favoritos ya existe. Solo falta el botón ♡ en la card. Toggle optimista.</div></div></div>
@@ -1153,242 +1173,154 @@
       <div id="changelog-entries">
         <!-- ENTRIES_START -->
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:13 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">30 de may de 2026<br>12:08 a. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:09 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">30 de may de 2026<br>12:06 a. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:53 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">30 de may de 2026<br>12:05 a. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:52 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">30 de may de 2026<br>12:01 a. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:51 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:57 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:45 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:56 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">34 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:41 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:48 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">34 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:40 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:41 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">34 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:37 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:35 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:36 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:36 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:33 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:03 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>09:58 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">32 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:42 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels, Notificaciones Push, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">20 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:38 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels, Notificaciones Push, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">20 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:36 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels, Notificaciones Push, Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">20 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:27 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels, Notificaciones Push</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">19 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:21 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Documentación CLAUDE.md, Dashboard HTML</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">2 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:20 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:26 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels, Notificaciones Push</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">18 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:19 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Documentación CLAUDE.md, Dashboard HTML</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, Reels</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">2 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:16 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:22 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:15 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>11:20 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:14 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>11:41 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">27 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:13 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>11:23 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">26 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:13 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>11:14 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">26 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:12 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>11:10 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">26 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:12 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>10:56 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, API / Axios, Contextos Globales, Usuarios, Chat / Mensajería, Perfil, Servicios / Marketplace, Componentes Core, App Layout / Providers, KYC / Antecedentes, Notificaciones Push, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">26 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:12 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>10:55 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería, Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">10 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Documentación CLAUDE.md, App Config (app.json), App Layout / Providers, Dependencias (package.json), Contextos Globales, API / Axios, Componentes Core, Chat / Mensajería, Favoritos, KYC / Antecedentes, Notificaciones Push, Órdenes, Planes, Perfil, Reseñas, Servicios / Marketplace, Usuarios</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">38 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:11 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">25 de may de 2026<br>10:52 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Config (app.json), App Layout / Providers, Dependencias (package.json), Contextos Globales, API / Axios, Componentes Core, Chat / Mensajería, Favoritos, KYC / Antecedentes, Notificaciones Push, Órdenes, Planes, Perfil, Reseñas, Servicios / Marketplace, Usuarios</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">37 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>

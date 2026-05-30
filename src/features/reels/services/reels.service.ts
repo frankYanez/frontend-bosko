@@ -5,11 +5,16 @@ export interface ReelUser {
   name: string;
   username: string;
   avatar: string | null;
+  isAvailable?: boolean;
+  isFollowing?: boolean;
 }
 
 export interface Reel {
   id: string;
-  videoUrl: string;
+  type?: 'video' | 'before_after';
+  videoUrl: string | null;
+  beforeImageUrl?: string;
+  afterImageUrl?: string;
   user: ReelUser;
   description: string | null;
   tags: string[];
