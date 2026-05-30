@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { initiatePayment, getOrderPayment } from '../services/payments';
 import type { Payment, PaymentHistoryItem, EarningsItem } from '../services/payments';
 import {
   usePaymentHistory,
@@ -19,9 +18,8 @@ export function usePayments() {
   const [orderPaymentId, setOrderPaymentId] = useState<string | undefined>();
   const orderPaymentQ = useOrderPayment(orderPaymentId);
 
-  const loadOrderPayment = async (orderId: string) => {
+  const loadOrderPayment = (orderId: string) => {
     setOrderPaymentId(orderId);
-    await getOrderPayment(orderId);
   };
 
   return {
