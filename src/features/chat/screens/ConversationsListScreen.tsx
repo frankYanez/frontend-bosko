@@ -22,9 +22,8 @@ import { EmptyState } from '@/core/components/EmptyState';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { fetchConversations, Conversation } from '../services/chat.service';
-import { useProfile } from '@/features/profile/state/ProfileContext';
-import { useUnread } from '@/features/chat/state/UnreadContext';
-import { useConversations } from '@/features/chat/state/ConversationsContext';
+import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { useChatStore, useConversationsList } from '@/stores/chat.store';
 import { TOKENS } from '@/core/design-system/tokens';
 
 function formatLastMessage(content?: string | null): string {
@@ -119,9 +118,10 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
 }
 
 export default function ConversationsListScreen() {
-  const { profile } = useProfile();
-  const { setTotal } = useUnread();
-  const { conversations, setConversations } = useConversations();
+  const { data: profile } = useProfile();
+  const conversations = useConversationsList();
+  const setConversations = useChatStore((s) => s.setConversations);
+  const setUnreadTotal = useChatStore((s) => s.setUnreadTotal);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -145,7 +145,7 @@ export default function ConversationsListScreen() {
           return fresh;
         }),
       );
-      setTotal(data.reduce((acc, c) => acc + c.unreadCount, 0));
+      setUnreadTotal(data.reduce((acc, c) => acc + c.unreadCount, 0));
     } catch (err) {
       console.error('Error al cargar conversaciones:', err);
     } finally {

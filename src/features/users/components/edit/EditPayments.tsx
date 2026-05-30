@@ -23,7 +23,7 @@ function formatDate(date: string) {
 export default function EditPayments() {
   const { history, loading, loadHistory } = usePayments();
 
-  useEffect(() => { loadHistory(1); }, []);
+  useEffect(() => { loadHistory(); }, []);
 
   if (loading && history.length === 0) {
     return (

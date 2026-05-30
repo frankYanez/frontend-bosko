@@ -51,9 +51,9 @@ import {
   Conversation,
 } from '../services/chat.service';
 import { socketService } from '../services/socket.service';
-import { useConversations } from '../state/ConversationsContext';
+import { useChatStore } from '@/stores/chat.store';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { useProfile } from '@/features/profile/state/ProfileContext';
+import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { TOKENS } from '@/core/design-system/tokens';
 
 const POLL_INTERVAL = 10000;
@@ -333,9 +333,9 @@ async function compressImage(uri: string, mimeType: string): Promise<{ uri: stri
 // ── Pantalla principal ────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ id: string }>();
-  const { profile } = useProfile();
+  const { data: profile } = useProfile();
   const { authState } = useAuth();
-  const { updateLastMessage } = useConversations();
+  const updateLastMessage = useChatStore((s) => s.updateLastMessage);
   const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);

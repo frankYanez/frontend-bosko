@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUnread } from '@/features/chat/state/UnreadContext';
+import { useUnreadTotal } from '@/stores/chat.store';
 import { TOKENS } from '@/core/design-system/tokens';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ function buildPath(W: number, cx: number): string {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
-  const { total: unread } = useUnread();
+  const unread = useUnreadTotal();
   const insets   = useSafeAreaInsets();
   const [barW, setBarW] = useState(Dimensions.get('window').width - 32);
 

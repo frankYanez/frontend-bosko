@@ -12,28 +12,22 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TOKENS } from '@/core/design-system/tokens';
 import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { useProfile } from '@/features/profile/state/ProfileContext';
-import { UnreadProvider } from '@/features/chat/state/UnreadContext';
-import { ConversationsProvider } from '@/features/chat/state/ConversationsContext';
+import { useProfile } from '@/hooks/queries/useProfileQuery';
 
 export default function TabsLayout() {
   const { authLoaded, isAuthenticated } = useAuth();
-  const { profile } = useProfile();
+  const { data: profile } = useProfile();
   const insets = useSafeAreaInsets();
-  const isProvider = profile?.role === 'provider';
+  const isProvider = (profile?.role as string) === 'provider';
 
-  // Mientras carga no mostrar nada (evita el flash de la tab bar sin datos)
   if (!authLoaded) return null;
 
-  // Guarda: sin sesión activa → redirigir al login
   if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
-    <ConversationsProvider>
-    <UnreadProvider>
     <SafeAreaView
       style={styles.container}
-      edges={['left', 'right',]}
+      edges={['left', 'right']}
     >
       <Tabs
         screenOptions={{
@@ -43,10 +37,6 @@ export default function TabsLayout() {
         tabBar={(props) => (
           <CustomTabBar
             {...props}
-          // Hack: cuando se abre el teclado, empujar la tab bar hacia arriba
-          // style={{
-          //   marginBottom: props.keyboardHeight || 0,
-          // }}
           />
         )}
       >
@@ -58,8 +48,6 @@ export default function TabsLayout() {
         <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />
       </Tabs>
     </SafeAreaView>
-    </UnreadProvider>
-    </ConversationsProvider>
   );
 }
 
