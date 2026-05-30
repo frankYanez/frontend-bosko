@@ -329,14 +329,14 @@
     <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Auth <span class="nav-count">95%</span></div>
     <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Inicio / Dashboard <span class="nav-count">88%</span></div>
     <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Servicios <span class="nav-count">95%</span></div>
-    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Chat <span class="nav-count">90%</span></div>
-    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Órdenes <span class="nav-count">90%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Chat <span class="nav-count">92%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Órdenes <span class="nav-count">92%</span></div>
     <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Perfil <span class="nav-count">92%</span></div>
-    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Pagos <span class="nav-count">75%</span></div>
-    <div class="nav-item"><span class="nav-dot" style="background:var(--red)"></span> Reels <span class="nav-count alert">40%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Pagos <span class="nav-count">80%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--red)"></span> Reels <span class="nav-count alert">50%</span></div>
     <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> KYC <span class="nav-count">92%</span></div>
-    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Notificaciones <span class="nav-count">90%</span></div>
-    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Búsqueda <span class="nav-count">72%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--green)"></span> Notificaciones <span class="nav-count">92%</span></div>
+    <div class="nav-item"><span class="nav-dot" style="background:var(--yellow)"></span> Búsqueda <span class="nav-count">80%</span></div>
     <div class="nav-item"><span class="nav-dot" style="background:var(--red)"></span> Planes <span class="nav-count alert">65%</span></div>
   </div>
 
@@ -356,6 +356,7 @@
   <div class="topbar">
     <div class="topbar-title">Bosko <span>— MVP Dashboard</span></div>
     <span class="badge badge-brand">React Native · Expo 54</span>
+    <span class="badge badge-purple">Zustand · TanStack Query</span>
     <span class="badge badge-green"><span class="live-dot"></span> Dev Branch</span>
     <span class="badge badge-yellow">⚡ Sprint 3</span>
     <div class="view-tabs">
@@ -536,7 +537,7 @@
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Read receipts ✓✓</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Socket.io service singleton con JWT auth</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Fallback polling REST cada 10s</div></div>
-          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Unread badge en tab + ConversationsContext</div></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Unread badge en tab + chat.store.ts (Zustand)</div></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Optimistic lastMessage update</div></div>
           <div class="task-group-label">🐛 Issues Críticos</div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Socket adaptativo — polling se detiene cuando socket conecta</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
@@ -775,11 +776,11 @@
           </tr>
           <tr>
             <td style="color:var(--text3)">02</td>
-            <td><strong>Reels 100% mock data</strong> — like/share/comment no hacen nada real</td>
+            <td><strong>Reels: backend OK, frontend roto</strong> — ReelsScreen usa MOCK_REELS. Backend tiene GET/POST /reels, like, comment implementados. Queda conectar frontend a API real.</td>
             <td><span class="code-path">reels/ReelsScreen.tsx</span></td>
-            <td><span class="severity sev-crit">● Crítico</span></td>
-            <td><span class="badge badge-red">Full Stack</span></td>
-            <td>Conectar API /reels, implementar endpoints de interacción</td>
+            <td><span class="severity sev-high">● Alto</span></td>
+            <td><span class="badge badge-orange">Frontend</span></td>
+            <td>Reemplazar MOCK_REELS con useReelsQuery. Backend ya expone endpoints.</td>
           </tr>
           <tr>
             <td style="color:var(--text3)">03</td>
@@ -799,11 +800,11 @@
           </tr>
           <tr>
             <td style="color:var(--text3)">05</td>
-            <td><strong>Sin pasarela de pago</strong> — CheckoutScreen sin Stripe/MercadoPago</td>
+            <td><strong>Sin pasarela de pago en frontend</strong> — Backend tiene MercadoPago adapter (mercadopago.service.ts). Frontend CheckoutScreen sin SDK nativo conectado.</td>
             <td><span class="code-path">payments/CheckoutScreen.tsx</span></td>
             <td><span class="severity sev-high">● Alto</span></td>
             <td><span class="badge badge-orange">Blocker</span></td>
-            <td>Integrar MercadoPago SDK (LATAM) o Stripe con Stripe React Native</td>
+            <td>Integrar SDK React Native de MercadoPago. Backend ya expone endpoints de pago.</td>
           </tr>
           <tr class="row-resolved">
             <td style="color:var(--text3)">06</td>
@@ -868,20 +869,21 @@
       <div class="be-card">
         <div class="be-head"><span>🔴</span> Críticos / Blockers</div>
         <div class="be-body">
-          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Pasarela de pago real</div><div style="color:var(--text3);font-size:11px">Integrar MercadoPago o Stripe server-side. Webhooks para confirmación. Escrow logic.</div></div></div>
-          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Socket.io rooms estables</div><div style="color:var(--text3);font-size:11px">Verificar que join/leave room funcione correctamente, que mensajes lleguen en tiempo real al cliente móvil.</div></div></div>
-          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Reels API completa</div><div style="color:var(--text3);font-size:11px">GET /reels (paginado), POST /reels (upload), POST /reels/:id/like, POST /reels/:id/comment, video processing/CDN.</div></div></div>
-          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">FCM / APNs tokens</div><div style="color:var(--text3);font-size:11px">Registrar device tokens, enviar push en eventos: nueva orden, mensaje, cambio de estado, review.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Pasarela de pago real</div><div style="color:var(--text3);font-size:11px">Backend: MercadoPago adapter implementado (mercadopago.service.ts, PaymentModule). Frontend: CheckoutScreen sin integración nativa. Conectar SDK React Native de MercadoPago.</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Socket.io rooms estables</div><div style="color:var(--text3);font-size:11px">Backend: ChatGateway completo con Redis adapter, WsJwtGuard, join/leave room, events: message_received, messages_delivered, messages_read, typing_indicator. Frontend: socket.service.ts + chat.store.ts conectados.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Frontend Reels → conectar API real</div><div style="color:var(--text3);font-size:11px">Backend: GET /reels, POST /reels, like, comment implementados (ReelsModule, ReelsController, use cases). Frontend: ReelsScreen usa MOCK_REELS, pantalla en negro con datos reales. Queda conectar.</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">FCM / APNs push tokens</div><div style="color:var(--text3);font-size:11px">Backend: expo-push.adapter + firebase.service + NotificationModule + order-reminder cron job. Frontend: usePushNotificationSetup hook con canal Android y projectId EAS.</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Rate limiting</div><div style="color:var(--text3);font-size:11px">Backend: ThrottlerGuard global (100 req/min general, 10 req/min auth). Frontend: axios timeout 30s, retry 1 en TanStack Query.</div></div></div>
         </div>
       </div>
       <div class="be-card">
         <div class="be-head"><span>🟡</span> Altos — Pre-MVP</div>
         <div class="be-body">
-          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">GET /reels feed paginado</div><div style="color:var(--text3);font-size:11px">cursor-based pagination, filtrar por categoría, proveedor</div></div></div>
-          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Refund / cancel flow</div><div style="color:var(--text3);font-size:11px">PATCH /orders/:id/cancel debe triggear reembolso según política</div></div></div>
-          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Dispute resolution</div><div style="color:var(--text3);font-size:11px">Admin panel para ver disputas, asignar resolución manual</div></div></div>
-          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Geolocation search</div><div style="color:var(--text3);font-size:11px">GET /services?lat=&lng=&radius= para búsqueda cercana</div></div></div>
-          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Rate limiting</div><div style="color:var(--text3);font-size:11px">Throttle endpoints críticos: login, OTP, KYC, upload</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">GET /reels feed paginado</div><div style="color:var(--text3);font-size:11px">Backend: ReelsModule con paginación cursor-based. Frontend: useReelsQuery con useInfiniteQuery listo.</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Refund / cancel flow</div><div style="color:var(--text3);font-size:11px">Backend: cancelOrder + disputeOrder + payment-release-scheduler. Frontend: useCancelOrder + useDisputeOrder mutations con cache invalidation.</div></div></div>
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Dispute resolution admin panel</div><div style="color:var(--text3);font-size:11px">Backend: AdminModule + AdminBackgroundCheckController. Falta UI de admin para gestionar disputas.</div></div></div>
+          <div class="be-item"><div class="task-check partial">~</div><div><div style="font-weight:600;font-size:12px">Geolocation search</div><div style="color:var(--text3);font-size:11px">Backend: GET /services acepta lat/lng/radius. Frontend: falta UI de mapa y búsqueda por ubicación.</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Tipos compartidos front↔back</div><div style="color:var(--text3);font-size:11px">Generar tipos TypeScript desde Swagger (openapi-typescript). Hoy se definen manualmente en ambos lados — riesgo de drift.</div></div></div>
         </div>
       </div>
       <div class="be-card">
@@ -890,8 +892,8 @@
           <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Search con Elasticsearch</div><div style="color:var(--text3);font-size:11px">Full-text search avanzado, fuzzy match, synonyms en español</div></div></div>
           <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Recommendations engine</div><div style="color:var(--text3);font-size:11px">Servicios sugeridos basados en historial de órdenes y categorías vistas</div></div></div>
           <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Analytics events</div><div style="color:var(--text3);font-size:11px">Track: service_view, order_created, payment_complete, reel_view</div></div></div>
-          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Withdrawal / payout</div><div style="color:var(--text3);font-size:11px">Proveedores pueden solicitar transferencia de ganancias a cuenta bancaria</div></div></div>
-          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Image CDN / optimization</div><div style="color:var(--text3);font-size:11px">CloudFront + Sharp para servir imágenes redimensionadas por viewport</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Image storage / S3</div><div style="color:var(--text3);font-size:11px">Backend: s3-storage.service con AWS S3/MinIO + presigned URLs. Frontend: expo-image-manipulator comprime antes de upload.</div></div></div>
+          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">Withdrawal / payout a banco</div><div style="color:var(--text3);font-size:11px">Proveedores solicitan transferencia de ganancias. Requiere integración bancaria por país.</div></div></div>
         </div>
       </div>
     </div>
@@ -1092,10 +1094,10 @@
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done"><span class="code-path">#850021</span> reemplazado en 36 archivos → <span class="code-path">TOKENS.color.primary</span></div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Componentes base creados: <span class="code-path">Input.tsx</span>, <span class="code-path">Toast.tsx</span></div></div>
         <div class="task-item" data-task-id="design-icons-mixed"><div class="task-check bug"></div><div class="task-text">Iconos mezclados: @expo/vector-icons vs SVGs vs emojis</div></div>
-        <div class="task-item" data-task-id="design-context-nesting"><div class="task-check bug"></div><div class="task-text">Context nesting 15 niveles profundo — puede afectar perf</div></div>
+        <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Context nesting 15 niveles → <strong>3 niveles</strong> (QueryClient → Auth → Services). 11 providers convertidos a shims no-op.</div></div>
         <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Barrel export creado: <span class="code-path">src/core/components/index.ts</span></div></div>
         <div class="task-item" data-task-id="design-types-todo"><div class="task-check bug"></div><div class="task-text">9 TODOs en interfaces — campos backend sin confirmar</div></div>
-        <div class="task-item" data-task-id="design-context-global"><div class="task-check bug"></div><div class="task-text">PostsContext + ReviewsContext inicializados globalmente con ID "global" en vez de per-entity</div></div>
+        <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">PostsContext + ReviewsContext con ID "global" — eliminados del árbol global</div></div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
         <div style="font-weight:700;font-size:13px;margin-bottom:12px;color:var(--green)">✅ Quick wins recomendados</div>
@@ -1116,24 +1118,28 @@
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;font-family:monospace;font-size:12px;line-height:1.7;color:var(--text2);">
-<span style="color:var(--text3)">// Context Provider Tree — app/_layout.tsx</span>
-<br><span style="color:var(--cyan)">AuthProvider</span>
-<br>&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ProfileProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">UsersProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">CategoriesProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ProvidersProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ServicesProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">SearchProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">PaymentsProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">OrdersProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--orange)">PostsProvider <span style="color:var(--red)">// ⚠ serviceId="global"</span></span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--orange)">ReviewsProvider <span style="color:var(--red)">// ⚠ providerId="global"</span></span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">KYCProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">NotificationsProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">FavoritesProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--text)">RootLayoutNav → Tabs</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--green)">ConversationsProvider</span>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--green)">UnreadProvider</span>
+<span style="color:var(--text3)">// Provider Tree — ANTES (15 niveles)</span>
+<br><span style="color:var(--red);text-decoration:line-through;opacity:0.5">AuthProvider → ProfileProvider → UsersProvider → CategoriesProvider → ProvidersProvider → ServicesProvider → SearchProvider → PaymentsProvider → OrdersProvider → PostsProvider → ReviewsProvider → KYCProvider → NotificationsProvider → FavoritesProvider</span>
+<br>
+<br><span style="color:var(--text3)">// Provider Tree — AHORA (3 niveles, 29 may 2026)</span>
+<br><span style="color:var(--cyan)">QueryClientProvider</span><span style="color:var(--text3)">        ← @tanstack/react-query (staleTime 2min, gcTime 5min, retry 1)</span>
+<br>&nbsp;&nbsp;└─ <span style="color:var(--purple)">AuthProvider</span><span style="color:var(--text3)">              ← único Context real (sesión + force logout + router guards)</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--cyan)">ServicesProvider</span><span style="color:var(--text3)">         ← reducer local + queryClient.fetchQuery cache</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span style="color:var(--text)">RootLayoutNav → Tabs → ToastRoot</span>
+<br>
+<br><span style="color:var(--text3)">// Los demás contextos son SHIMS (Provider = {">"children{"<"} /">"})</span>
+<br><span style="color:var(--green)">ProfileProvider · OrdersProvider · PaymentsProvider · KYCProvider · NotificationsProvider · FavoritesProvider · CategoriesProvider · UsersProvider · SearchProvider · ProvidersProvider</span>
+<br><span style="color:var(--text3)">   ↳ Cada shim exporta el mismo hook useXxx() con la misma API, pero internamente usa TanStack Query o Zustand.</span>
+<br>
+<br><span style="color:var(--text3)">// Zustand stores (UI state)</span>
+<br><span style="color:var(--orange)">chat.store.ts</span><span style="color:var(--text3)">         ← conversations, unread badge, socket ready, typing indicators</span>
+<br><span style="color:var(--orange)">favorites.store.ts</span><span style="color:var(--text3)">    ← favorites con persist AsyncStorage (partialize)</span>
+<br><span style="color:var(--orange)">marketplace.store.ts</span><span style="color:var(--text3)">  ← selectedCategoryId, filters, search query (UI only)</span>
+<br>
+<br><span style="color:var(--text3)">// TanStack Query hooks (server state)</span>
+<br><span style="color:var(--blue)">hooks/queries/</span><span style="color:var(--text3)">          ← useProfileQuery · useOrdersQuery · useMarketplaceQuery · usePaymentsQuery · useKYCQuery · useNotificationsQuery · useChatQuery · useReelsQuery · useSearchQuery</span>
+<br><span style="color:var(--blue)">hooks/mutations/</span><span style="color:var(--text3)">        ← useReviewMutations</span>
+<br><span style="color:var(--blue)">core/query/</span><span style="color:var(--text3)">            ← queryClient.ts · queryKeys.ts (centralizadas)</span>
     </div>
 
     <!-- ─── AUTO-CHANGELOG ─── -->
@@ -1146,6 +1152,70 @@
       <div style="padding:9px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Historial de sesiones · últimas 30</div>
       <div id="changelog-entries">
         <!-- ENTRIES_START -->
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:52 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:51 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">35 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:45 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">34 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:41 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">34 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:40 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">34 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:37 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:36 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:36 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
           <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">29 de may de 2026<br>10:33 p. m.</span>
           <div style="flex:1;">
@@ -1319,70 +1389,6 @@
           <div style="flex:1;">
             <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">9 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:04 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:03 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">9 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>10:03 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>09:59 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>09:58 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>09:56 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Chat / Mensajería</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">9 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>09:53 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">26 de may de 2026<br>09:52 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
