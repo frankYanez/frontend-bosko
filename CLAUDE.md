@@ -36,12 +36,14 @@ npx jest __tests__/login.test.tsx
 | moti | ^0.30.0 |
 | socket.io-client | ^4.8.3 |
 | axios | ^1.12.2 |
+| @tanstack/react-query | ^5.100 |
+| zustand | ^5.0 |
 | expo-av | ~16.0.8 |
 | expo-image-picker | ~17.0.11 |
 
 ## Architecture
 
-**Bosko** — React Native + Expo marketplace for service providers. Expo Router (file-based routing), React Context for all state.
+**Bosko** — React Native + Expo marketplace for service providers. Expo Router (file-based routing). State: **TanStack Query** (server state) + **Zustand** (client UI state) + **React Context** (auth/session only).
 
 ### Path alias
 
@@ -62,46 +64,114 @@ Auth guards:
 - `app/(tabs)/_layout.tsx` — secondary guard, redirects to `/login` if no token
 - `app/login/_layout.tsx` — inverse guard, redirects to `/(tabs)` if authenticated
 
-### Context provider tree
+### State Management
 
-Root (`app/_layout.tsx`):
+**Three layers, strict separation:**
+
+| Layer | Tool | What goes here |
+|---|---|---|
+| Server state | TanStack Query | Todo lo que viene de la API: perfiles, órdenes, servicios, reseñas, etc. |
+| Client UI state | Zustand | Estado que no viene del servidor: filtros, tabs, typing indicators, socket status, favoritos local. |
+| Session / routing | React Context | Solo `AuthProvider` (token, force logout, router guards). |
+
+#### Provider tree (actual)
+
 ```
-AuthProvider
-  └─ ProfileProvider
-       └─ UsersProvider
-            └─ CategoriesProvider
-                 └─ ProvidersProvider
-                      └─ ServicesProvider
-                           └─ SearchProvider
-                                └─ PaymentsProvider
-                                     └─ OrdersProvider
-                                          └─ PostsProvider
-                                               └─ ReviewsProvider
+QueryClientProvider        ← TanStack Query
+  └─ AuthProvider          ← único Context real (sesión + router)
+       └─ ServicesProvider ← reducer local + fetchQuery cache
 ```
 
-Tabs (`app/(tabs)/_layout.tsx`):
+Los demás "providers" (`ProfileProvider`, `OrdersProvider`, etc.) son **shims**: exportan un `Provider` que es `({children}) => <>{children}</>` y un hook con la misma API que antes, pero internamente usan TanStack Query o Zustand. Esto permite migrar pantallas de a una sin romper nada.
+
+#### Zustand store rules
+
+**Cuándo crear un store Zustand:**
+
+- ✅ Estado UI compartido entre pantallas no relacionadas (ej: `selectedCategoryId`, `activeFilters`)
+- ✅ Estado que sobrevive navegación (ej: conversación activa, posición de scroll)
+- ✅ Estado de infraestructura (ej: `socketReady`, `typingUsers`)
+- ✅ Datos que necesitan persistencia local (ej: favoritos con AsyncStorage)
+
+**Cuándo NO usar Zustand (usar TanStack Query):**
+
+- ❌ Datos del servidor (fetch, cache, paginación) → va en un hook `useQuery`
+- ❌ Mutaciones al backend → van en un hook `useMutation`
+- ❌ Estado de carga/error de un fetch → ya viene en `useQuery().isLoading`
+
+**Reglas para no descontrolarse:**
+
+1. **Un store por dominio**, no uno por pantalla. Si tiene sentido conceptual, puede haber varios stores, pero el default es pocos y bien definidos.
+2. **No mezclar estado servidor + UI en el mismo store.** Si algo se fetchea de la API, no va en Zustand. Usar `qc.fetchQuery` o un hook query y que TanStack maneje el cache.
+3. **Usar selectores granulares.** Cada componente importa solo el slice que necesita — evita re-renders innecesarios:
+   ```ts
+   // ❌
+   const { unreadTotal, conversations, socketReady } = useChatStore();
+   // ✅
+   const unreadTotal = useUnreadTotal();
+   const conversations = useConversationsList();
+   ```
+4. **Exportar selectores named.** El store file debe exportar hooks con nombre claro (`useUnreadTotal`, `useIsFavorite`, `useSocketReady`) además de `useChatStore` para selectores ad-hoc:
+
+   ```ts
+   // src/stores/marketplace.store.ts
+   export const useMarketplaceStore = create<MarketplaceUIState>((set) => ({ ... }));
+   export const useSelectedCategory = () => useMarketplaceStore(s => s.selectedCategoryId);
+   export const useActiveFilters = () => useMarketplaceStore(s => s.activeFilters);
+   ```
+
+5. **Persist solo lo necesario.** Con `zustand/middleware/persist`, usar `partialize` para no guardar derivados ni funciones:
+   ```ts
+   persist(store, {
+     name: 'BOSKO_FAVORITES_v2',
+     storage: createJSONStorage(() => AsyncStorage),
+     partialize: (state) => ({ favorites: state.favorites }),
+   })
+   ```
+6. **Stores nuevos → discutir.** Antes de crear un store nuevo, preguntar si el estado ya está cubierto por una query key de TanStack o si puede ir en un hook simple.
+
+#### Estructura de archivos
+
 ```
-ConversationsProvider   ← shared conversations list + optimistic lastMessage updates
-  └─ UnreadProvider     ← total unread count for tab badge
+src/
+  stores/                    ← Zustand (UI state)
+    chat.store.ts            ← conversaciones, unread, socket, typing
+    favorites.store.ts       ← favoritos con persist AsyncStorage
+    marketplace.store.ts     ← categoría seleccionada, filtros, search query
+  hooks/queries/             ← TanStack Query (server state)
+    useProfileQuery.ts
+    useOrdersQuery.ts
+    useMarketplaceQuery.ts
+    usePaymentsQuery.ts
+    useKYCQuery.ts
+    useNotificationsQuery.ts
+    useChatQuery.ts
+    useReelsQuery.ts
+    useSearchQuery.ts
+  hooks/mutations/           ← TanStack Query mutations
+    useReviewMutations.ts
+  core/query/
+    queryClient.ts           ← QueryClient config (staleTime, gcTime, retry)
+    queryKeys.ts             ← QUERY_KEYS centralizadas
 ```
 
 ### Feature modules (`src/features/`)
 
-| Feature | Purpose |
-|---|---|
-| `auth` | Login, register, onboarding, token management |
-| `profile` | Current user profile (fetch/update via `ProfileContext`) |
-| `servicesUser` | Marketplace: categories, services, provider profiles, reviews, posts |
-| `users` | User lookup by ID, edit profile |
-| `orders` | Order creation, history, status tracking, quote requests |
-| `payments` | Payment processing |
-| `chat` | Real-time messaging (socket.io + REST fallback) |
-| `kyc` | KYC / background check flow |
-| `reviews` | Reviews and ratings |
-| `reels` | Video reels feed |
-| `search` | Search services/providers |
-| `notifications` | Push notifications (expo-notifications, dev build only) |
-| `plans` | Subscription plan management |
+| Feature | Purpose | State |
+|---|---|---|
+| `auth` | Login, register, onboarding, token management | Context (`AuthContext`, único real) |
+| `profile` | Current user profile (fetch/update) | TanStack Query (`useProfileQuery`) |
+| `servicesUser` | Marketplace: categories, services, provider profiles, reviews, posts | `ServicesProvider` (reducer + fetchQuery) |
+| `users` | User lookup by ID, edit profile | TanStack Query (`usePublicUser`) |
+| `orders` | Order creation, history, status tracking, quote requests | TanStack Query (`useOrdersQuery`) |
+| `payments` | Payment processing | TanStack Query (`usePaymentsQuery`) |
+| `chat` | Real-time messaging (socket.io + REST fallback) | Zustand (`chat.store`) + TanStack Query |
+| `kyc` | KYC / background check flow | TanStack Query (`useKYCQuery`) |
+| `reviews` | Reviews and ratings | TanStack Query hooks |
+| `reels` | Video reels feed | TanStack Query (`useReelsQuery`) |
+| `search` | Search services/providers | TanStack Query + Zustand (query state) |
+| `notifications` | Push notifications (expo-notifications, dev build only) | TanStack Query + `usePushNotificationSetup` hook |
+| `plans` | Subscription plan management | — |
 
 ### API layer
 
@@ -122,8 +192,11 @@ Real-time chat tied to orders (no free DMs).
 - `socket.service.ts` — socket.io singleton. Connect with JWT, join/leave rooms, emit/receive messages and typing indicators. Falls back to REST polling every 10s.
 
 **State:**
-- `ConversationsContext` — holds conversations list shared between `ConversationsListScreen` and `ChatScreen`. `updateLastMessage(convId, content, senderId)` updates preview instantly (optimistic, no re-fetch needed).
-- `UnreadContext` — total unread count, read by `CustomTabBar` to show badge on chat tab.
+- `src/stores/chat.store.ts` — Zustand store: conversations list, unread badge, socket ready, typing indicators
+  - `useConversationsList()` / `useUnreadTotal()` / `useSocketReady()` / `useIsTyping(convId)`
+  - `updateLastMessage(convId, content, senderId)` — optimistic preview update
+  - `setConversations(fn)` — accepts updater function for preserving optimistic state on re-fetch
+- `src/hooks/queries/useChatQuery.ts` — TanStack Query: fetch conversations, messages, send/mark read mutations
 
 **ChatScreen features:**
 - Text, image, video (up to 60s), audio (long-press mic) messages
@@ -137,7 +210,7 @@ Real-time chat tied to orders (no free DMs).
 ### Tab bar
 
 `src/components/CustomTabBar.tsx` — custom animated pill tab bar.
-- Reads `useUnread()` to show red badge on chat tab when `total > 0`.
+- Reads `useUnreadTotal()` (from `chat.store`) to show red badge on chat tab when `total > 0`.
 - Pill slides with spring animation to active tab.
 - Icons from `@expo/vector-icons` Ionicons.
 
@@ -157,6 +230,10 @@ Real-time chat tied to orders (no free DMs).
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
 
 ## Recent Changes
+- **29/5/2026 10:40 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
+- **29/5/2026 10:37 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
+- **29/5/2026 10:36 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
+- **29/5/2026 10:36 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
 - **29/5/2026 10:33 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
 - **29/5/2026 10:03 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)
 - **29/5/2026 09:58 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios (32 archivos)
@@ -173,7 +250,3 @@ Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image
 - **26/5/2026 10:13 p. m.** — Reels (17 archivos)
 - **26/5/2026 10:13 p. m.** — Reels (17 archivos)
 - **26/5/2026 10:12 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:12 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:12 p. m.** — Servicios / Marketplace, Chat / Mensajería, Dashboard HTML (10 archivos)
-- **26/5/2026 10:11 p. m.** — Reels (17 archivos)
-- **26/5/2026 10:08 p. m.** — Servicios / Marketplace, Chat / Mensajería, Dashboard HTML (10 archivos)
