@@ -25,6 +25,19 @@ export interface Reel {
   createdAt: string;
 }
 
+export interface ReelComment {
+  id: string;
+  reelId: string;
+  userId: string;
+  comment: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
+}
+
 export interface CreateReelPayload {
   videoUrl: string;
   description?: string;
@@ -44,11 +57,28 @@ export async function createReel(payload: CreateReelPayload): Promise<Reel> {
   return res.data;
 }
 
+/** DELETE /reels/:id */
+export async function deleteReel(reelId: string): Promise<void> {
+  await api.delete(`/reels/${reelId}`);
+}
+
 /** POST /reels/:id/like  → toggle */
 export async function toggleLikeReel(
   reelId: string,
 ): Promise<{ likes: number; isLiked: boolean }> {
   const res = await api.post<{ likes: number; isLiked: boolean }>(`/reels/${reelId}/like`);
+  return res.data;
+}
+
+/** GET /reels/:id/comments */
+export async function getReelComments(
+  reelId: string,
+  page = 1,
+  limit = 20,
+): Promise<ReelComment[]> {
+  const res = await api.get<ReelComment[]>(`/reels/${reelId}/comments`, {
+    params: { page, limit },
+  });
   return res.data;
 }
 
@@ -59,4 +89,20 @@ export async function commentOnReel(
 ): Promise<{ commentsCount: number }> {
   const res = await api.post<{ commentsCount: number }>(`/reels/${reelId}/comments`, { comment });
   return res.data;
+}
+
+/** DELETE /reels/:id/comments/:commentId */
+export async function deleteReelComment(
+  reelId: string,
+  commentId: string,
+): Promise<void> {
+  await api.delete(`/reels/${reelId}/comments/${commentId}`);
+}
+
+/** POST /reels/:id/report */
+export async function reportReel(
+  reelId: string,
+  reason?: string,
+): Promise<void> {
+  await api.post(`/reels/${reelId}/report`, { reason });
 }

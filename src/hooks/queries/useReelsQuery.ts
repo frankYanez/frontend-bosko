@@ -1,13 +1,17 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getReelsFeed,
   toggleLikeReel,
   createReel,
+  deleteReel,
+  getReelComments,
+  deleteReelComment,
+  reportReel,
   type CreateReelPayload,
 } from '@/features/reels/services/reels.service';
 
 const REELS_KEY = ['reels'] as const;
+const reelCommentsKey = (reelId: string) => ['reels', reelId, 'comments'] as const;
 
 export function useReelsFeed() {
   return useInfiniteQuery({
@@ -26,7 +30,6 @@ export function useToggleLikeReel() {
     onMutate: async (reelId) => {
       await qc.cancelQueries({ queryKey: REELS_KEY });
       const previous = qc.getQueryData(REELS_KEY);
-
       qc.setQueryData(REELS_KEY, (old: any) => {
         if (!old) return old;
         return {
@@ -34,17 +37,12 @@ export function useToggleLikeReel() {
           pages: old.pages.map((page: any[]) =>
             page.map((reel: any) =>
               reel.id === reelId
-                ? {
-                    ...reel,
-                    isLiked: !reel.isLiked,
-                    likes: reel.isLiked ? reel.likes - 1 : reel.likes + 1,
-                  }
+                ? { ...reel, isLiked: !reel.isLiked, likes: reel.isLiked ? reel.likes - 1 : reel.likes + 1 }
                 : reel,
             ),
           ),
         };
       });
-
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
@@ -63,5 +61,41 @@ export function useCreateReel() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: REELS_KEY });
     },
+  });
+}
+
+export function useDeleteReel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reelId: string) => deleteReel(reelId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: REELS_KEY });
+    },
+  });
+}
+
+export function useReelComments(reelId: string) {
+  return useQuery({
+    queryKey: reelCommentsKey(reelId),
+    queryFn: () => getReelComments(reelId),
+    enabled: !!reelId,
+  });
+}
+
+export function useDeleteReelComment(reelId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => deleteReelComment(reelId, commentId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: reelCommentsKey(reelId) });
+      qc.invalidateQueries({ queryKey: REELS_KEY });
+    },
+  });
+}
+
+export function useReportReel() {
+  return useMutation({
+    mutationFn: ({ reelId, reason }: { reelId: string; reason?: string }) =>
+      reportReel(reelId, reason),
   });
 }

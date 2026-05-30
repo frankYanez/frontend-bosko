@@ -30,7 +30,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { toggleLikeReel, commentOnReel, Reel } from '@/features/reels/services/reels.service';
-import { useReelsFeed } from '@/hooks/queries/useReelsQuery';
+import { useAuth } from '@/features/auth/state/AuthContext';
+import {
+  useReelsFeed,
+  useDeleteReel,
+  useReelComments,
+  useDeleteReelComment,
+  useReportReel,
+} from '@/hooks/queries/useReelsQuery';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -140,16 +147,21 @@ function FloatingHeart({ visible, x, y }: { visible: boolean; x: number; y: numb
 // ── Comments sheet ────────────────────────────────────────────────────────────
 function CommentsSheet({
   reelId,
+  currentUserId,
   onClose,
   onCommentPosted,
 }: {
   reelId: string;
+  currentUserId?: string;
   onClose: () => void;
   onCommentPosted: () => void;
 }) {
   const insets      = useSafeAreaInsets();
   const [text,    setText]    = useState('');
   const [sending, setSending] = useState(false);
+
+  const { data: comments = [], isLoading, refetch } = useReelComments(reelId);
+  const { mutate: deleteComment } = useDeleteReelComment(reelId);
 
   const handleSend = async () => {
     if (!text.trim() || sending) return;
@@ -158,11 +170,23 @@ function CommentsSheet({
       await commentOnReel(reelId, text.trim());
       setText('');
       onCommentPosted();
+      refetch();
     } catch {
       Alert.alert('Error', 'No se pudo enviar el comentario. Intentá de nuevo.');
     } finally {
       setSending(false);
     }
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    Alert.alert('Eliminar comentario', '¿Seguro?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: () => deleteComment(commentId),
+      },
+    ]);
   };
 
   return (
@@ -185,11 +209,38 @@ function CommentsSheet({
           <View style={s.commentsHandle} />
           <Text style={s.commentsTitle}>Comentarios</Text>
 
-          {/* Placeholder — no GET /comments endpoint aún */}
-          <View style={s.commentsEmpty}>
-            <Ionicons name="chatbubbles-outline" size={44} color="rgba(255,255,255,0.25)" />
-            <Text style={s.commentsEmptyText}>Sé el primero en comentar</Text>
-          </View>
+          {isLoading ? (
+            <View style={s.commentsEmpty}>
+              <ActivityIndicator color="rgba(255,255,255,0.5)" />
+            </View>
+          ) : comments.length === 0 ? (
+            <View style={s.commentsEmpty}>
+              <Ionicons name="chatbubbles-outline" size={44} color="rgba(255,255,255,0.25)" />
+              <Text style={s.commentsEmptyText}>Sé el primero en comentar</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={comments}
+              keyExtractor={(c) => c.id}
+              style={{ maxHeight: 320 }}
+              renderItem={({ item }) => (
+                <View style={s.commentItem}>
+                  <View style={s.commentAvatar}>
+                    <Ionicons name="person-circle" size={32} color="rgba(255,255,255,0.4)" />
+                  </View>
+                  <View style={s.commentBody}>
+                    <Text style={s.commentUser}>{item.user.name}</Text>
+                    <Text style={s.commentText}>{item.comment}</Text>
+                  </View>
+                  {item.userId === currentUserId && (
+                    <Pressable onPress={() => handleDeleteComment(item.id)} style={s.commentDelete}>
+                      <Ionicons name="trash-outline" size={16} color="rgba(255,255,255,0.35)" />
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            />
+          )}
 
           {/* Input */}
           <View style={s.commentsInputRow}>
@@ -260,11 +311,15 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
 const ReelItem = React.memo(function ReelItem({
   reel,
   isActive,
+  currentUserId,
 }: {
   reel: Reel;
   isActive: boolean;
+  currentUserId?: string;
 }) {
   const insets = useSafeAreaInsets();
+  const { mutate: deleteReelMutate } = useDeleteReel();
+  const { mutate: reportReelMutate } = useReportReel();
 
   const isBeforeAfter = reel.type === 'before_after';
 
@@ -388,20 +443,42 @@ const ReelItem = React.memo(function ReelItem({
   }, [reel.user.username, reel.user.id]);
 
   const handleMore = useCallback(() => {
-    Alert.alert('Opciones', undefined, [
-      {
-        text: 'No me interesa',
-        onPress: () => {},
-      },
+    const isOwner = reel.user.id === currentUserId;
+    const options: any[] = [
+      { text: 'No me interesa', onPress: () => {} },
       {
         text: 'Reportar contenido',
         style: 'destructive',
         onPress: () =>
-          Alert.alert('Reporte enviado', 'Gracias por ayudarnos a mantener la comunidad.'),
+          reportReelMutate(
+            { reelId: reel.id },
+            {
+              onSuccess: () =>
+                Alert.alert('Reporte enviado', 'Gracias por ayudarnos a mantener la comunidad.'),
+              onError: () =>
+                Alert.alert('Error', 'No se pudo enviar el reporte.'),
+            },
+          ),
       },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
-  }, []);
+    ];
+    if (isOwner) {
+      options.push({
+        text: 'Eliminar reel',
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert('Eliminar reel', '¿Seguro que querés eliminarlo?', [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Eliminar',
+              style: 'destructive',
+              onPress: () => deleteReelMutate(reel.id),
+            },
+          ]),
+      });
+    }
+    options.push({ text: 'Cancelar', style: 'cancel' });
+    Alert.alert('Opciones', undefined, options);
+  }, [reel.id, reel.user.id, currentUserId, reportReelMutate, deleteReelMutate]);
 
   const handleCommentPosted = useCallback(() => {
     setCommentCount(c => c + 1);
@@ -553,6 +630,7 @@ const ReelItem = React.memo(function ReelItem({
       {showComments && (
         <CommentsSheet
           reelId={reel.id}
+          currentUserId={currentUserId}
           onClose={() => setShowComments(false)}
           onCommentPosted={handleCommentPosted}
         />
@@ -586,6 +664,8 @@ function TopBar({ insetTop }: { insetTop: number }) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
+  const { authState } = useAuth();
+  const currentUserId = authState.user?.id;
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useReelsFeed();
   const reels = data?.pages.flat() ?? [];
   const [activeIndex, setActiveIndex] = useState(0);
@@ -613,9 +693,9 @@ export default function ReelsScreen() {
   // the two items whose isActive prop actually flipped get re-rendered.
   const renderItem = useCallback(
     ({ item, index }: { item: Reel; index: number }) => (
-      <ReelItem reel={item} isActive={index === activeIndex} />
+      <ReelItem reel={item} isActive={index === activeIndex} currentUserId={currentUserId} />
     ),
-    [activeIndex],
+    [activeIndex, currentUserId],
   );
 
   const keyExtractor = useCallback((item: Reel) => item.id, []);
@@ -815,6 +895,38 @@ const s = StyleSheet.create({
   commentsEmptyText: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.4)',
+  },
+  commentItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  commentAvatar: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  commentBody: {
+    flex: 1,
+    gap: 2,
+  },
+  commentUser: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  commentText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    lineHeight: 18,
+  },
+  commentDelete: {
+    padding: 6,
+    justifyContent: 'center',
   },
   commentsInputRow: {
     flexDirection: 'row',
