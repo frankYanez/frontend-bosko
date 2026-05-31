@@ -607,7 +607,7 @@ const ReelItem = React.memo(function ReelItem({
         )}
         <Text style={s.username}>@{reel.user.username}</Text>
         <Text style={s.description} numberOfLines={2}>{reel.description}</Text>
-        <Text style={s.tags}>{reel.tags.join(' ')}</Text>
+        <Text style={s.tags}>{(reel.tags ?? []).join(' ')}</Text>
         {!isBeforeAfter && reel.music && (
           <View style={s.musicRow}>
             <Ionicons name="musical-notes" size={13} color="rgba(255,255,255,0.8)" />
