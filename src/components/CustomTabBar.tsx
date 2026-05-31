@@ -111,35 +111,38 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       pointerEvents="box-none"
       style={[styles.shell, { bottom: Math.max(insets.bottom, 16) }]}
     >
-      {/* ── Bar ── */}
+      {/* ── Bar shadow wrapper — elevation sin overflow (Android fix) ── */}
       <View
-        style={styles.bar}
+        style={styles.barShadow}
         onLayout={e => setBarW(e.nativeEvent.layout.width)}
       >
-        <Svg
-          width={barW}
-          height={BAR_H}
-          viewBox={`0 0 ${barW} ${BAR_H}`}
-          style={StyleSheet.absoluteFill}
-        >
-          <Path d={pathD} fill={C.bar} />
-        </Svg>
+        {/* ── Bar clip — overflow hidden sin elevation ── */}
+        <View style={styles.bar}>
+          <Svg
+            width={barW}
+            height={BAR_H}
+            viewBox={`0 0 ${barW} ${BAR_H}`}
+            style={StyleSheet.absoluteFill}
+          >
+            <Path d={pathD} fill={C.bar} />
+          </Svg>
 
-        <View style={styles.row}>
-          {state.routes.map((route, idx) => {
-            const cfg     = TABS[route.name] ?? TABS.index;
-            const focused = idx === state.index;
-            return (
-              <TabSlot
-                key={route.key}
-                icon={cfg.icon}
-                focused={focused}
-                badge={route.name === 'chat' ? unread : 0}
-                onPress={() => onPress(idx)}
-                onLongPress={() => onLongPress(idx)}
-              />
-            );
-          })}
+          <View style={styles.row}>
+            {state.routes.map((route, idx) => {
+              const cfg     = TABS[route.name] ?? TABS.index;
+              const focused = idx === state.index;
+              return (
+                <TabSlot
+                  key={route.key}
+                  icon={cfg.icon}
+                  focused={focused}
+                  badge={route.name === 'chat' ? unread : 0}
+                  onPress={() => onPress(idx)}
+                  onLongPress={() => onLongPress(idx)}
+                />
+              );
+            })}
+          </View>
         </View>
       </View>
 
@@ -202,19 +205,26 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 0,
   },
-  bar: {
+  // Wrapper: provee elevation en Android (sin overflow, con backgroundColor)
+  barShadow: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     height: BAR_H,
     borderRadius: BAR_R,
-    overflow: 'hidden',   // clips SVG to rounded shape; NO backgroundColor — SVG is the bg
+    backgroundColor: C.bar,
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 16,
+  },
+  // Inner: overflow hidden para clipear el SVG a la forma redondeada
+  bar: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: BAR_R,
+    overflow: 'hidden',
   },
   row: {
     ...StyleSheet.absoluteFillObject,
