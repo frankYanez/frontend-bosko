@@ -23,6 +23,7 @@ import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const { width: W } = Dimensions.get('window');
 
@@ -229,6 +230,7 @@ function AvailabilityToggle({
 // ── Main screen ───────────────────────────────────────────────────────────────
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const themeColors = useThemeColors();
   const { authState, logout } = useAuth();
   const { profile, isLoading, refreshProfile, updateProfile, toggleAvailability } = useProfile();
   const { verification } = useKYC();
@@ -296,7 +298,7 @@ export const ProfileScreen: React.FC = () => {
     : '';
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
+    <View style={[s.root, { paddingTop: insets.top, backgroundColor: themeColors.bg }]}>
       <StatusBar barStyle="light-content" />
 
       <ScrollView

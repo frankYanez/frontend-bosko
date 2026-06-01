@@ -1,10 +1,11 @@
 import React, { useRef, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
+import { View, Text, StyleSheet, Pressable, Animated, Switch } from "react-native";
 import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Colors from "@/core/design-system/Colors";
 import { useAuth } from "@/features/auth/state/AuthContext";
+import { useIsDark, useToggleTheme } from "@/stores/theme.store";
 
 interface MenuItemProps {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -47,6 +48,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
 export const SettingsMenu: React.FC = () => {
   const router = useRouter();
   const { logout } = useAuth();
+  const isDark = useIsDark();
+  const toggleTheme = useToggleTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
 
@@ -69,6 +72,28 @@ export const SettingsMenu: React.FC = () => {
           <Text style={styles.sectionTitle}>Configuración</Text>
 
           <View style={styles.menuList}>
+            {/* ── Apariencia ── */}
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <MaterialIcons
+                  name={isDark ? "dark-mode" : "light-mode"}
+                  size={24}
+                  color={Colors.white}
+                />
+                <Text style={[styles.menuItemText, { color: Colors.white }]}>
+                  {isDark ? "Modo oscuro" : "Modo claro"}
+                </Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: "rgba(255,255,255,0.2)", true: "#850021" }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View style={styles.divider} />
+
             <MenuItem
               icon="work"
               label="Mis Servicios"

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +8,7 @@ import { AuthProvider } from "@/features/auth/state/AuthContext";
 import { ServicesProvider } from "@/features/servicesUser/state/ServicesContext";
 import { ToastRoot } from "@/core/components/Toast";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
+import { useThemeColors } from "@/stores/theme.store";
 
 function useNotificationNavigation() {
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
@@ -57,15 +59,28 @@ function RootLayoutNav() {
   );
 }
 
+function ThemedRoot() {
+  const colors = useThemeColors();
+  return (
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+      <ServicesProvider>
+        <RootLayoutNav />
+        <ToastRoot />
+      </ServicesProvider>
+    </View>
+  );
+}
+
 export default function _layout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ServicesProvider>
-          <RootLayoutNav />
-          <ToastRoot />
-        </ServicesProvider>
+        <ThemedRoot />
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
