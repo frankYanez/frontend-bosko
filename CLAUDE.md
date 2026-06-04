@@ -230,6 +230,7 @@ Real-time chat tied to orders (no free DMs).
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
 
 ## Recent Changes
+- **4/6/2026 08:03 p. m.** — Dashboard HTML (1 archivos)
 - **30/5/2026 09:29 a. m.** — Dashboard HTML (1 archivos)
 - **30/5/2026 12:52 a. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
 - **29/5/2026 11:19 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
@@ -249,4 +250,3 @@ Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image
 - **29/5/2026 09:58 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios (32 archivos)
 - **26/5/2026 10:42 p. m.** — Reels, Notificaciones Push, Servicios / Marketplace (20 archivos)
 - **26/5/2026 10:38 p. m.** — Reels, Notificaciones Push, Servicios / Marketplace (20 archivos)
-- **26/5/2026 10:36 p. m.** — Reels, Notificaciones Push, Servicios / Marketplace (20 archivos)
