@@ -25,10 +25,12 @@ import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const { width } = Dimensions.get('window');
 
 export default function QuoteRequestScreen() {
+  const tc = useThemeColors();
   const params = useLocalSearchParams<{ serviceId: string; providerName?: string; serviceTitle?: string }>();
   const { addOrder } = useOrders();
 
@@ -88,10 +90,10 @@ export default function QuoteRequestScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
+              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
-            <Text style={styles.headerTitle}>Solicitar servicio</Text>
+            <Text style={[styles.headerTitle, { color: tc.text }]}>Solicitar servicio</Text>
             <View style={{ width: 40 }} />
           </View>
 
@@ -102,12 +104,12 @@ export default function QuoteRequestScreen() {
               animate={{ opacity: 1, translateY: 0 }}
               transition={{ type: 'timing', duration: 400 }}
             >
-              <BlurView intensity={25} tint="light" style={styles.serviceInfo}>
+              <BlurView intensity={25} tint="light" style={[styles.serviceInfo, { borderColor: tc.cardBorder }]}>
                 <MaterialIcons name="work" size={20} color={TOKENS.color.primary} />
                 <View style={styles.serviceInfoText}>
-                  <Text style={styles.serviceTitle}>{params.serviceTitle}</Text>
+                  <Text style={[styles.serviceTitle, { color: tc.text }]}>{params.serviceTitle}</Text>
                   {params.providerName && (
-                    <Text style={styles.providerName}>por {params.providerName}</Text>
+                    <Text style={[styles.providerName, { color: tc.textSub }]}>por {params.providerName}</Text>
                   )}
                 </View>
               </BlurView>
@@ -120,19 +122,19 @@ export default function QuoteRequestScreen() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 450, delay: 100 }}
           >
-            <BlurView intensity={30} tint="light" style={styles.card}>
+            <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
               {/* Mensaje al proveedor (requerido) */}
               <View style={styles.fieldContainer}>
-                <Text style={styles.fieldLabel}>
+                <Text style={[styles.fieldLabel, { color: tc.text }]}>
                   Mensaje al proveedor <Text style={styles.required}>*</Text>
                 </Text>
-                <Text style={styles.fieldHint}>
+                <Text style={[styles.fieldHint, { color: tc.textSub }]}>
                   Describí qué necesitás, cuándo y cualquier detalle relevante.
                 </Text>
                 <TextInput
-                  style={[styles.textArea]}
+                  style={[styles.textArea, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
                   placeholder="Ej: Necesito una instalación eléctrica en 3 habitaciones. Tengo los materiales..."
-                  placeholderTextColor={TOKENS.color.sub}
+                  placeholderTextColor={tc.textSub}
                   value={message}
                   onChangeText={setMessage}
                   multiline
@@ -140,19 +142,19 @@ export default function QuoteRequestScreen() {
                   textAlignVertical="top"
                   maxLength={500}
                 />
-                <Text style={styles.charCount}>{message.length}/500</Text>
+                <Text style={[styles.charCount, { color: tc.textSub }]}>{message.length}/500</Text>
               </View>
 
               {/* Dirección (opcional) */}
               <View style={styles.fieldContainer}>
-                <Text style={styles.fieldLabel}>Dirección del trabajo</Text>
-                <Text style={styles.fieldHint}>Opcional — dónde se realizará el servicio.</Text>
-                <View style={styles.inputWrapper}>
-                  <MaterialIcons name="location-on" size={20} color={TOKENS.color.sub} />
+                <Text style={[styles.fieldLabel, { color: tc.text }]}>Dirección del trabajo</Text>
+                <Text style={[styles.fieldHint, { color: tc.textSub }]}>Opcional — dónde se realizará el servicio.</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+                  <MaterialIcons name="location-on" size={20} color={tc.textSub} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: tc.text }]}
                     placeholder="Ej: Av. Corrientes 1234, CABA"
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={address}
                     onChangeText={setAddress}
                     returnKeyType="next"
@@ -162,14 +164,14 @@ export default function QuoteRequestScreen() {
 
               {/* Fecha deseada (opcional) */}
               <View style={styles.fieldContainer}>
-                <Text style={styles.fieldLabel}>Fecha deseada</Text>
-                <Text style={styles.fieldHint}>Opcional — cuándo preferís que se realice.</Text>
-                <View style={styles.inputWrapper}>
-                  <MaterialIcons name="event" size={20} color={TOKENS.color.sub} />
+                <Text style={[styles.fieldLabel, { color: tc.text }]}>Fecha deseada</Text>
+                <Text style={[styles.fieldHint, { color: tc.textSub }]}>Opcional — cuándo preferís que se realice.</Text>
+                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+                  <MaterialIcons name="event" size={20} color={tc.textSub} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: tc.text }]}
                     placeholder="Ej: Sábado por la mañana"
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={scheduledDate}
                     onChangeText={setScheduledDate}
                     returnKeyType="done"
@@ -178,37 +180,39 @@ export default function QuoteRequestScreen() {
               </View>
 
               {/* Aviso */}
-              <View style={styles.notice}>
+              <View style={[styles.notice, { backgroundColor: tc.accent }]}>
                 <MaterialIcons name="info-outline" size={16} color={TOKENS.color.primary} />
-                <Text style={styles.noticeText}>
+                <Text style={[styles.noticeText, { color: tc.textSub }]}>
                   El proveedor verá tu solicitud y podrá aceptarla o rechazarla.
                   El precio final se acuerda entre ambas partes.
                 </Text>
               </View>
 
               {/* Botón enviar */}
-              <Pressable
-                onPress={handleSubmit}
-                disabled={isLoading}
-                style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
+              <View style={styles.buttonShadow}>
+                <Pressable
+                  onPress={handleSubmit}
+                  disabled={isLoading}
+                  style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
                 >
-                  {isLoading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : (
-                      <View style={styles.buttonContent}>
-                        <MaterialIcons name="send" size={18} color="#fff" />
-                        <Text style={styles.buttonText}>Enviar solicitud</Text>
-                      </View>
-                    )
-                  }
-                </LinearGradient>
-              </Pressable>
+                  <LinearGradient
+                    colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.buttonGradient}
+                  >
+                    {isLoading
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : (
+                        <View style={styles.buttonContent}>
+                          <MaterialIcons name="send" size={18} color="#fff" />
+                          <Text style={styles.buttonText}>Enviar solicitud</Text>
+                        </View>
+                      )
+                    }
+                  </LinearGradient>
+                </Pressable>
+              </View>
             </BlurView>
           </MotiView>
         </ScrollView>
@@ -339,15 +343,18 @@ const styles = StyleSheet.create({
     color: TOKENS.color.sub,
     lineHeight: 18,
   },
-  button: {
+  buttonShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     marginTop: 4,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  button: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

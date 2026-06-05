@@ -245,23 +245,25 @@ export default function ChangePasswordScreen() {
 
                 {!!error && <Text style={s.errorText}>{error}</Text>}
 
-                <Pressable
-                  onPress={handleSave}
-                  disabled={isLoading}
-                  style={({ pressed }) => [s.button, pressed && s.buttonPressed]}
-                >
-                  <LinearGradient
-                    colors={[PRIMARY, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={s.buttonGradient}
+                <View style={s.buttonShadow}>
+                  <Pressable
+                    onPress={handleSave}
+                    disabled={isLoading}
+                    style={({ pressed }) => [s.button, pressed && s.buttonPressed]}
                   >
-                    {isLoading
-                      ? <ActivityIndicator color="#fff" size="small" />
-                      : <Text style={s.buttonText}>Guardar cambios</Text>
-                    }
-                  </LinearGradient>
-                </Pressable>
+                    <LinearGradient
+                      colors={[PRIMARY, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={s.buttonGradient}
+                    >
+                      {isLoading
+                        ? <ActivityIndicator color="#fff" size="small" />
+                        : <Text style={s.buttonText}>Guardar cambios</Text>
+                      }
+                    </LinearGradient>
+                  </Pressable>
+                </View>
               </View>
             </Animated.View>
           </ScrollView>
@@ -362,15 +364,18 @@ const s = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 4,
   },
-  button: {
+  buttonShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     marginTop: 12,
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  button: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

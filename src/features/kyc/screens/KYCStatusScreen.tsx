@@ -199,68 +199,74 @@ export default function KYCStatusScreen() {
           style={s.ctaContainer}
         >
           {(status === 'not_started' || status === 'expired' || status === 'failed') && (
-            <Pressable
-              style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-              onPress={() => router.push('/(tabs)/profile/kyc/intro')}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.buttonGradient}
+            <View style={s.primaryButtonShadow}>
+              <Pressable
+                style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+                onPress={() => router.push('/(tabs)/profile/kyc/intro')}
               >
                 <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
+                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.buttonGradient}
                 >
-                  <Text style={s.primaryButtonText}>Iniciar verificación</Text>
-                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
+                  <LinearGradient
+                    colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={s.buttonGradient}
+                  >
+                    <Text style={s.primaryButtonText}>Iniciar verificación</Text>
+                    <MaterialIcons name="arrow-forward" size={18} color="#fff" />
+                  </LinearGradient>
                 </LinearGradient>
-              </LinearGradient>
-            </Pressable>
+              </Pressable>
+            </View>
           )}
 
           {(status === 'in_progress' || status === 'pending') && (
-            <Pressable
-              style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-              onPress={() => router.push('/(tabs)/profile/kyc/intro')}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.buttonGradient}
-              >
-                <Text style={s.primaryButtonText}>Continuar verificación</Text>
-                <MaterialIcons name="arrow-forward" size={18} color="#fff" />
-              </LinearGradient>
-            </Pressable>
-          )}
-
-          {(status === 'rejected' || status === 'declined') && verification && verification.attemptCount < verification.maxAttempts && (
-            <Pressable
-              style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-              onPress={() => router.push('/(tabs)/profile/kyc/intro')}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.buttonGradient}
+            <View style={s.primaryButtonShadow}>
+              <Pressable
+                style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+                onPress={() => router.push('/(tabs)/profile/kyc/intro')}
               >
                 <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
+                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.buttonGradient}
                 >
-                  <Text style={s.primaryButtonText}>Reintentar verificación</Text>
-                  <MaterialIcons name="refresh" size={18} color="#fff" />
+                  <Text style={s.primaryButtonText}>Continuar verificación</Text>
+                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
                 </LinearGradient>
-              </LinearGradient>
-            </Pressable>
+              </Pressable>
+            </View>
+          )}
+
+          {(status === 'rejected' || status === 'declined') && verification && verification.attemptCount < verification.maxAttempts && (
+            <View style={s.primaryButtonShadow}>
+              <Pressable
+                style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+                onPress={() => router.push('/(tabs)/profile/kyc/intro')}
+              >
+                <LinearGradient
+                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={s.buttonGradient}
+                >
+                  <LinearGradient
+                    colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={s.buttonGradient}
+                  >
+                    <Text style={s.primaryButtonText}>Reintentar verificación</Text>
+                    <MaterialIcons name="refresh" size={18} color="#fff" />
+                  </LinearGradient>
+                </LinearGradient>
+              </Pressable>
+            </View>
           )}
 
           {status === 'approved' && (
@@ -350,11 +356,14 @@ const s = StyleSheet.create({
   primaryButton: {
     borderRadius: 14,
     overflow: 'hidden',
+  },
+  primaryButtonShadow: {
+    borderRadius: 14,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

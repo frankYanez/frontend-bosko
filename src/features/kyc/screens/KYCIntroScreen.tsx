@@ -129,11 +129,12 @@ export default function KYCIntroScreen() {
           transition={{ type: 'timing', duration: 400, delay: 400 }}
           style={s.ctaContainer}
         >
-          <Pressable
-            style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-            onPress={start}
-            disabled={loading}
-          >
+          <View style={s.primaryButtonShadow}>
+            <Pressable
+              style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
+              onPress={start}
+              disabled={loading}
+            >
             <LinearGradient
               colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
               start={{ x: 0, y: 0 }}
@@ -149,6 +150,7 @@ export default function KYCIntroScreen() {
               }
             </LinearGradient>
           </Pressable>
+          </View>
 
           <Pressable
             onPress={() => router.back()}
@@ -239,11 +241,14 @@ const s = StyleSheet.create({
   primaryButton: {
     borderRadius: 14,
     overflow: 'hidden',
+  },
+  primaryButtonShadow: {
+    borderRadius: 14,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

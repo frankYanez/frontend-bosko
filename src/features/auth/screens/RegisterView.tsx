@@ -40,13 +40,17 @@ interface Step {
 }
 
 interface FormData {
-  email: string;
-  password: string;
+  firstName: string;
+  lastName:  string;
+  email:     string;
+  password:  string;
 }
 
 const STEPS: Step[] = [
-  { label: 'Email', placeholder: 'tucorreo@ejemplo.com', field: 'email', keyboardType: 'email-address', icon: 'email' },
-  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres', field: 'password', secure: true, icon: 'lock' },
+  { label: 'Nombre',     placeholder: 'Tu nombre',          field: 'firstName', keyboardType: 'default',       icon: 'person'  },
+  { label: 'Apellido',   placeholder: 'Tu apellido',         field: 'lastName',  keyboardType: 'default',       icon: 'person'  },
+  { label: 'Email',      placeholder: 'tucorreo@ejemplo.com',field: 'email',     keyboardType: 'email-address', icon: 'email'   },
+  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres', field: 'password',  secure: true,                  icon: 'lock'    },
 ];
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
@@ -54,8 +58,10 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
 
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
-    email: '',
-    password: '',
+    firstName: '',
+    lastName:  '',
+    email:     '',
+    password:  '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldError, setFieldError] = useState('');
@@ -126,12 +132,13 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
   };
 
   const handleFinish = async () => {
-    const email = formData.email.trim().toLowerCase();
+    const email     = formData.email.trim().toLowerCase();
+    const firstName = formData.firstName.trim();
+    const lastName  = formData.lastName.trim();
+    const base      = (firstName + lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const userName  = base + Math.floor(1000 + Math.random() * 9000);
     try {
-      await registerUser({
-        email,
-        password: formData.password,
-      });
+      await registerUser({ email, password: formData.password, firstName, lastName, userName });
       router.replace(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Error al registrar la cuenta';
@@ -163,91 +170,95 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
             />
 
             {/* Tarjeta glass */}
-            <BlurView intensity={30} tint="light" style={styles.card}>
-              {/* Header con barra de progreso */}
-              <View style={styles.cardHeader}>
-                <Pressable onPress={handleBack} hitSlop={8}>
-                  <MaterialIcons name="arrow-back" size={22} color={TOKENS.color.text} />
-                </Pressable>
-                <Text style={styles.stepCounter}>
-                  {step + 1} / {STEPS.length}
-                </Text>
-              </View>
-
-              {/* Barra de progreso */}
-              <View style={styles.progressTrack}>
-                <Animated.View style={[styles.progressFill, progressStyle]} />
-              </View>
-
-              <Text style={styles.cardTitle}>Crear cuenta</Text>
-              <Text style={styles.stepLabel}>{currentStep.label}</Text>
-
-              {/* Input del paso actual */}
-              <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
-                <MaterialIcons name={currentStep.icon} size={20} color={TOKENS.color.sub} />
-                <TextInput
-                  ref={inputRef}
-                  style={styles.input}
-                  placeholder={currentStep.placeholder}
-                  placeholderTextColor={TOKENS.color.sub}
-                  value={formData[currentStep.field]}
-                  onChangeText={text => {
-                    setFormData(prev => ({ ...prev, [currentStep.field]: text }));
-                    setFieldError('');
-                    clearError();
-                  }}
-                  keyboardType={currentStep.keyboardType || 'default'}
-                  secureTextEntry={currentStep.secure && !showPassword}
-                  autoCapitalize={['firstName', 'lastName'].includes(currentStep.field) ? 'words' : 'none'}
-                  autoCorrect={false}
-                  returnKeyType={isLastStep ? 'done' : 'next'}
-                  onSubmitEditing={handleNext}
-                  autoFocus
-                />
-                {currentStep.secure && (
-                  <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
-                    <MaterialIcons
-                      name={showPassword ? 'visibility' : 'visibility-off'}
-                      size={20}
-                      color={TOKENS.color.sub}
-                    />
+            <View style={styles.cardShadow}>
+              <BlurView intensity={30} tint="light" style={styles.card}>
+                {/* Header con barra de progreso */}
+                <View style={styles.cardHeader}>
+                  <Pressable onPress={handleBack} hitSlop={8}>
+                    <MaterialIcons name="arrow-back" size={22} color={TOKENS.color.text} />
                   </Pressable>
+                  <Text style={styles.stepCounter}>
+                    {step + 1} / {STEPS.length}
+                  </Text>
+                </View>
+
+                {/* Barra de progreso */}
+                <View style={styles.progressTrack}>
+                  <Animated.View style={[styles.progressFill, progressStyle]} />
+                </View>
+
+                <Text style={styles.cardTitle}>Crear cuenta</Text>
+                <Text style={styles.stepLabel}>{currentStep.label}</Text>
+
+                {/* Input del paso actual */}
+                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name={currentStep.icon} size={20} color={TOKENS.color.sub} />
+                  <TextInput
+                    ref={inputRef}
+                    style={styles.input}
+                    placeholder={currentStep.placeholder}
+                    placeholderTextColor={TOKENS.color.sub}
+                    value={formData[currentStep.field]}
+                    onChangeText={text => {
+                      setFormData(prev => ({ ...prev, [currentStep.field]: text }));
+                      setFieldError('');
+                      clearError();
+                    }}
+                    keyboardType={currentStep.keyboardType || 'default'}
+                    secureTextEntry={currentStep.secure && !showPassword}
+                    autoCapitalize={['firstName', 'lastName'].includes(currentStep.field) ? 'words' : 'none'}
+                    autoCorrect={false}
+                    returnKeyType={isLastStep ? 'done' : 'next'}
+                    onSubmitEditing={handleNext}
+                    autoFocus
+                  />
+                  {currentStep.secure && (
+                    <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
+                      <MaterialIcons
+                        name={showPassword ? 'visibility' : 'visibility-off'}
+                        size={20}
+                        color={TOKENS.color.sub}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+
+                {!!displayError && (
+                  <Text style={styles.errorText}>{displayError}</Text>
                 )}
-              </View>
 
-              {!!displayError && (
-                <Text style={styles.errorText}>{displayError}</Text>
-              )}
-
-              {/* Botón siguiente / finalizar */}
-              <Pressable
-                onPress={handleNext}
-                disabled={isLoading}
-                style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
-                >
-                  {isLoading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.buttonText}>{isLastStep ? 'Crear cuenta' : 'Siguiente'}</Text>
-                  }
-                </LinearGradient>
-              </Pressable>
-
-              {/* Link a login */}
-              {step === 0 && (
-                <View style={styles.loginRow}>
-                  <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
-                  <Pressable onPress={toRegister}>
-                    <Text style={styles.loginLink}>Ingresar</Text>
+                {/* Botón siguiente / finalizar */}
+                <View style={styles.buttonShadow}>
+                  <Pressable
+                    onPress={handleNext}
+                    disabled={isLoading}
+                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+                  >
+                    <LinearGradient
+                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.buttonGradient}
+                    >
+                      {isLoading
+                        ? <ActivityIndicator color="#fff" size="small" />
+                        : <Text style={styles.buttonText}>{isLastStep ? 'Crear cuenta' : 'Siguiente'}</Text>
+                      }
+                    </LinearGradient>
                   </Pressable>
                 </View>
-              )}
-            </BlurView>
+
+                {/* Link a login */}
+                {step === 0 && (
+                  <View style={styles.loginRow}>
+                    <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
+                    <Pressable onPress={toRegister}>
+                      <Text style={styles.loginLink}>Ingresar</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </BlurView>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -270,6 +281,14 @@ const styles = StyleSheet.create({
     height: 60,
     marginBottom: 20,
   },
+  cardShadow: {
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
   card: {
     width: width - 48,
     borderRadius: 24,
@@ -277,11 +296,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.85)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -345,16 +359,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginLeft: 4,
   },
-  button: {
+  buttonShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     marginTop: 8,
     marginBottom: 16,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  button: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

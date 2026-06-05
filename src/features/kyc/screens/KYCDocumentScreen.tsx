@@ -210,15 +210,15 @@ export default function KYCDocumentScreen() {
 
         {/* Submit button */}
         <FadeSlide delay={300}>
-          <Pressable
-            onPress={handleSubmit}
-            disabled={!canSubmit || loading}
-            style={({ pressed }) => [
-              s.submitButton,
-              !canSubmit && s.submitButtonDisabled,
-              pressed && canSubmit && s.buttonPressed,
-            ]}
-          >
+          <View style={[s.submitButtonShadow, !canSubmit && s.submitButtonShadowDisabled]}>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={!canSubmit || loading}
+              style={({ pressed }) => [
+                s.submitButton,
+                pressed && canSubmit && s.buttonPressed,
+              ]}
+            >
             <LinearGradient
               colors={canSubmit
                 ? [TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']
@@ -244,6 +244,7 @@ export default function KYCDocumentScreen() {
               }
             </LinearGradient>
           </Pressable>
+          </View>
         </FadeSlide>
       </ScrollView>
     </LinearGradient>
@@ -330,13 +331,16 @@ const s = StyleSheet.create({
   submitButton: {
     borderRadius: 14,
     overflow: 'hidden',
+  },
+  submitButtonShadow: {
+    borderRadius: 14,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
-  submitButtonDisabled: { shadowOpacity: 0, elevation: 0 },
+  submitButtonShadowDisabled: { shadowOpacity: 0, elevation: 0 },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {
     paddingVertical: 16,

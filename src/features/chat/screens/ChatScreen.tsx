@@ -52,6 +52,7 @@ import {
 } from '../services/chat.service';
 import { socketService } from '../services/socket.service';
 import { useChatStore } from '@/stores/chat.store';
+import { useThemeColors } from '@/stores/theme.store';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -167,13 +168,14 @@ function MediaLightbox({ uri, isVideo, visible, onClose }: { uri: string; isVide
 
 // ── Burbuja de mensaje ────────────────────────────────────────────────────────
 const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
+  const tc = useThemeColors();
   const isMine = msg.senderId === myUserId;
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (msg.messageType === 'system_event') {
     return (
       <View style={styles.systemMessage}>
-        <Text style={styles.systemText}>{msg.content}</Text>
+        <Text style={[styles.systemText, { color: tc.textSub }]}>{msg.content}</Text>
       </View>
     );
   }
@@ -194,7 +196,7 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
     return (
       <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
         {!isMine && (
-          <View style={styles.bubbleAvatar}>
+          <View style={[styles.bubbleAvatar, { backgroundColor: tc.textSub }]}>
             <Text style={styles.bubbleAvatarText}>
               {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
             </Text>
@@ -223,23 +225,23 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
   return (
     <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
       {!isMine && (
-        <View style={styles.bubbleAvatar}>
+        <View style={[styles.bubbleAvatar, { backgroundColor: tc.textSub }]}>
           <Text style={styles.bubbleAvatarText}>
             {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
           </Text>
         </View>
       )}
-      <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
+      <View style={[styles.bubble, isMine ? styles.bubbleMine : [styles.bubbleOther, { backgroundColor: tc.surface }]]}>
         {msg.messageType === 'audio' ? (
           <AudioBubble msg={msg} isMine={isMine} />
         ) : msg.messageType === 'file' && msg.mediaUrl ? (
           <DocumentBubble msg={msg} isMine={isMine} />
         ) : (
-          <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>
+          <Text style={[styles.bubbleText, { color: isMine ? '#fff' : tc.text }, isMine && styles.bubbleTextMine]}>
             {msg.content}
           </Text>
         )}
-        <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>
+        <Text style={[styles.bubbleTime, { color: isMine ? 'rgba(255,255,255,0.7)' : tc.textSub }, isMine && styles.bubbleTimeMine]}>
           {timestamp}
           {isMine && (
             <Text style={msg.isRead
@@ -259,6 +261,7 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
 
 // ── Indicador de grabación (reemplaza el TextInput) ───────────────────────────
 function RecordingIndicator({ duration, locked, lockProgress }: { duration: number; locked?: boolean; lockProgress?: number }) {
+  const tc = useThemeColors();
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -280,7 +283,7 @@ function RecordingIndicator({ duration, locked, lockProgress }: { duration: numb
       {locked ? null : progress > 0.1 ? (
         <MaterialIcons name="lock" size={16} color={TOKENS.color.primary} style={{ opacity: progress }} />
       ) : (
-        <Text style={styles.recordingHint}>← cancelar  ↑ bloquear</Text>
+        <Text style={[styles.recordingHint, { color: tc.textSub }]}>← cancelar  ↑ bloquear</Text>
       )}
     </View>
   );
@@ -288,6 +291,7 @@ function RecordingIndicator({ duration, locked, lockProgress }: { duration: numb
 
 // ── Typing bubble ─────────────────────────────────────────────────────────────
 function TypingBubble() {
+  const tc = useThemeColors();
   const dots = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
 
   useEffect(() => {
@@ -307,9 +311,9 @@ function TypingBubble() {
 
   return (
     <View style={styles.typingBubbleRow}>
-      <View style={styles.typingBubble}>
+      <View style={[styles.typingBubble, { backgroundColor: tc.surface }]}>
         {dots.map((dot, i) => (
-          <Animated.View key={i} style={[styles.typingDot, { transform: [{ translateY: dot }] }]} />
+          <Animated.View key={i} style={[styles.typingDot, { backgroundColor: tc.textSub }, { transform: [{ translateY: dot }] }]} />
         ))}
       </View>
     </View>
@@ -332,6 +336,7 @@ async function compressImage(uri: string, mimeType: string): Promise<{ uri: stri
 
 // ── Pantalla principal ────────────────────────────────────────────────────────
 export default function ChatScreen() {
+  const tc = useThemeColors();
   const params = useLocalSearchParams<{ id: string }>();
   const { data: profile } = useProfile();
   const { authState } = useAuth();
@@ -744,7 +749,7 @@ export default function ChatScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.background, styles.centered]}>
+      <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
         <ActivityIndicator color={TOKENS.color.primary} size="large" />
       </View>
     );
@@ -754,12 +759,12 @@ export default function ChatScreen() {
     <KeyboardAvoidingView
       behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
-      style={styles.background}
+      style={[styles.background, { backgroundColor: tc.bg }]}
     >
       {/* Header */}
-      <BlurView intensity={25} tint="light" style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+      <BlurView intensity={25} tint="light" style={[styles.header, { borderBottomColor: tc.divider }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <View style={styles.headerInfo}>
           {other?.avatarUrl ? (
@@ -772,7 +777,7 @@ export default function ChatScreen() {
             </View>
           )}
           <View>
-            <Text style={styles.headerName} numberOfLines={1}>{otherName}</Text>
+            <Text style={[styles.headerName, { color: tc.text }]} numberOfLines={1}>{otherName}</Text>
           </View>
         </View>
         {conversation?.orderId && (
@@ -805,8 +810,8 @@ export default function ChatScreen() {
         ListEmptyComponent={
           <View style={styles.emptyChat}>
             <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
-            <Text style={styles.emptyChatText}>Todavía no hay mensajes</Text>
-            <Text style={styles.emptyChatSubtext}>Enviá el primer mensaje para empezar</Text>
+            <Text style={[styles.emptyChatText, { color: tc.text }]}>Todavía no hay mensajes</Text>
+            <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Enviá el primer mensaje para empezar</Text>
           </View>
         }
         style={styles.messagesList}
@@ -837,8 +842,8 @@ export default function ChatScreen() {
       )}
 
       {/* Input bar */}
-      <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <View style={styles.inputWrapper}>
+      <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
+        <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
           {/* Botón izquierdo */}
           {isRecording || recordingLocked ? (
             <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn}>
@@ -850,7 +855,7 @@ export default function ChatScreen() {
               hitSlop={8}
               style={({ pressed }) => [styles.leftBtn, pressed && { opacity: 0.6 }]}
             >
-              <MaterialIcons name={showAttachMenu ? 'close' : 'attach-file'} size={22} color={TOKENS.color.sub} />
+              <MaterialIcons name={showAttachMenu ? 'close' : 'attach-file'} size={22} color={tc.textSub} />
             </Pressable>
           )}
 
@@ -861,11 +866,11 @@ export default function ChatScreen() {
             <ActivityIndicator color={TOKENS.color.primary} size="small" style={{ flex: 1 }} />
           ) : (
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: tc.text }]}
               value={input}
               onChangeText={handleInputChange}
               placeholder="Escribí un mensaje..."
-              placeholderTextColor={TOKENS.color.sub}
+              placeholderTextColor={tc.textSub}
               multiline
               maxLength={1000}
               returnKeyType="default"
@@ -883,7 +888,7 @@ export default function ChatScreen() {
             <Pressable
               onPress={handleSend}
               disabled={!input.trim() || sending}
-              style={[styles.rightBtn, (!input.trim() || sending) && styles.rightBtnDisabled]}
+              style={[styles.rightBtn, (!input.trim() || sending) && { backgroundColor: tc.surface2 }]}
             >
               {sending ? <ActivityIndicator color="#fff" size="small" /> : <MaterialIcons name="send" size={20} color="#fff" />}
             </Pressable>
@@ -935,7 +940,7 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#f8f5ff' },
+  background: { flex: 1 },
   centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
@@ -946,9 +951,8 @@ const styles = StyleSheet.create({
     gap: 12,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.6)',
   },
-  backButton: { padding: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.5)' },
+  backButton: { padding: 6, borderRadius: 10 },
   headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerAvatar: { width: 40, height: 40, borderRadius: 20 },
   headerAvatarPlaceholder: {
@@ -957,8 +961,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerAvatarText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  headerName: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
-  headerOrder: { fontSize: 12, color: TOKENS.color.sub, marginTop: 1 },
+  headerName: { fontSize: 16, fontWeight: '700' },
+  headerOrder: { fontSize: 12, marginTop: 1 },
   messagesList: { flex: 1 },
   messagesContent: { paddingHorizontal: 16, paddingVertical: 16, gap: 8, flexGrow: 1 },
   systemMessage: {
@@ -967,19 +971,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 10, marginVertical: 4,
   },
-  systemText: { fontSize: 12, color: TOKENS.color.sub, textAlign: 'center' },
+  systemText: { fontSize: 12, textAlign: 'center' },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 4 },
   bubbleRowMine: { flexDirection: 'row-reverse' },
   bubbleAvatar: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: TOKENS.color.sub,
     alignItems: 'center', justifyContent: 'center',
   },
   bubbleAvatarText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
   bubbleMine: { backgroundColor: TOKENS.color.primary, borderBottomRightRadius: 4 },
   bubbleOther: {
-    backgroundColor: '#fff', borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 4,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
@@ -999,9 +1002,9 @@ const styles = StyleSheet.create({
   mediaTimestampText: { color: '#fff', fontSize: 10 },
   bubbleImage: { width: 220, height: 165 },
   bubbleVideo: { width: 220, height: 165, backgroundColor: '#000' },
-  bubbleText: { fontSize: 15, color: TOKENS.color.text, lineHeight: 20 },
+  bubbleText: { fontSize: 15, lineHeight: 20 },
   bubbleTextMine: { color: '#fff' },
-  bubbleTime: { fontSize: 10, color: TOKENS.color.sub, alignSelf: 'flex-end' },
+  bubbleTime: { fontSize: 10, alignSelf: 'flex-end' },
   bubbleTimeMine: { color: 'rgba(255,255,255,0.7)' },
   lightboxBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',
@@ -1052,21 +1055,18 @@ const styles = StyleSheet.create({
     padding: 12,
     overflow: 'hidden',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.6)',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   leftBtn: { padding: 4 },
-  input: { flex: 1, fontSize: 15, color: TOKENS.color.text, maxHeight: 100, paddingTop: 4 },
+  input: { flex: 1, fontSize: 15, maxHeight: 100, paddingTop: 4 },
   rightBtn: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: TOKENS.color.primary,
@@ -1074,24 +1074,23 @@ const styles = StyleSheet.create({
   },
   rightBtnRecording: { backgroundColor: '#dc2626' },
   rightBtnSend: { backgroundColor: '#22c55e' },
-  rightBtnDisabled: { backgroundColor: '#ccc' },
+  rightBtnDisabled: {},
   rightBtnPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
   // Recording
   recordingBar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   recordingDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626' },
   recordingTimer: { fontSize: 15, fontWeight: '700', color: '#dc2626', minWidth: 36 },
-  recordingHint: { flex: 1, fontSize: 12, color: TOKENS.color.sub },
+  recordingHint: { flex: 1, fontSize: 12 },
   // Empty + typing
   emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
-  emptyChatText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
-  emptyChatSubtext: { fontSize: 14, color: TOKENS.color.sub },
+  emptyChatText: { fontSize: 16, fontWeight: '700' },
+  emptyChatSubtext: { fontSize: 14 },
   typingBubbleRow: { paddingHorizontal: 16, paddingVertical: 4 },
   typingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     alignSelf: 'flex-start',
-    backgroundColor: '#fff',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
@@ -1106,7 +1105,6 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: TOKENS.color.sub,
   },
   statusSent:      { color: 'rgba(255,255,255,0.5)' },
   statusDelivered: { color: 'rgba(255,255,255,0.7)' },

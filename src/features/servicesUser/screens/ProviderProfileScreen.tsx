@@ -19,6 +19,7 @@ import api from '@/core/api/axiosinstance';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 interface ReviewItem {
   id: string;
@@ -28,17 +29,12 @@ interface ReviewItem {
   reviewer: { firstName: string; lastName: string; avatarUrl: string | null };
 }
 
-const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  border:  '#EDEDF0',
-  amber:   '#F59E0B',
-  green:   '#22C55E',
-};
+const AMBER = '#F59E0B';
+
+function useC() {
+  const tc = useThemeColors();
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: AMBER };
+}
 
 interface PublicProvider {
   id: string;
@@ -61,6 +57,7 @@ function formatRate(rate?: ServiceSummary['rate']) {
 }
 
 function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => void }) {
+  const c = useC();
   const scaleA = useRef(new Animated.Value(1)).current;
   return (
     <Pressable
@@ -68,22 +65,22 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
       onPressOut={() => Animated.spring(scaleA, { toValue: 1, useNativeDriver: true }).start()}
       onPress={onPress}
     >
-      <Animated.View style={[s.serviceRow, { transform: [{ scale: scaleA }] }]}>
+      <Animated.View style={[s.serviceRow, { transform: [{ scale: scaleA }], borderBottomColor: c.border }]}>
         {item.thumbnail ? (
-          <Image source={{ uri: item.thumbnail }} style={s.serviceThumb} contentFit="cover" />
+          <Image source={{ uri: item.thumbnail }} style={[s.serviceThumb, { backgroundColor: c.surface2 }]} contentFit="cover" />
         ) : (
-          <LinearGradient colors={['#f0f0f4', '#e4e4ea']} style={s.serviceThumb}>
-            <Ionicons name="construct-outline" size={20} color={C.sub} />
+          <LinearGradient colors={['#f0f0f4', '#e4e4ea']} style={[s.serviceThumb, { backgroundColor: c.surface2 }]}>
+            <Ionicons name="construct-outline" size={20} color={c.sub} />
           </LinearGradient>
         )}
         <View style={{ flex: 1 }}>
-          <Text style={s.serviceTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={s.serviceSummary} numberOfLines={2}>{item.summary}</Text>
+          <Text style={[s.serviceTitle, { color: c.text }]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[s.serviceSummary, { color: c.sub }]} numberOfLines={2}>{item.summary}</Text>
           {item.rate?.amount ? (
-            <Text style={s.servicePrice}>{formatRate(item.rate)}</Text>
+            <Text style={[s.servicePrice, { color: c.sub }]}>{formatRate(item.rate)}</Text>
           ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={16} color={C.border} />
+        <Ionicons name="chevron-forward" size={16} color={c.border} />
       </Animated.View>
     </Pressable>
   );
@@ -91,6 +88,7 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
 
 export default function ProviderProfileScreen() {
   const insets = useSafeAreaInsets();
+  const c = useC();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -182,22 +180,22 @@ export default function ProviderProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[s.root, s.center, { paddingTop: insets.top }]}>
+      <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={C.primary} />
+        <ActivityIndicator size="large" color={TOKENS.color.primary} />
       </View>
     );
   }
 
   if (!provider) {
     return (
-      <View style={[s.root, s.center, { paddingTop: insets.top }]}>
+      <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <Pressable onPress={() => router.back()} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={C.text} />
+        <Pressable onPress={() => router.back()} style={[s.backBtn, { backgroundColor: c.card }]}>
+          <Ionicons name="arrow-back" size={22} color={c.text} />
         </Pressable>
-        <Text style={s.errorTitle}>Perfil no encontrado</Text>
-        <Text style={s.errorSub}>Volvé y elegí otro profesional.</Text>
+        <Text style={[s.errorTitle, { color: c.text }]}>Perfil no encontrado</Text>
+        <Text style={[s.errorSub, { color: c.sub }]}>Volvé y elegí otro profesional.</Text>
       </View>
     );
   }
@@ -215,13 +213,13 @@ export default function ProviderProfileScreen() {
   };
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
+    <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
 
       {/* Back button flotante */}
-      <Pressable onPress={() => router.back()} style={[s.backBtn, s.backBtnFloat]}>
-        <Ionicons name="arrow-back" size={22} color={C.text} />
+      <Pressable onPress={() => router.back()} style={[s.backBtn, s.backBtnFloat, { backgroundColor: c.card }]}>
+        <Ionicons name="arrow-back" size={22} color={c.text} />
       </Pressable>
 
       <Animated.ScrollView
@@ -231,7 +229,7 @@ export default function ProviderProfileScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={[C.primary, '#c0002f', C.dark]}
+          colors={[TOKENS.color.primary, '#c0002f', TOKENS.color.primaryDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.hero}
@@ -264,7 +262,7 @@ export default function ProviderProfileScreen() {
               ) : null}
 
               <View style={s.statsRow}>
-                <Ionicons name="star" size={13} color={C.amber} />
+                <Ionicons name="star" size={13} color={c.amber} />
                 <Text style={s.statText}>
                   {provider.rating ? Number(provider.rating).toFixed(1) : 'Sin reseñas'}
                 </Text>
@@ -277,16 +275,16 @@ export default function ProviderProfileScreen() {
         </LinearGradient>
 
         {/* ── Verificación ── */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Verificación</Text>
+        <View style={[s.section, { backgroundColor: c.card }]}>
+          <Text style={[s.sectionTitle, { color: c.text }]}>Verificación</Text>
           <View style={s.badgeRow}>
             <View style={[s.badge, provider.kycApproved ? s.badgeOk : s.badgePending]}>
               <Ionicons
                 name={provider.kycApproved ? 'shield-checkmark' : 'shield-outline'}
                 size={15}
-                color={provider.kycApproved ? '#16A34A' : C.sub}
+                color={provider.kycApproved ? '#16A34A' : c.sub}
               />
-              <Text style={[s.badgeText, provider.kycApproved ? s.badgeTextOk : s.badgeTextPending]}>
+              <Text style={[s.badgeText, provider.kycApproved ? s.badgeTextOk : [s.badgeTextPending, { color: c.sub }]]}>
                 {provider.kycApproved ? 'Identidad verificada' : 'Sin verificar'}
               </Text>
             </View>
@@ -299,7 +297,7 @@ export default function ProviderProfileScreen() {
             )}
 
             <View style={[s.badge, s.badgeInfo]}>
-              <Ionicons name="star" size={15} color={C.amber} />
+              <Ionicons name="star" size={15} color={c.amber} />
               <Text style={[s.badgeText, s.badgeTextInfo]}>
                 {provider.reviewsCount > 0
                   ? `${Number(provider.rating ?? 0).toFixed(1)} · ${provider.reviewsCount} reseñas`
@@ -311,18 +309,18 @@ export default function ProviderProfileScreen() {
 
         {/* ── Bio ── */}
         {provider.bio ? (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>Sobre el profesional</Text>
-            <Text style={s.bioText}>{provider.bio}</Text>
+          <View style={[s.section, { backgroundColor: c.card }]}>
+            <Text style={[s.sectionTitle, { color: c.text }]}>Sobre el profesional</Text>
+            <Text style={[s.bioText, { color: c.sub }]}>{provider.bio}</Text>
           </View>
         ) : null}
 
         {/* ── Servicios ── */}
         {services.length > 0 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>
+          <View style={[s.section, { backgroundColor: c.card }]}>
+            <Text style={[s.sectionTitle, { color: c.text }]}>
               Servicios
-              <Text style={s.sectionCount}> ({services.length})</Text>
+              <Text style={[s.sectionCount, { color: c.sub }]}> ({services.length})</Text>
             </Text>
             {services.map(item => (
               <ServiceRow
@@ -338,43 +336,43 @@ export default function ProviderProfileScreen() {
         )}
 
         {services.length === 0 && (
-          <View style={[s.section, s.emptyServices]}>
-            <Ionicons name="construct-outline" size={36} color={C.border} />
-            <Text style={s.emptySub}>Este profesional aún no publicó servicios.</Text>
+          <View style={[s.section, s.emptyServices, { backgroundColor: c.card }]}>
+            <Ionicons name="construct-outline" size={36} color={c.border} />
+            <Text style={[s.emptySub, { color: c.sub }]}>Este profesional aún no publicó servicios.</Text>
           </View>
         )}
 
         {/* ── Reseñas ── */}
         {reviews.length > 0 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>
+          <View style={[s.section, { backgroundColor: c.card }]}>
+            <Text style={[s.sectionTitle, { color: c.text }]}>
               Reseñas
-              <Text style={s.sectionCount}> ({provider?.reviewsCount ?? reviews.length})</Text>
+              <Text style={[s.sectionCount, { color: c.sub }]}> ({provider?.reviewsCount ?? reviews.length})</Text>
             </Text>
             {reviews.map(r => {
               const name = [r.reviewer.firstName, r.reviewer.lastName].filter(Boolean).join(' ') || 'Usuario';
               const initial = (r.reviewer.firstName[0] ?? r.reviewer.lastName[0] ?? 'U').toUpperCase();
               const date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
               return (
-                <View key={r.id} style={s.reviewCard}>
+                <View key={r.id} style={[s.reviewCard, { borderBottomColor: c.border }]}>
                   <View style={s.reviewHeader}>
-                    <View style={s.reviewAvatar}>
+                    <View style={[s.reviewAvatar, { backgroundColor: TOKENS.color.primary }]}>
                       {r.reviewer.avatarUrl
                         ? <Image source={{ uri: r.reviewer.avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} contentFit="cover" />
                         : <Text style={s.reviewInitial}>{initial}</Text>
                       }
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={s.reviewName}>{name}</Text>
+                      <Text style={[s.reviewName, { color: c.text }]}>{name}</Text>
                       <View style={s.starsRow}>
                         {[1,2,3,4,5].map(i => (
-                          <Ionicons key={i} name="star" size={11} color={i <= r.rating ? C.amber : C.border} />
+                          <Ionicons key={i} name="star" size={11} color={i <= r.rating ? c.amber : c.border} />
                         ))}
-                        <Text style={s.reviewDate}>{date}</Text>
+                        <Text style={[s.reviewDate, { color: c.sub }]}>{date}</Text>
                       </View>
                     </View>
                   </View>
-                  {r.comment ? <Text style={s.reviewComment}>{r.comment}</Text> : null}
+                  {r.comment ? <Text style={[s.reviewComment, { color: c.sub }]}>{r.comment}</Text> : null}
                 </View>
               );
             })}
@@ -384,7 +382,7 @@ export default function ProviderProfileScreen() {
 
       {/* ── Footer CTA ── */}
       {services.length > 0 && (
-        <View style={[s.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <View style={[s.footer, { backgroundColor: c.card, borderTopColor: c.border, paddingBottom: insets.bottom + 12 }]}>
           <Pressable style={s.ctaBtn} onPress={handleRequest}>
             <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
             <Text style={s.ctaBtnText}>Solicitar servicio</Text>
@@ -402,13 +400,13 @@ export default function ProviderProfileScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
+  root: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
   scroll: { gap: 12, paddingTop: 0 },
 
   backBtn: {
     width: 40, height: 40, borderRadius: 12,
-    backgroundColor: C.card, alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
@@ -454,28 +452,27 @@ const s = StyleSheet.create({
   footer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 16, paddingTop: 12,
-    backgroundColor: C.card,
-    borderTopWidth: 1, borderTopColor: C.border,
+    borderTopWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 8,
   },
   ctaBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: C.primary, borderRadius: 16,
+    backgroundColor: TOKENS.color.primary, borderRadius: 16,
     paddingVertical: 15,
   },
   ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
   // Sections
   section: {
-    backgroundColor: C.card, marginHorizontal: 16, borderRadius: 20,
+    marginHorizontal: 16, borderRadius: 20,
     padding: 18, gap: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.06, shadowRadius: 10, elevation: 3,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.text },
-  sectionCount: { fontWeight: '400', color: C.sub },
-  bioText: { fontSize: 14, color: C.sub, lineHeight: 21 },
+  sectionTitle: { fontSize: 16, fontWeight: '700' },
+  sectionCount: { fontWeight: '400' },
+  bioText: { fontSize: 14, lineHeight: 21 },
 
   // Verification badges
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -488,39 +485,39 @@ const s = StyleSheet.create({
   badgeInfo: { backgroundColor: '#FEF9C3' },
   badgeText: { fontSize: 12, fontWeight: '600' },
   badgeTextOk: { color: '#16A34A' },
-  badgeTextPending: { color: C.sub },
+  badgeTextPending: { color: '#6B7280' },
   badgeTextInfo: { color: '#A16207' },
 
   // Service row
   serviceRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: C.border,
+    borderBottomWidth: 1,
   },
   serviceThumb: {
     width: 56, height: 56, borderRadius: 14,
-    backgroundColor: '#F0F0F4', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  serviceTitle: { fontSize: 14, fontWeight: '600', color: C.text },
-  serviceSummary: { fontSize: 12, color: C.sub, lineHeight: 17, marginTop: 2 },
-  servicePrice: { fontSize: 13, fontWeight: '600', color: C.sub, marginTop: 4 },
+  serviceTitle: { fontSize: 14, fontWeight: '600' },
+  serviceSummary: { fontSize: 12, lineHeight: 17, marginTop: 2 },
+  servicePrice: { fontSize: 13, fontWeight: '600', marginTop: 4 },
 
   // Reviews
-  reviewCard: { gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+  reviewCard: { gap: 8, paddingVertical: 10, borderBottomWidth: 1 },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   reviewAvatar: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   reviewInitial: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  reviewName: { fontSize: 13, fontWeight: '600', color: C.text },
+  reviewName: { fontSize: 13, fontWeight: '600' },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
-  reviewDate: { fontSize: 11, color: C.sub, marginLeft: 4 },
-  reviewComment: { fontSize: 13, color: C.sub, lineHeight: 19 },
+  reviewDate: { fontSize: 11, marginLeft: 4 },
+  reviewComment: { fontSize: 13, lineHeight: 19 },
 
   // Empty
   emptyServices: { alignItems: 'center', paddingVertical: 24 },
-  emptySub: { fontSize: 14, color: C.sub, textAlign: 'center' },
-  errorTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginTop: 16 },
-  errorSub: { fontSize: 14, color: C.sub, marginTop: 6 },
+  emptySub: { fontSize: 14, textAlign: 'center' },
+  errorTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
+  errorSub: { fontSize: 14, marginTop: 6 },
 });

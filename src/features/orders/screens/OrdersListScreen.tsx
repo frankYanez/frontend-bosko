@@ -20,6 +20,7 @@ import { router } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 import { EmptyState } from '@/core/components/EmptyState';
 
 type TabType = 'client' | 'provider';
@@ -44,6 +45,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 }
 
 function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
+  const tc = useThemeColors();
   const otherName = order.otherParty
     ? `${order.otherParty.firstName} ${order.otherParty.lastName ?? ''}`.trim()
     : null;
@@ -58,46 +60,49 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
 
   return (
     <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}>
-      <Pressable
-        style={({ pressed }) => [styles.orderCard, pressed && styles.orderCardPressed]}
-        onPress={onPress}
-      >
+      <View style={styles.orderCardShadow}>
+        <Pressable
+          style={({ pressed }) => [{ backgroundColor: tc.card, borderRadius: 16, flexDirection: 'row', overflow: 'hidden' }, pressed && styles.orderCardPressed]}
+          onPress={onPress}
+        >
         {/* Acento de color según estado */}
         <View style={[styles.statusStripe, { backgroundColor: STATUS_CONFIG[order.status]?.color || TOKENS.color.primary }]} />
 
         <View style={styles.orderContent}>
           <View style={styles.orderHeader}>
-            <Text style={styles.orderTitle} numberOfLines={1}>
+            <Text style={[styles.orderTitle, { color: tc.text }]} numberOfLines={1}>
               {otherName || serviceTitle}
             </Text>
             <StatusBadge status={order.status} />
           </View>
           {otherName ? (
-            <Text style={styles.orderService} numberOfLines={1}>{serviceTitle}</Text>
+            <Text style={[styles.orderService, { color: TOKENS.color.primary }]} numberOfLines={1}>{serviceTitle}</Text>
           ) : null}
 
-          <Text style={styles.orderMessage} numberOfLines={2}>{order.clientMessage}</Text>
+          <Text style={[styles.orderMessage, { color: tc.textSub }]} numberOfLines={2}>{order.clientMessage}</Text>
 
           <View style={styles.orderFooter}>
             <View style={styles.orderMeta}>
-              <MaterialIcons name="schedule" size={13} color={TOKENS.color.sub} />
-              <Text style={styles.orderDate}>{date}</Text>
+              <MaterialIcons name="schedule" size={13} color={tc.textSub} />
+              <Text style={[styles.orderDate, { color: tc.textSub }]}>{date}</Text>
             </View>
             {order.address && (
               <View style={styles.orderMeta}>
-                <MaterialIcons name="location-on" size={13} color={TOKENS.color.sub} />
-                <Text style={styles.orderAddress} numberOfLines={1}>{order.address}</Text>
+                <MaterialIcons name="location-on" size={13} color={tc.textSub} />
+                <Text style={[styles.orderAddress, { color: tc.textSub }]} numberOfLines={1}>{order.address}</Text>
               </View>
             )}
-            <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.sub} />
+            <MaterialIcons name="chevron-right" size={18} color={tc.textSub} />
           </View>
         </View>
       </Pressable>
+      </View>
     </Animated.View>
   );
 }
 
 export default function OrdersListScreen() {
+  const tc = useThemeColors();
   const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders } = useOrders();
   const [activeTab, setActiveTab] = useState<TabType>('client');
   const [refreshing, setRefreshing] = useState(false);
@@ -143,11 +148,11 @@ export default function OrdersListScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mis órdenes</Text>
+        <Text style={[styles.headerTitle, { color: tc.text }]}>Mis órdenes</Text>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { borderColor: tc.cardBorder }]}>
         {(['client', 'provider'] as TabType[]).map(tab => (
           <Pressable
             key={tab}
@@ -157,9 +162,9 @@ export default function OrdersListScreen() {
             <MaterialIcons
               name={tab === 'client' ? 'shopping-bag' : 'work'}
               size={16}
-              color={activeTab === tab ? TOKENS.color.primary : TOKENS.color.sub}
+              color={activeTab === tab ? TOKENS.color.primary : tc.textSub}
             />
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: activeTab === tab ? TOKENS.color.primary : tc.textSub }, activeTab === tab && styles.tabTextActive]}>
               {tab === 'client' ? 'Como cliente' : 'Como proveedor'}
             </Text>
           </Pressable>
@@ -212,7 +217,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: TOKENS.color.text,
   },
   tabBar: {
     flexDirection: 'row',
@@ -221,7 +225,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.85)',
     padding: 4,
   },
   tab: {
@@ -239,10 +242,8 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontWeight: '500',
-    color: TOKENS.color.sub,
   },
   tabTextActive: {
-    color: TOKENS.color.primary,
     fontWeight: '700',
   },
   listContent: {
@@ -256,6 +257,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     flexDirection: 'row',
     overflow: 'hidden',
+  },
+  orderCardShadow: {
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -280,7 +284,6 @@ const styles = StyleSheet.create({
   orderTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: TOKENS.color.text,
     flex: 1,
   },
   badge: {
@@ -294,13 +297,11 @@ const styles = StyleSheet.create({
   },
   orderService: {
     fontSize: 12,
-    color: TOKENS.color.primary,
     fontWeight: '500',
     marginTop: -2,
   },
   orderMessage: {
     fontSize: 13,
-    color: TOKENS.color.sub,
     lineHeight: 18,
   },
   orderFooter: {
@@ -317,11 +318,9 @@ const styles = StyleSheet.create({
   },
   orderDate: {
     fontSize: 12,
-    color: TOKENS.color.sub,
   },
   orderAddress: {
     fontSize: 12,
-    color: TOKENS.color.sub,
     flex: 1,
   },
   emptyContainer: {
@@ -335,12 +334,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: TOKENS.color.text,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: TOKENS.color.sub,
     textAlign: 'center',
     lineHeight: 20,
   },

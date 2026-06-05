@@ -22,6 +22,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const POLL_INTERVAL = 10000;
 
@@ -37,6 +38,7 @@ const STATUS_DETAILS: Record<OrderStatus, { label: string; desc: string; icon: a
 };
 
 function LiveTimeline({ status }: { status: OrderStatus }) {
+  const tc = useThemeColors();
   const isTerminal = status === 'cancelled' || status === 'disputed';
 
   return (
@@ -76,10 +78,10 @@ function LiveTimeline({ status }: { status: OrderStatus }) {
                 )}
               </View>
               <View style={styles.timelineContent}>
-                <Text style={[styles.stepLabel, done && styles.stepDone]}>
+                <Text style={[styles.stepLabel, done && styles.stepDone, { color: done ? tc.text : tc.textSub }]}>
                   {STATUS_DETAILS[step].label}
                 </Text>
-                <Text style={[styles.stepDesc, active && styles.stepActiveDesc]}>
+                <Text style={[styles.stepDesc, active && styles.stepActiveDesc, { color: active ? TOKENS.color.primary : tc.textSub }]}>
                   {STATUS_DETAILS[step].desc}
                 </Text>
               </View>
@@ -113,6 +115,7 @@ function CountdownTimer({ createdAt, status }: { createdAt: string; status: Orde
 }
 
 export default function OrderStatusScreen() {
+  const tc = useThemeColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getOrder } = useOrders();
 
@@ -153,8 +156,8 @@ export default function OrderStatusScreen() {
     return (
       <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
         <View style={styles.center}>
-          <MaterialIcons name="search-off" size={48} color={TOKENS.color.sub} />
-          <Text style={styles.notFound}>Orden no encontrada</Text>
+          <MaterialIcons name="search-off" size={48} color={tc.textSub} />
+          <Text style={[styles.notFound, { color: tc.textSub }]}>Orden no encontrada</Text>
           <Pressable onPress={() => router.back()}>
             <Text style={styles.backLink}>← Volver</Text>
           </Pressable>
@@ -184,10 +187,10 @@ export default function OrderStatusScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Seguimiento</Text>
+          <Text style={[styles.headerTitle, { color: tc.text }]}>Seguimiento</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -197,14 +200,16 @@ export default function OrderStatusScreen() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 14 }}
         >
-          <BlurView intensity={30} tint="light" style={styles.heroCard}>
-            <View style={[styles.heroIcon, { backgroundColor: statusConfig.color + '20' }]}>
-              <MaterialIcons name={statusConfig.icon} size={40} color={statusConfig.color} />
-            </View>
-            <Text style={styles.heroLabel}>{statusConfig.label}</Text>
-            <Text style={styles.heroDesc}>{statusConfig.desc}</Text>
-            <CountdownTimer createdAt={order.createdAt} status={order.status} />
-          </BlurView>
+          <View style={styles.heroCardShadow}>
+            <BlurView intensity={30} tint="light" style={[styles.heroCard, { borderColor: tc.cardBorder }]}>
+              <View style={[styles.heroIcon, { backgroundColor: statusConfig.color + '20' }]}>
+                <MaterialIcons name={statusConfig.icon} size={40} color={statusConfig.color} />
+              </View>
+              <Text style={[styles.heroLabel, { color: tc.text }]}>{statusConfig.label}</Text>
+              <Text style={[styles.heroDesc, { color: tc.textSub }]}>{statusConfig.desc}</Text>
+              <CountdownTimer createdAt={order.createdAt} status={order.status} />
+            </BlurView>
+          </View>
         </MotiView>
 
         {/* Timeline */}
@@ -213,10 +218,12 @@ export default function OrderStatusScreen() {
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 100 }}
         >
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.sectionTitle}>Progreso</Text>
-            <LiveTimeline status={order.status} />
-          </BlurView>
+          <View style={styles.cardShadow}>
+            <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+              <Text style={[styles.sectionTitle, { color: tc.text }]}>Progreso</Text>
+              <LiveTimeline status={order.status} />
+            </BlurView>
+          </View>
         </MotiView>
 
         {/* Service info */}
@@ -225,28 +232,30 @@ export default function OrderStatusScreen() {
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 180 }}
         >
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.sectionTitle}>Detalle del servicio</Text>
-            <Text style={styles.serviceName}>{order.service?.title || 'Servicio'}</Text>
-            {order.agreedPrice != null && (
+          <View style={styles.cardShadow}>
+            <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+              <Text style={[styles.sectionTitle, { color: tc.text }]}>Detalle del servicio</Text>
+              <Text style={[styles.serviceName, { color: tc.text }]}>{order.service?.title || 'Servicio'}</Text>
+              {order.agreedPrice != null && (
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="attach-money" size={16} color={tc.textSub} />
+                  <Text style={[styles.infoText, { color: tc.textSub }]}>
+                    ${order.agreedPrice.toLocaleString('es-AR')}
+                  </Text>
+                </View>
+              )}
               <View style={styles.infoRow}>
-                <MaterialIcons name="attach-money" size={16} color={TOKENS.color.sub} />
-                <Text style={styles.infoText}>
-                  ${order.agreedPrice.toLocaleString('es-AR')}
-                </Text>
+                <MaterialIcons name="calendar-today" size={16} color={tc.textSub} />
+                <Text style={[styles.infoText, { color: tc.textSub }]}>{date}</Text>
               </View>
-            )}
-            <View style={styles.infoRow}>
-              <MaterialIcons name="calendar-today" size={16} color={TOKENS.color.sub} />
-              <Text style={styles.infoText}>{date}</Text>
-            </View>
-            {order.address && (
-              <View style={styles.infoRow}>
-                <MaterialIcons name="location-on" size={16} color={TOKENS.color.sub} />
-                <Text style={styles.infoText}>{order.address}</Text>
-              </View>
-            )}
-          </BlurView>
+              {order.address && (
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="location-on" size={16} color={tc.textSub} />
+                  <Text style={[styles.infoText, { color: tc.textSub }]}>{order.address}</Text>
+                </View>
+              )}
+            </BlurView>
+          </View>
         </MotiView>
 
         {/* Quick actions */}
@@ -290,11 +299,14 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
   notFound: { fontSize: 16, color: TOKENS.color.sub },
   backLink: { fontSize: 15, color: TOKENS.color.primary, fontWeight: '600' },
+  heroCardShadow: {
+    borderRadius: 24,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06, shadowRadius: 12, elevation: 4,
+  },
   heroCard: {
     borderRadius: 24, overflow: 'hidden', padding: 28, borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.85)', alignItems: 'center', gap: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06, shadowRadius: 12, elevation: 4,
   },
   heroIcon: {
     width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center',
@@ -336,11 +348,14 @@ const styles = StyleSheet.create({
   terminalTextWrap: { flex: 1, gap: 4 },
   terminalTitle: { fontSize: 17, fontWeight: '700' },
   terminalDesc: { fontSize: 13, lineHeight: 18 },
+  cardShadow: {
+    borderRadius: 20,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06, shadowRadius: 12, elevation: 4,
+  },
   card: {
     borderRadius: 20, overflow: 'hidden', padding: 18, borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.85)', gap: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06, shadowRadius: 12, elevation: 4,
   },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.color.text, marginBottom: 2 },
   serviceName: { fontSize: 16, fontWeight: '600', color: TOKENS.color.text },

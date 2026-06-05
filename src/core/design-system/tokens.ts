@@ -9,9 +9,23 @@ export const TOKENS = {
   },
   radius: { sm: 10, md: 16, lg: 22, xl: 28, pill: 999 },
   shadow: {
-    soft: { shadowColor:'#000', shadowOpacity:0.08, shadowRadius:12, elevation:3 }
+    soft: { shadowColor:'#000', shadowOpacity:0.08, shadowRadius:12, elevation:3 },
+    card: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.08,
+      shadowRadius: 24,
+      elevation: 4,
+    },
+    button: {
+      shadowColor: '#850021',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.35,
+      shadowRadius: 12,
+      elevation: 4,
+    },
   },
   glass: { bg: 'rgba(255,255,255,0.55)' },
-  text: { color: '#fff', fontWeight: '700' } 
+  text: { color: '#fff', fontWeight: '700' }
 
 };

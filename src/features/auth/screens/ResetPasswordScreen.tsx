@@ -82,19 +82,21 @@ export default function ResetPasswordScreen() {
             <Text style={styles.successText}>
               Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
             </Text>
-            <Pressable
-              onPress={() => router.replace('/login')}
-              style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGradient}
+            <View style={styles.btnShadow}>
+              <Pressable
+                onPress={() => router.replace('/login')}
+                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
               >
-                <Text style={styles.btnText}>Iniciar sesión</Text>
-              </LinearGradient>
-            </Pressable>
+                <LinearGradient
+                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.btnGradient}
+                >
+                  <Text style={styles.btnText}>Iniciar sesión</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
           </BlurView>
         </Animated.View>
       </LinearGradient>
@@ -183,23 +185,25 @@ export default function ResetPasswordScreen() {
             )}
 
             {/* Botón */}
-            <Pressable
-              onPress={handleSubmit}
-              disabled={loading}
-              style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGradient}
+            <View style={styles.btnShadow}>
+              <Pressable
+                onPress={handleSubmit}
+                disabled={loading}
+                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
               >
-                {loading
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.btnText}>Restablecer contraseña</Text>
-                }
-              </LinearGradient>
-            </Pressable>
+                <LinearGradient
+                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.btnGradient}
+                >
+                  {loading
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={styles.btnText}>Restablecer contraseña</Text>
+                  }
+                </LinearGradient>
+              </Pressable>
+            </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -271,14 +275,17 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  primaryBtn: {
+  btnShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  primaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   btnGradient: {

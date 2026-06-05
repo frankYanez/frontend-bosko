@@ -168,25 +168,27 @@ export default function VerifyPhoneScreen() {
                 </View>
               )}
 
-              <Pressable
-                style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
-                onPress={step === 'phone' ? handleSendCode : handleVerifyCode}
-                disabled={loading}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.btnGradient}
+              <View style={styles.btnShadow}>
+                <Pressable
+                  style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
+                  onPress={step === 'phone' ? handleSendCode : handleVerifyCode}
+                  disabled={loading}
                 >
-                  {loading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.btnText}>
-                        {step === 'phone' ? 'Enviar código' : 'Verificar'}
-                      </Text>
-                  }
-                </LinearGradient>
-              </Pressable>
+                  <LinearGradient
+                    colors={[TOKENS.color.primary, '#a0032a']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.btnGradient}
+                  >
+                    {loading
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : <Text style={styles.btnText}>
+                          {step === 'phone' ? 'Enviar código' : 'Verificar'}
+                        </Text>
+                    }
+                  </LinearGradient>
+                </Pressable>
+              </View>
 
               {step === 'code' && (
                 <Pressable onPress={handleResend} style={styles.resendBtn}>
@@ -283,15 +285,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 8,
   },
-  btn: {
+  btnShadow: {
     width: '100%',
     borderRadius: 14,
-    overflow: 'hidden',
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  btn: {
+    width: '100%',
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   btnGradient: {

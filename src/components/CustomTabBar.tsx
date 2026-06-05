@@ -205,7 +205,8 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 0,
   },
-  // Wrapper: provee elevation en Android (sin overflow, con backgroundColor)
+  // Wrapper: provee elevation en Android (sin overflow)
+  // Sin backgroundColor — SVG es el background visual, notch transparente
   barShadow: {
     position: 'absolute',
     bottom: 0,
@@ -213,7 +214,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: BAR_H,
     borderRadius: BAR_R,
-    backgroundColor: C.bar,
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },

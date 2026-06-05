@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -23,21 +23,25 @@ import { useNotifications } from '@/features/notifications/state/NotificationsCo
 import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const { width: W } = Dimensions.get('window');
 
-// ── Paleta ───────────────────────────────────────────────────────────────────
-const C = {
-  primary:   TOKENS.color.primary,
-  primaryMd: '#a8002a',
-  dark:      TOKENS.color.primaryDark,
-  bg:        '#F7F7FA',
-  card:      '#FFFFFF',
-  text:      '#1A1A1A',
-  sub:       '#6B7280',
-  border:    '#EDEDF0',
-  accent:    '#FFF0F3',
-};
+// ── Paleta dinámica (se instancia por render con useMemo) ─────────────────────
+type CPalette = ReturnType<typeof makeC>;
+function makeC(tc: ReturnType<typeof useThemeColors>) {
+  return {
+    primary:   TOKENS.color.primary,
+    primaryMd: '#a8002a',
+    dark:      TOKENS.color.primaryDark,
+    bg:        tc.bg,
+    card:      tc.card,
+    text:      tc.text,
+    sub:       tc.textSub,
+    border:    tc.border,
+    accent:    tc.accent,
+  };
+}
 
 // ── Datos estáticos ──────────────────────────────────────────────────────────
 const HERO_SLIDES_CLIENT = [
@@ -99,7 +103,7 @@ const QUICK_ACTIONS_CLIENT = [
 
 const QUICK_ACTIONS_PROVIDER = [
   { id: 'search', label: 'Buscar',   icon: 'search' as const,      color: '#E8F4FD', iconColor: '#2196F3' },
-  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const,  color: '#FFF0F3', iconColor: C.primary },
+  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const,  color: '#FFF0F3', iconColor: '#850021' },
   { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        color: '#F0FFF4', iconColor: '#22C55E' },
   { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, color: '#FFF8E1', iconColor: '#F59E0B' },
 ];
@@ -120,12 +124,13 @@ function formatPrice(price: number, currency = 'ARS') {
 // ── Componentes pequeños ─────────────────────────────────────────────────────
 
 function SectionHeader({ title, onPress }: { title: string; onPress?: () => void }) {
+  const tc = useThemeColors();
   return (
-    <View style={s.sectionRow}>
-      <Text style={s.sectionTitle}>{title}</Text>
+    <View style={ds.sectionRow}>
+      <Text style={[ds.sectionTitle, { color: tc.text }]}>{title}</Text>
       {onPress && (
         <Pressable onPress={onPress} hitSlop={8}>
-          <Text style={s.sectionLink}>Ver todo</Text>
+          <Text style={[ds.sectionLink, { color: TOKENS.color.primary }]}>Ver todo</Text>
         </Pressable>
       )}
     </View>
@@ -174,13 +179,18 @@ function CategoryPill({
         onPressIn={pressIn}
         onPressOut={pressOut}
         onPress={onPress}
-        style={[s.pill, { backgroundColor: accent + '18', borderColor: accent + '40' }]}
+        style={[ds.pill, { backgroundColor: accent + '18', borderColor: accent + '40' }]}
       >
-        <Text style={s.pillIcon}>{icon}</Text>
-        <Text style={[s.pillText, { color: C.text }]}>{name}</Text>
+        <Text style={ds.pillIcon}>{icon}</Text>
+        <PillText name={name} />
       </Pressable>
     </Animated.View>
   );
+}
+
+function PillText({ name }: { name: string }) {
+  const tc = useThemeColors();
+  return <Text style={[ds.pillText, { color: tc.text }]}>{name}</Text>;
 }
 
 function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
@@ -191,9 +201,6 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
     Animated.timing(anim, { toValue: 1, duration: 380, delay, useNativeDriver: true }).start();
   }, []);
 
-  const pressIn  = () => Animated.spring(scaleA, { toValue: 0.96, useNativeDriver: true }).start();
-  const pressOut = () => Animated.spring(scaleA, { toValue: 1,    useNativeDriver: true }).start();
-
   return (
     <Animated.View
       style={{
@@ -202,31 +209,41 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
         width: (W - 48) / 2,
       }}
     >
-      <Pressable
-        onPressIn={pressIn}
-        onPressOut={pressOut}
-        onPress={() => {}}
-        style={s.serviceCard}
-      >
-        {(item.thumbnail || item.images?.[0]) ? (
-          <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={s.serviceThumb} contentFit="cover" />
-        ) : (
-          <LinearGradient colors={['#f5f5f5', '#ebebeb']} style={s.serviceThumb}>
-            <Ionicons name="image-outline" size={28} color={C.sub} />
-          </LinearGradient>
-        )}
-
-        <View style={s.serviceInfo}>
-          <Text style={s.serviceTitle} numberOfLines={2}>{item.title ?? item.name}</Text>
-          <View style={s.serviceRow}>
-            <Ionicons name="star" size={11} color="#F59E0B" />
-            <Text style={s.serviceStar}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
-            <Text style={s.serviceReviews}> ({item.reviewsCount ?? 0})</Text>
-          </View>
-          <Text style={s.servicePrice}>Cotizar por chat</Text>
-        </View>
-      </Pressable>
+      <ServiceCardInner item={item} scaleA={scaleA} />
     </Animated.View>
+  );
+}
+
+function ServiceCardInner({ item, scaleA }: { item: ServiceSummary; scaleA: Animated.Value }) {
+  const tc = useThemeColors();
+  const pressIn  = () => Animated.spring(scaleA, { toValue: 0.96, useNativeDriver: true }).start();
+  const pressOut = () => Animated.spring(scaleA, { toValue: 1,    useNativeDriver: true }).start();
+  return (
+    <View style={ds.serviceCardShadow}>
+    <Pressable
+      onPressIn={pressIn}
+      onPressOut={pressOut}
+      onPress={() => {}}
+      style={[ds.serviceCard, { backgroundColor: tc.card }]}
+    >
+      {(item.thumbnail || item.images?.[0]) ? (
+        <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={ds.serviceThumb} contentFit="cover" />
+      ) : (
+        <LinearGradient colors={[tc.surface2, tc.surface]} style={ds.serviceThumb}>
+          <Ionicons name="image-outline" size={28} color={tc.textSub} />
+        </LinearGradient>
+      )}
+      <View style={ds.serviceInfo}>
+        <Text style={[ds.serviceTitle, { color: tc.text }]} numberOfLines={2}>{item.title ?? item.name}</Text>
+        <View style={ds.serviceRow}>
+          <Ionicons name="star" size={11} color="#F59E0B" />
+          <Text style={ds.serviceStar}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
+          <Text style={[ds.serviceReviews, { color: tc.textSub }]}> ({item.reviewsCount ?? 0})</Text>
+        </View>
+        <Text style={[ds.servicePrice, { color: TOKENS.color.primary }]}>Cotizar por chat</Text>
+      </View>
+    </Pressable>
+    </View>
   );
 }
 
@@ -261,20 +278,30 @@ function QuickActionBtn({
         onPressIn={() => Animated.spring(scaleA, { toValue: 0.9, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(scaleA, { toValue: 1,   useNativeDriver: true }).start()}
         onPress={onPress}
-        style={s.qaBtn}
+        style={ds.qaBtn}
       >
-        <Animated.View style={[s.qaIcon, { backgroundColor: color, transform: [{ scale: scaleA }] }]}>
+        <Animated.View style={[ds.qaIcon, { backgroundColor: color, transform: [{ scale: scaleA }] }]}>
           <Ionicons name={icon} size={22} color={iconColor} />
         </Animated.View>
-        <Text style={s.qaLabel}>{label}</Text>
+        <QALabel label={label} />
       </Pressable>
     </Animated.View>
   );
 }
 
+function QALabel({ label }: { label: string }) {
+  const tc = useThemeColors();
+  return <Text style={[ds.qaLabel, { color: tc.text }]}>{label}</Text>;
+}
+
 // ── Componente principal ─────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
+  const isDark = useIsDark();
+  const C = useMemo(() => makeC(tc), [tc]);
+  const s = useMemo(() => makeStyles(C), [C]);
+
   const { authState } = useAuth();
   const { profile }   = useProfile();
   const {
@@ -371,7 +398,7 @@ export default function DashboardScreen() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <Animated.View style={[s.header, sectionStyle(0)]}>
@@ -381,7 +408,7 @@ export default function DashboardScreen() {
           ) : (
             <LinearGradient colors={[C.primary, C.dark]} style={s.avatarGrad}>
               <Text style={s.avatarInitial}>
-                {(profile?.firstName ?? 'U')[0].toUpperCase()}
+                {(profile?.firstName?.[0] ?? 'U').toUpperCase()}
               </Text>
             </LinearGradient>
           )}
@@ -433,7 +460,7 @@ export default function DashboardScreen() {
               setHeroIndex(idx);
               heroTimerRef.current = setInterval(advanceHero, 3600);
             }}
-            renderItem={({ item }) => <HeroSlide slide={item} />}
+            renderItem={({ item }) => <HeroSlide slide={item} s={s} C={C} />}
           />
 
           {/* Dots */}
@@ -514,14 +541,14 @@ export default function DashboardScreen() {
               ))}
             </View>
           ) : (
-            <SkeletonGrid />
+            <SkeletonGrid s={s} />
           )}
         </Animated.View>
 
         {/* ── Banner CTA (solo proveedores) ──────────────────────────────── */}
         {isProvider && (
           <Animated.View style={[s.section, sectionStyle(4)]}>
-            <CTABanner />
+            <CTABanner s={s} />
           </Animated.View>
         )}
 
@@ -531,7 +558,7 @@ export default function DashboardScreen() {
 }
 
 // ── HeroSlide ────────────────────────────────────────────────────────────────
-function HeroSlide({ slide }: { slide: typeof HERO_SLIDES[number] }) {
+function HeroSlide({ slide, s, C }: { slide: typeof HERO_SLIDES[number]; s: ReturnType<typeof makeStyles>; C: CPalette }) {
   const scaleA = useRef(new Animated.Value(1)).current;
 
   return (
@@ -568,8 +595,13 @@ function HeroSlide({ slide }: { slide: typeof HERO_SLIDES[number] }) {
 }
 
 // ── CTABanner ────────────────────────────────────────────────────────────────
-function CTABanner() {
+function CTABanner({ s }: { s: ReturnType<typeof makeStyles> }) {
   const scaleA = useRef(new Animated.Value(1)).current;
+  const tc = useThemeColors();
+  const C = useMemo(() => ({
+    primary:    tc.primary,
+    dark:       tc.surface2,
+  }), [tc]);
 
   return (
     <Pressable
@@ -602,15 +634,17 @@ function CTABanner() {
 }
 
 // ── Skeletons ─────────────────────────────────────────────────────────────────
-function SkeletonGrid() {
+function SkeletonGrid({ s }: { s: ReturnType<typeof makeStyles> }) {
   return (
     <View style={s.servicesGrid}>
       {Array.from({ length: 4 }).map((_, i) => (
-        <View key={i} style={[s.serviceCard, { width: (W - 48) / 2 }]}>
-          <View style={[s.serviceThumb, { backgroundColor: '#EFEFEF' }]} />
-          <View style={s.serviceInfo}>
-            <View style={{ height: 12, width: '80%', backgroundColor: '#EFEFEF', borderRadius: 6, marginBottom: 6 }} />
-            <View style={{ height: 10, width: '50%', backgroundColor: '#EFEFEF', borderRadius: 6 }} />
+        <View key={i} style={[s.serviceCardShadow, { width: (W - 48) / 2 }]}>
+          <View style={s.serviceCard}>
+            <View style={[s.serviceThumb, { backgroundColor: '#EFEFEF' }]} />
+            <View style={s.serviceInfo}>
+              <View style={{ height: 12, width: '80%', backgroundColor: '#EFEFEF', borderRadius: 6, marginBottom: 6 }} />
+              <View style={{ height: 10, width: '50%', backgroundColor: '#EFEFEF', borderRadius: 6 }} />
+            </View>
           </View>
         </View>
       ))}
@@ -618,8 +652,30 @@ function SkeletonGrid() {
   );
 }
 
+// ds = static layout styles for sub-components
+const ds = StyleSheet.create({
+  sectionRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  sectionTitle:  { fontSize: 17, fontWeight: '700', letterSpacing: -0.2 },
+  sectionLink:   { fontSize: 13, fontWeight: '500' },
+  pill:          { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 99, borderWidth: 1 },
+  pillIcon:      { fontSize: 15 },
+  pillText:      { fontSize: 13, fontWeight: '600' },
+  serviceCardShadow: { borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
+  serviceCard:   { borderRadius: 16, overflow: 'hidden' },
+  serviceThumb:  { width: '100%', height: 110, alignItems: 'center', justifyContent: 'center' },
+  serviceInfo:   { padding: 10, gap: 3 },
+  serviceTitle:  { fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  serviceRow:    { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  serviceStar:   { fontSize: 11, fontWeight: '700', color: '#F59E0B' },
+  serviceReviews:{ fontSize: 11 },
+  servicePrice:  { fontSize: 13, fontWeight: '700', marginTop: 2 },
+  qaBtn:         { alignItems: 'center', gap: 7 },
+  qaIcon:        { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  qaLabel:       { fontSize: 11.5, fontWeight: '500' },
+});
+
 // ── Styles ────────────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
+function makeStyles(C: CPalette) { return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: C.bg,
@@ -899,15 +955,18 @@ const s = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 16,
   },
-  serviceCard: {
-    backgroundColor: C.card,
+  serviceCardShadow: {
     borderRadius: 16,
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
     elevation: 3,
+  },
+  serviceCard: {
+    backgroundColor: C.card,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   serviceThumb: {
     width: '100%',
@@ -1004,4 +1063,4 @@ const s = StyleSheet.create({
     right: 50,
     bottom: -20,
   },
-});
+}); }

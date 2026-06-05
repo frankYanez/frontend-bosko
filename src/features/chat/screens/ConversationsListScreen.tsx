@@ -24,6 +24,7 @@ import { router } from 'expo-router';
 import { fetchConversations, Conversation } from '../services/chat.service';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useChatStore, useConversationsList } from '@/stores/chat.store';
+import { useThemeColors } from '@/stores/theme.store';
 import { TOKENS } from '@/core/design-system/tokens';
 
 function formatLastMessage(content?: string | null): string {
@@ -54,6 +55,7 @@ function timeAgo(dateStr: string): string {
 }
 
 function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
+  const tc = useThemeColors();
   const other = item.otherParty;
   const name = other
     ? `${other.firstName} ${other.lastName || ''}`.trim() || 'Usuario'
@@ -68,13 +70,13 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
       <Pressable
-        style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
+        style={({ pressed }) => [styles.item, { backgroundColor: tc.card, borderColor: tc.cardBorder }, pressed && styles.itemPressed]}
         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.orderId } })}
       >
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           {other?.avatarUrl ? (
-            <Image source={{ uri: other.avatarUrl }} style={styles.avatar} />
+            <Image source={{ uri: other.avatarUrl }} style={[styles.avatar, { backgroundColor: tc.surface2 }]} />
           ) : (
             <View style={styles.avatarPlaceholder}>
               <Text style={styles.avatarInitial}>
@@ -88,17 +90,17 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
         {/* Contenido */}
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
-            <Text style={[styles.itemName, hasUnread && styles.itemNameBold]} numberOfLines={1}>
+            <Text style={[styles.itemName, hasUnread && styles.itemNameBold, { color: tc.text }]} numberOfLines={1}>
               {name}
             </Text>
-            <Text style={styles.itemTime}>
+            <Text style={[styles.itemTime, { color: tc.textSub }]}>
               {item.lastMessage?.createdAt ? timeAgo(String(item.lastMessage.createdAt)) : ''}
             </Text>
           </View>
 
           <View style={styles.itemFooter}>
             <Text
-              style={[styles.itemPreview, hasUnread && styles.itemPreviewBold]}
+              style={[styles.itemPreview, { color: hasUnread ? tc.text : tc.textSub }, hasUnread && { fontWeight: '600' }]}
               numberOfLines={1}
             >
               {formatLastMessage(item.lastMessage?.content)}
@@ -118,6 +120,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
 }
 
 export default function ConversationsListScreen() {
+  const tc = useThemeColors();
   const { data: profile } = useProfile();
   const conversations = useConversationsList();
   const setConversations = useChatStore((s) => s.setConversations);
@@ -171,8 +174,8 @@ export default function ConversationsListScreen() {
       style={styles.background}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mensajes</Text>
+      <View style={[styles.header, { borderBottomColor: tc.divider }]}>
+        <Text style={[styles.headerTitle, { color: tc.text }]}>Mensajes</Text>
         {totalUnread > 0 && (
           <View style={styles.headerBadge}>
             <Text style={styles.headerBadgeText}>{totalUnread}</Text>
@@ -228,12 +231,10 @@ const styles = StyleSheet.create({
     gap: 10,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.6)',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: TOKENS.color.text,
   },
   headerBadge: {
     backgroundColor: TOKENS.color.primary,
@@ -263,9 +264,7 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.85)',
   },
   itemPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   avatarContainer: { position: 'relative' },
@@ -273,7 +272,6 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#e5e7eb',
   },
   avatarPlaceholder: {
     width: 52,
@@ -308,13 +306,11 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 15,
     fontWeight: '500',
-    color: TOKENS.color.text,
     flex: 1,
   },
   itemNameBold: { fontWeight: '700' },
   itemTime: {
     fontSize: 12,
-    color: TOKENS.color.sub,
   },
   itemOrder: {
     fontSize: 12,
@@ -329,10 +325,8 @@ const styles = StyleSheet.create({
   },
   itemPreview: {
     fontSize: 13,
-    color: TOKENS.color.sub,
     flex: 1,
   },
-  itemPreviewBold: { color: TOKENS.color.text, fontWeight: '600' },
   unreadBadge: {
     backgroundColor: TOKENS.color.primary,
     borderRadius: 10,
@@ -346,38 +340,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#fff',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  emptyButton: {
-    marginTop: 8,
-    backgroundColor: TOKENS.color.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  buttonPressed: { opacity: 0.85 },
-  emptyButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

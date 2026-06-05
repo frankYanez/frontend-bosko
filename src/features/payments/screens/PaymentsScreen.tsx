@@ -74,28 +74,30 @@ export default function PaymentsScreen() {
 
   const renderHistoryItem = ({ item, index }: { item: PaymentHistoryItem; index: number }) => (
     <AnimatedItem index={index}>
-      <Pressable
-        style={({ pressed }) => [s.card, pressed && s.cardPressed]}
-        onPress={() => item.orderId && router.push(`/(tabs)/orders/${item.orderId}`)}
-      >
-        <View style={s.cardInner}>
-          <View style={s.cardRow}>
-            <View style={s.cardIcon}>
-              <MaterialIcons name="payment" size={22} color={TOKENS.color.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.cardTitle} numberOfLines={1}>
-                {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
-              </Text>
-              <Text style={s.cardDate}>{formatDate(item.createdAt)}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end', gap: 4 }}>
-              <Text style={s.cardAmount}>{formatCurrency(item.amount, item.currency)}</Text>
-              <StatusBadge status={item.status} />
+      <View style={s.cardShadow}>
+        <Pressable
+          style={({ pressed }) => [s.card, pressed && s.cardPressed]}
+          onPress={() => item.orderId && router.push(`/(tabs)/orders/${item.orderId}`)}
+        >
+          <View style={s.cardInner}>
+            <View style={s.cardRow}>
+              <View style={s.cardIcon}>
+                <MaterialIcons name="payment" size={22} color={TOKENS.color.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.cardTitle} numberOfLines={1}>
+                  {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
+                </Text>
+                <Text style={s.cardDate}>{formatDate(item.createdAt)}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                <Text style={s.cardAmount}>{formatCurrency(item.amount, item.currency)}</Text>
+                <StatusBadge status={item.status} />
+              </View>
             </View>
           </View>
-        </View>
-      </Pressable>
+        </Pressable>
+      </View>
     </AnimatedItem>
   );
 
@@ -261,6 +263,9 @@ const s = StyleSheet.create({
   card: {
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  cardShadow: {
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

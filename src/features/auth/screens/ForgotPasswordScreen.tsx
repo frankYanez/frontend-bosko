@@ -98,73 +98,79 @@ export default function ForgotPasswordScreen() {
               Ingresá tu email y te enviamos un enlace para restablecerla.
             </Text>
 
-            <BlurView intensity={30} tint="light" style={styles.card}>
-              {success ? (
-                <View style={styles.successContainer}>
-                  <MaterialIcons name="check-circle" size={48} color="#22c55e" />
-                  <Text style={styles.successTitle}>¡Email enviado!</Text>
-                  <Text style={styles.successText}>
-                    Si ese email está registrado, recibirás las instrucciones en minutos.
-                    Revisá también tu carpeta de spam.
-                  </Text>
-                  <Pressable
-                    onPress={() => router.back()}
-                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-                  >
-                    <LinearGradient
-                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.buttonGradient}
-                    >
-                      <Text style={styles.buttonText}>Volver al inicio</Text>
-                    </LinearGradient>
-                  </Pressable>
-                </View>
-              ) : (
-                /* Formulario */
-                <>
-                  <Text style={styles.cardTitle}>Recuperar contraseña</Text>
-
-                  <View style={[styles.inputWrapper, error ? styles.inputError : null]}>
-                    <MaterialIcons name="email" size={20} color={TOKENS.color.sub} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Correo electrónico"
-                      placeholderTextColor={TOKENS.color.sub}
-                      value={email}
-                      onChangeText={text => { setEmail(text); setError(''); }}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      returnKeyType="done"
-                      onSubmitEditing={handleSend}
-                      autoFocus
-                    />
+            <View style={styles.cardShadow}>
+              <BlurView intensity={30} tint="light" style={styles.card}>
+                {success ? (
+                  <View style={styles.successContainer}>
+                    <MaterialIcons name="check-circle" size={48} color="#22c55e" />
+                    <Text style={styles.successTitle}>¡Email enviado!</Text>
+                    <Text style={styles.successText}>
+                      Si ese email está registrado, recibirás las instrucciones en minutos.
+                      Revisá también tu carpeta de spam.
+                    </Text>
+                    <View style={styles.buttonShadow}>
+                      <Pressable
+                        onPress={() => router.back()}
+                        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+                      >
+                        <LinearGradient
+                          colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.buttonGradient}
+                        >
+                          <Text style={styles.buttonText}>Volver al inicio</Text>
+                        </LinearGradient>
+                      </Pressable>
+                    </View>
                   </View>
+                ) : (
+                  /* Formulario */
+                  <>
+                    <Text style={styles.cardTitle}>Recuperar contraseña</Text>
 
-                  {!!error && <Text style={styles.errorText}>{error}</Text>}
+                    <View style={[styles.inputWrapper, error ? styles.inputError : null]}>
+                      <MaterialIcons name="email" size={20} color={TOKENS.color.sub} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Correo electrónico"
+                        placeholderTextColor={TOKENS.color.sub}
+                        value={email}
+                        onChangeText={text => { setEmail(text); setError(''); }}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        returnKeyType="done"
+                        onSubmitEditing={handleSend}
+                        autoFocus
+                      />
+                    </View>
 
-                  <Pressable
-                    onPress={handleSend}
-                    disabled={isLoading}
-                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-                  >
-                    <LinearGradient
-                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.buttonGradient}
-                    >
-                      {isLoading
-                        ? <ActivityIndicator color="#fff" size="small" />
-                        : <Text style={styles.buttonText}>Enviar email</Text>
-                      }
-                    </LinearGradient>
-                  </Pressable>
-                </>
-              )}
-            </BlurView>
+                    {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+                    <View style={styles.buttonShadow}>
+                      <Pressable
+                        onPress={handleSend}
+                        disabled={isLoading}
+                        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+                      >
+                        <LinearGradient
+                          colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.buttonGradient}
+                        >
+                          {isLoading
+                            ? <ActivityIndicator color="#fff" size="small" />
+                            : <Text style={styles.buttonText}>Enviar email</Text>
+                          }
+                        </LinearGradient>
+                      </Pressable>
+                    </View>
+                  </>
+                )}
+              </BlurView>
+            </View>
           </Animated.View>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -214,6 +220,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 8,
   },
+  cardShadow: {
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
   card: {
     width: width - 48,
     borderRadius: 24,
@@ -221,11 +235,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.85)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
   },
   cardTitle: {
     fontSize: 18,
@@ -259,15 +268,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginLeft: 4,
   },
-  button: {
+  buttonShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     marginTop: 8,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  button: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

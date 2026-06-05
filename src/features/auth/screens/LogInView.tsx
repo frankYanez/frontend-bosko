@@ -95,91 +95,95 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
             <Text style={styles.subtitle}>Encontrá o publicá servicios fácilmente</Text>
 
             {/* Tarjeta glass */}
-            <BlurView intensity={30} tint="light" style={styles.card}>
-              <Text style={styles.cardTitle}>Iniciar sesión</Text>
+            <View style={styles.cardShadow}>
+              <BlurView intensity={30} tint="light" style={styles.card}>
+                <Text style={styles.cardTitle}>Iniciar sesión</Text>
 
-              {/* Email */}
-              <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
-                <MaterialIcons name="email" size={20} color={TOKENS.color.sub} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Correo electrónico"
-                  placeholderTextColor={TOKENS.color.sub}
-                  value={email}
-                  onChangeText={text => { setEmail(text); setLocalError(''); clearError(); }}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                />
-              </View>
-
-              {/* Contraseña */}
-              <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
-                <MaterialIcons name="lock" size={20} color={TOKENS.color.sub} />
-                <TextInput
-                  ref={passwordRef}
-                  style={styles.input}
-                  placeholder="Contraseña"
-                  placeholderTextColor={TOKENS.color.sub}
-                  value={password}
-                  onChangeText={text => { setPassword(text); setLocalError(''); clearError(); }}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                />
-                <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
-                  <MaterialIcons
-                    name={showPassword ? 'visibility' : 'visibility-off'}
-                    size={20}
-                    color={TOKENS.color.sub}
+                {/* Email */}
+                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name="email" size={20} color={TOKENS.color.sub} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Correo electrónico"
+                    placeholderTextColor={TOKENS.color.sub}
+                    value={email}
+                    onChangeText={text => { setEmail(text); setLocalError(''); clearError(); }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordRef.current?.focus()}
                   />
-                </Pressable>
-              </View>
+                </View>
 
-              {/* Error */}
-              {!!displayError && (
-                <Text style={styles.errorText}>{displayError}</Text>
-              )}
+                {/* Contraseña */}
+                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name="lock" size={20} color={TOKENS.color.sub} />
+                  <TextInput
+                    ref={passwordRef}
+                    style={styles.input}
+                    placeholder="Contraseña"
+                    placeholderTextColor={TOKENS.color.sub}
+                    value={password}
+                    onChangeText={text => { setPassword(text); setLocalError(''); clearError(); }}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
+                  />
+                  <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
+                    <MaterialIcons
+                      name={showPassword ? 'visibility' : 'visibility-off'}
+                      size={20}
+                      color={TOKENS.color.sub}
+                    />
+                  </Pressable>
+                </View>
 
-              {/* Olvidé contraseña */}
-              <Pressable
-                onPress={() => router.push('/login/forgot-password')}
-                style={styles.forgotContainer}
-              >
-                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
-              </Pressable>
+                {/* Error */}
+                {!!displayError && (
+                  <Text style={styles.errorText}>{displayError}</Text>
+                )}
 
-              {/* Botón ingresar */}
-              <Pressable
-                onPress={handleLogin}
-                disabled={isLoading}
-                style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
+                {/* Olvidé contraseña */}
+                <Pressable
+                  onPress={() => router.push('/login/forgot-password')}
+                  style={styles.forgotContainer}
                 >
-                  {isLoading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.buttonText}>Ingresar</Text>
-                  }
-                </LinearGradient>
-              </Pressable>
-
-              {/* Ir a registro */}
-              <View style={styles.registerRow}>
-                <Text style={styles.registerPrompt}>¿No tenés cuenta? </Text>
-                <Pressable onPress={toRegister}>
-                  <Text style={styles.registerLink}>Registrarse</Text>
+                  <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
                 </Pressable>
-              </View>
-            </BlurView>
+
+                {/* Botón ingresar */}
+                <View style={styles.buttonShadow}>
+                  <Pressable
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+                  >
+                    <LinearGradient
+                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.buttonGradient}
+                    >
+                      {isLoading
+                        ? <ActivityIndicator color="#fff" size="small" />
+                        : <Text style={styles.buttonText}>Ingresar</Text>
+                      }
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+
+                {/* Ir a registro */}
+                <View style={styles.registerRow}>
+                  <Text style={styles.registerPrompt}>¿No tenés cuenta? </Text>
+                  <Pressable onPress={toRegister}>
+                    <Text style={styles.registerLink}>Registrarse</Text>
+                  </Pressable>
+                </View>
+              </BlurView>
+            </View>
           </Animated.View>
         </KeyboardAvoidingView>
       </LinearGradient>
@@ -215,6 +219,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: 'center',
   },
+  cardShadow: {
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
   card: {
     width: width - 48,
     borderRadius: 24,
@@ -222,12 +234,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.85)',
-    // Sombra suave
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
   },
   cardTitle: {
     fontSize: 22,
@@ -272,16 +278,18 @@ const styles = StyleSheet.create({
     color: TOKENS.color.primary,
     fontWeight: '500',
   },
-  button: {
+  buttonShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     marginBottom: 16,
-    // Sombra glow
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  button: {
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   buttonPressed: {
     opacity: 0.85,

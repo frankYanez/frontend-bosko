@@ -20,18 +20,16 @@ import { useServices } from '../state/ServicesContext';
 import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const { width: W } = Dimensions.get('window');
 
-const C = {
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  border:  '#EDEDF0',
-  amber:   '#F59E0B',
-  primary: TOKENS.color.primary,
-};
+const AMBER = '#F59E0B';
+
+function useC() {
+  const tc = useThemeColors();
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: AMBER };
+}
 
 // ── Curated gradients — must match ServicesScreen ────────────────────────────
 const GRADIENTS: [string, string, string][] = [
@@ -49,6 +47,7 @@ const GRADIENTS: [string, string, string][] = [
 
 // ── Shimmer skeleton ──────────────────────────────────────────────────────────
 function Shimmer({ width, height, radius = 12 }: { width: number | string; height: number; radius?: number }) {
+  const tc = useThemeColors();
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -57,7 +56,7 @@ function Shimmer({ width, height, radius = 12 }: { width: number | string; heigh
   }, []);
   const tx = anim.interpolate({ inputRange: [0, 1], outputRange: [-300, 300] });
   return (
-    <View style={{ width, height, borderRadius: radius, backgroundColor: '#E2E6EC', overflow: 'hidden' }}>
+    <View style={{ width, height, borderRadius: radius, backgroundColor: tc.surface2, overflow: 'hidden' }}>
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: tx }] }]}>
         <LinearGradient
           colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
@@ -70,10 +69,11 @@ function Shimmer({ width, height, radius = 12 }: { width: number | string; heigh
 }
 
 function SkeletonList() {
+  const c = useC();
   return (
     <View style={{ paddingHorizontal: 16, gap: 12, paddingTop: 4 }}>
       {[0, 1, 2, 3].map(i => (
-        <View key={i} style={[sk.card, { opacity: 1 - i * 0.15 }]}>
+        <View key={i} style={[{ backgroundColor: c.card }, sk.card, { opacity: 1 - i * 0.15 }]}>
           <Shimmer width={64} height={64} radius={18} />
           <View style={{ flex: 1, gap: 8 }}>
             <Shimmer width="75%" height={14} radius={7} />
@@ -86,7 +86,7 @@ function SkeletonList() {
   );
 }
 const sk = StyleSheet.create({
-  card: { flexDirection: 'row', gap: 12, alignItems: 'center', backgroundColor: '#fff', borderRadius: 18, padding: 16 },
+  card: { flexDirection: 'row', gap: 12, alignItems: 'center', borderRadius: 18, padding: 16 },
 });
 
 // ── Price formatter ───────────────────────────────────────────────────────────
@@ -106,6 +106,7 @@ const ServiceCard = memo(function ServiceCard({
   index: number;
   onPress: () => void;
 }) {
+  const c = useC();
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(item.id);
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -140,7 +141,7 @@ const ServiceCard = memo(function ServiceCard({
         transform: [{ translateY: slideAnim }, { scale: scaleA }],
       }}
     >
-      <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={s.serviceCard}>
+      <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={[s.serviceCard, { backgroundColor: c.card }]}>
         {/* Avatar + availability dot */}
         <View style={s.avatarWrap}>
           {item.thumbnail ? (
@@ -157,17 +158,17 @@ const ServiceCard = memo(function ServiceCard({
 
         {/* Info */}
         <View style={s.info}>
-          <Text style={s.name} numberOfLines={1}>{item.name}</Text>
-          <Text style={s.headline} numberOfLines={1}>{item.title}</Text>
+          <Text style={[s.name, { color: c.text }]} numberOfLines={1}>{item.name}</Text>
+          <Text style={[s.headline, { color: c.sub }]} numberOfLines={1}>{item.title}</Text>
 
           <View style={s.metaRow}>
             <View style={s.ratingChip}>
-              <Ionicons name="star" size={11} color={C.amber} />
-              <Text style={s.ratingText}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
-              <Text style={s.reviewCount}>({item.reviewsCount ?? 0})</Text>
+              <Ionicons name="star" size={11} color={c.amber} />
+              <Text style={[s.ratingText, { color: c.amber }]}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
+              <Text style={[s.reviewCount, { color: c.sub }]}>({item.reviewsCount ?? 0})</Text>
             </View>
-            <View style={s.dot} />
-            <Text style={s.location} numberOfLines={1}>{item.location}</Text>
+            <View style={[s.dot, { backgroundColor: c.border }]} />
+            <Text style={[s.location, { color: c.sub }]} numberOfLines={1}>{item.location}</Text>
           </View>
 
           <Text style={s.price}>Cotizar por chat</Text>
@@ -175,16 +176,16 @@ const ServiceCard = memo(function ServiceCard({
 
         {/* Favorite + chevron */}
         <View style={s.cardActions}>
-          <Pressable onPress={handleFavorite} hitSlop={8} style={s.heartBtn}>
+          <Pressable onPress={handleFavorite} hitSlop={8} style={[s.heartBtn, { backgroundColor: c.surface2 }]}>
             <Animated.View style={{ transform: [{ scale: heartScale }] }}>
               <Ionicons
                 name={fav ? 'heart' : 'heart-outline'}
                 size={20}
-                color={fav ? '#EF4444' : C.border}
+                color={fav ? '#EF4444' : c.border}
               />
             </Animated.View>
           </Pressable>
-          <Ionicons name="chevron-forward" size={16} color={C.border} />
+          <Ionicons name="chevron-forward" size={16} color={c.border} />
         </View>
       </Pressable>
     </Animated.View>
@@ -201,6 +202,7 @@ function Hero({
   gradientIndex: number;
   onBack: () => void;
 }) {
+  const c = useC();
   const gradient = GRADIENTS[gradientIndex % GRADIENTS.length];
   const scaleA   = useRef(new Animated.Value(0.9)).current;
   const fadeA    = useRef(new Animated.Value(0)).current;
@@ -224,8 +226,8 @@ function Hero({
       <View style={[s.blob, { width: 120, height: 120, bottom: -30, right: 80, opacity: 0.07 }]} />
 
       {/* Back button */}
-      <Pressable onPress={onBack} style={s.backBtn}>
-        <Ionicons name="arrow-back" size={18} color="#1A1A1A" />
+      <Pressable onPress={onBack} style={[s.backBtn, { backgroundColor: c.card }]}>
+        <Ionicons name="arrow-back" size={18} color={c.text} />
       </Pressable>
 
       {/* Content */}
@@ -284,6 +286,8 @@ export default function CategoryServicesScreen() {
     }
   }, [categoryId, hasMore, isLoadingMore, loadMoreServicesByCategory]);
 
+  const c = useC();
+
   const ListHeader = (
     <>
       <View style={s.heroPad}>
@@ -295,10 +299,10 @@ export default function CategoryServicesScreen() {
       </View>
       {!isLoading && services.length > 0 && (
         <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>
+          <Text style={[s.sectionTitle, { color: c.text }]}>
             {`${services.length} profesional${services.length !== 1 ? 'es' : ''}`}
           </Text>
-          <Text style={s.sectionSub}>Tocá uno para ver su perfil completo</Text>
+          <Text style={[s.sectionSub, { color: c.sub }]}>Tocá uno para ver su perfil completo</Text>
         </View>
       )}
     </>
@@ -309,21 +313,21 @@ export default function CategoryServicesScreen() {
   ) : (
     <View style={s.empty}>
       <Text style={s.emptyIcon}>🔍</Text>
-      <Text style={s.emptyTitle}>Próximamente hay más</Text>
-      <Text style={s.emptySub}>Estamos sumando especialistas en esta categoría.</Text>
+      <Text style={[s.emptyTitle, { color: c.text }]}>Próximamente hay más</Text>
+      <Text style={[s.emptySub, { color: c.sub }]}>Estamos sumando especialistas en esta categoría.</Text>
     </View>
   );
 
   const ListFooter = isLoadingMore ? (
-    <ActivityIndicator color={C.primary} style={{ marginVertical: 20 }} />
+    <ActivityIndicator color={TOKENS.color.primary} style={{ marginVertical: 20 }} />
   ) : !hasMore && services.length > 0 ? (
-    <Text style={s.endLabel}>Eso es todo por ahora</Text>
+    <Text style={[s.endLabel, { color: c.sub }]}>Eso es todo por ahora</Text>
   ) : null;
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
+    <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
 
       <FlatList
         data={isLoading ? [] : services}
@@ -354,7 +358,6 @@ export default function CategoryServicesScreen() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.bg,
   },
   scroll: {
     paddingTop: 4,
@@ -386,7 +389,6 @@ const s = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
@@ -435,12 +437,10 @@ const s = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.text,
     letterSpacing: -0.2,
   },
   sectionSub: {
     fontSize: 13,
-    color: C.sub,
   },
 
   // List item wrapper
@@ -452,7 +452,6 @@ const s = StyleSheet.create({
   endLabel: {
     textAlign: 'center',
     fontSize: 13,
-    color: C.sub,
     paddingVertical: 20,
   },
 
@@ -461,7 +460,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: C.card,
     borderRadius: 18,
     padding: 14,
     shadowColor: '#000',
@@ -479,7 +477,7 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F9FAFB', // overridden inline via c.surface2
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -516,11 +514,9 @@ const s = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: C.text,
   },
   headline: {
     fontSize: 13,
-    color: C.sub,
   },
   metaRow: {
     flexDirection: 'row',
@@ -535,27 +531,24 @@ const s = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.amber,
+    color: AMBER,
   },
   reviewCount: {
     fontSize: 11,
-    color: C.sub,
   },
   dot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: C.border,
   },
   location: {
     fontSize: 12,
-    color: C.sub,
     flex: 1,
   },
   price: {
     fontSize: 13,
     fontWeight: '700',
-    color: C.primary,
+    color: TOKENS.color.primary,
   },
 
   // Empty
@@ -566,6 +559,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: C.text },
-  emptySub: { fontSize: 14, color: C.sub, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '700' },
+  emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });

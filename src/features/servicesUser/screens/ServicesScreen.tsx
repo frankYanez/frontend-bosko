@@ -18,6 +18,7 @@ import { useServices } from '../state/ServicesContext';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const { width: W } = Dimensions.get('window');
 const CARD_GAP   = 12;
@@ -46,6 +47,7 @@ function getGradient(index: number, accent?: string): [string, string, string] {
 function Shimmer({ width, height, radius = 12, style }: {
   width: number | string; height: number; radius?: number; style?: object;
 }) {
+  const tc = useThemeColors();
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -60,7 +62,7 @@ function Shimmer({ width, height, radius = 12, style }: {
   });
 
   return (
-    <View style={[{ width, height, borderRadius: radius, backgroundColor: '#E2E6EC', overflow: 'hidden' }, style]}>
+    <View style={[{ width, height, borderRadius: radius, backgroundColor: tc.surface2, overflow: 'hidden' }, style]}>
       <Animated.View
         style={{
           ...StyleSheet.absoluteFillObject,
@@ -244,14 +246,15 @@ function CategoryCard({
 
 // ── Header ────────────────────────────────────────────────────────────────────
 function Header({ titleAnim }: { titleAnim: Animated.Value }) {
+  const tc = useThemeColors();
   return (
     <Animated.View style={[s.header, { opacity: titleAnim, transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }] }]}>
       <View>
-        <Text style={s.headerTitle}>Explorar</Text>
-        <Text style={s.headerSub}>Descubrí profesionales cerca tuyo</Text>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Explorar</Text>
+        <Text style={[s.headerSub, { color: tc.textSub }]}>Descubrí profesionales cerca tuyo</Text>
       </View>
-      <Pressable style={s.searchIcon} onPress={() => router.push('/search')}>
-        <Ionicons name="search" size={20} color="#1A1A1A" />
+      <Pressable style={[s.searchIcon, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
+        <Ionicons name="search" size={20} color={tc.text} />
       </Pressable>
     </Animated.View>
   );
@@ -259,12 +262,13 @@ function Header({ titleAnim }: { titleAnim: Animated.Value }) {
 
 // ── Search bar ────────────────────────────────────────────────────────────────
 function SearchBar({ anim }: { anim: Animated.Value }) {
+  const tc = useThemeColors();
   return (
     <Animated.View style={[s.searchWrap, { opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
-      <Pressable style={s.searchBar} onPress={() => router.push('/search')}>
-        <Ionicons name="search-outline" size={16} color="#9CA3AF" />
-        <Text style={s.searchPlaceholder}>Buscar servicios o profesionales…</Text>
-        <View style={s.searchFilter}>
+      <Pressable style={[s.searchBar, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
+        <Ionicons name="search-outline" size={16} color={tc.textMuted} />
+        <Text style={[s.searchPlaceholder, { color: tc.textMuted }]}>Buscar servicios o profesionales…</Text>
+        <View style={[s.searchFilter, { backgroundColor: tc.accent }]}>
           <Ionicons name="options-outline" size={15} color={TOKENS.color.primary} />
         </View>
       </Pressable>
@@ -275,6 +279,7 @@ function SearchBar({ anim }: { anim: Animated.Value }) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ServicesScreen() {
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
   const { categories, categoriesStatus, fetchCategories } = useServices();
 
   const loading = categoriesStatus.loading && categories.length === 0;
@@ -303,8 +308,8 @@ export default function ServicesScreen() {
   }
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F7F7FA" />
+    <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={tc.bg} />
 
       <Header titleAnim={headerAnim} />
       <SearchBar anim={searchAnim} />
@@ -320,8 +325,8 @@ export default function ServicesScreen() {
             icon="grid-outline"
             title="Categorías próximamente"
             subtitle="Estamos cargando los servicios disponibles. Volvé en breve."
-            iconColor="#6B7280"
-            iconBg="#F3F4F6"
+            iconColor={tc.textSub}
+            iconBg={tc.surface2}
           />
         ) : (
           <View style={s.grid}>
@@ -362,7 +367,6 @@ export default function ServicesScreen() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F7F7FA',
   },
 
   // Header

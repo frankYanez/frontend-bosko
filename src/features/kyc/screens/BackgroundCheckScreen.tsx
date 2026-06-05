@@ -217,11 +217,12 @@ export default function BackgroundCheckScreen() {
 
               {/* Botón */}
               {canUpload && (
-                <Pressable
-                  onPress={showPickerOptions}
-                  disabled={uploading}
-                  style={({ pressed }) => [s.uploadBtn, pressed && { opacity: 0.85 }]}
-                >
+                <View style={s.uploadBtnShadow}>
+                  <Pressable
+                    onPress={showPickerOptions}
+                    disabled={uploading}
+                    style={({ pressed }) => [s.uploadBtn, pressed && { opacity: 0.85 }]}
+                  >
                   <LinearGradient colors={[C.dark, C.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.uploadBtnGrad}>
                     {uploading
                       ? <ActivityIndicator color="#fff" />
@@ -234,6 +235,7 @@ export default function BackgroundCheckScreen() {
                     }
                   </LinearGradient>
                 </Pressable>
+                </View>
               )}
 
               {status === 'UNDER_REVIEW' && (
@@ -279,7 +281,8 @@ const s = StyleSheet.create({
   formatText:   { fontSize: 12, fontWeight: '600', color: C.sub },
   formatNote:   { fontSize: 12, color: C.sub, marginLeft: 4 },
 
-  uploadBtn:    { borderRadius: 14, overflow: 'hidden', elevation: 4, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  uploadBtn:    { borderRadius: 14, overflow: 'hidden' },
+  uploadBtnShadow: { borderRadius: 14, elevation: 4, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
   uploadBtnGrad:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16 },
   uploadBtnText:{ fontSize: 15, fontWeight: '700', color: '#fff' },
 

@@ -19,13 +19,15 @@ export function HeroCarousel({
       showsHorizontalScrollIndicator={false}
       keyExtractor={(_, i) => String(i)}
       renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.sub}>{item.subtitle}</Text>
-          <PremiumButton
-            title="Explorar"
-            onPress={() => router.push("/(tabs)/services")}
-          />
+        <View style={styles.cardShadow}>
+          <View style={styles.card}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.sub}>{item.subtitle}</Text>
+            <PremiumButton
+              title="Explorar"
+              onPress={() => router.push("/(tabs)/services")}
+            />
+          </View>
         </View>
       )}
     />
@@ -33,19 +35,23 @@ export function HeroCarousel({
 }
 
 const styles = StyleSheet.create({
-  card: {
+  cardShadow: {
     width: width - 32,
     marginHorizontal: 16,
     height: 200,
     borderRadius: 20,
-    overflow: "hidden",
-    padding: 16,
-    backgroundColor: "transparent",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  card: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: "hidden",
+    padding: 16,
+    backgroundColor: "transparent",
   },
   title: { fontSize: 22, fontWeight: "800", color: TOKENS.color.text },
   sub: { color: TOKENS.color.sub, marginTop: 6 },

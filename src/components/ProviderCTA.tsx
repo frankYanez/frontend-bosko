@@ -166,7 +166,6 @@ const styles = StyleSheet.create({
     },
     ctaButton: {
         borderRadius: 16,
-        overflow: 'hidden',
         ...Colors.premium.shadows.gold,
     },
 

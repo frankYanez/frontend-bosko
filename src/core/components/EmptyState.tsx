@@ -70,16 +70,18 @@ export function EmptyState({
           onPressOut={() => Animated.spring(btnScale, { toValue: 1, useNativeDriver: true }).start()}
           onPress={cta.onPress}
         >
-          <Animated.View style={[s.ctaWrap, { transform: [{ scale: btnScale }] }]}>
-            <LinearGradient
-              colors={[C.dark, C.primary, '#c0002f']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={s.ctaBtn}
-            >
-              <Text style={s.ctaText}>{cta.label}</Text>
-            </LinearGradient>
-          </Animated.View>
+          <View style={s.ctaShadow}>
+            <Animated.View style={[s.ctaWrap, { transform: [{ scale: btnScale }] }]}>
+              <LinearGradient
+                colors={[C.dark, C.primary, '#c0002f']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={s.ctaBtn}
+              >
+                <Text style={s.ctaText}>{cta.label}</Text>
+              </LinearGradient>
+            </Animated.View>
+          </View>
         </Pressable>
       )}
 
@@ -123,15 +125,18 @@ const s = StyleSheet.create({
     lineHeight: 20,
     maxWidth: 280,
   },
-  ctaWrap: {
+  ctaShadow: {
     borderRadius: 13,
-    overflow: 'hidden',
     marginTop: 4,
     shadowColor: C.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 5,
+  },
+  ctaWrap: {
+    borderRadius: 13,
+    overflow: 'hidden',
   },
   ctaBtn: {
     paddingHorizontal: 28,

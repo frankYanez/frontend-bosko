@@ -21,6 +21,7 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { fetchServiceById } from "../services/services";
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const BRAND = "#850021";
 const MIN_DESCRIPTION = 20;
@@ -53,6 +54,7 @@ async function imageToBase64(uri: string): Promise<string> {
 export default function ServiceFormScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
   const params = useLocalSearchParams<{ serviceId?: string }>();
   const { services, loading, loadServices, addService, editService } = useServices();
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
@@ -212,7 +214,7 @@ export default function ServiceFormScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: tc.bg }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={10}>
@@ -231,44 +233,44 @@ export default function ServiceFormScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Datos principales */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Información del servicio</Text>
+        <View style={[styles.card, { backgroundColor: tc.card }]}>
+          <Text style={[styles.cardTitle, { color: tc.text }]}>Información del servicio</Text>
 
-          <Text style={styles.label}>Título *</Text>
+          <Text style={[styles.label, { color: tc.textSub }]}>Título *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: tc.text, borderColor: tc.border, backgroundColor: tc.surface2 }]}
             placeholder="Ej: Plomería de urgencia"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={tc.textMuted}
             value={form.title}
             onChangeText={(t) => setForm((p) => ({ ...p, title: t }))}
           />
 
-          <Text style={styles.label}>Descripción *</Text>
+          <Text style={[styles.label, { color: tc.textSub }]}>Descripción *</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Contá qué incluye tu servicio, cuánto tardás, qué materiales usás…"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={tc.textMuted}
             value={form.description}
             multiline
             numberOfLines={5}
             textAlignVertical="top"
             onChangeText={(t) => setForm((p) => ({ ...p, description: t }))}
           />
-          <Text style={styles.hint}>
+          <Text style={[styles.hint, { color: tc.textMuted }]}>
             {form.description.trim().length}/{MIN_DESCRIPTION} caracteres mínimos
           </Text>
         </View>
 
         {/* Precio */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Precio</Text>
-          <Text style={styles.cardSubtitle}>
+        <View style={[styles.card, { backgroundColor: tc.card }]}>
+          <Text style={[styles.cardTitle, { color: tc.text }]}>Precio</Text>
+          <Text style={[styles.cardSubtitle, { color: tc.textSub }]}>
             Podés dejar el precio en blanco si preferís cotizar por chat.
           </Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: tc.text, borderColor: tc.border, backgroundColor: tc.surface2 }]}
             placeholder="Ej: 5000 (opcional)"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={tc.textMuted}
             keyboardType="numeric"
             value={form.price}
             onChangeText={(t) => setForm((p) => ({ ...p, price: t.replace(/[^0-9.,]/g, "") }))}
@@ -276,8 +278,8 @@ export default function ServiceFormScreen() {
         </View>
 
         {/* Categoría */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Categoría *</Text>
+        <View style={[styles.card, { backgroundColor: tc.card }]}>
+          <Text style={[styles.cardTitle, { color: tc.text }]}>Categoría *</Text>
           {categoriesLoading ? (
             <ActivityIndicator color={BRAND} style={{ marginVertical: 8 }} />
           ) : (
@@ -287,13 +289,13 @@ export default function ServiceFormScreen() {
                 return (
                   <Pressable
                     key={cat.id}
-                    style={[styles.chip, selected && styles.chipSelected]}
+                    style={[styles.chip, selected && styles.chipSelected, !selected && { backgroundColor: tc.card, borderColor: tc.border }]}
                     onPress={() => setForm((p) => ({ ...p, categoryId: cat.id }))}
                   >
                     {cat.icon ? (
                       <Text style={styles.chipIcon}>{cat.icon}</Text>
                     ) : null}
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected, !selected && { color: tc.textSub }]}>
                       {cat.name}
                     </Text>
                   </Pressable>
@@ -304,10 +306,10 @@ export default function ServiceFormScreen() {
         </View>
 
         {/* Imagen principal */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Foto principal</Text>
-          <Text style={styles.cardSubtitle}>Una imagen que represente tu servicio.</Text>
-          <Pressable style={styles.imagePicker} onPress={handlePickImage}>
+        <View style={[styles.card, { backgroundColor: tc.card }]}>
+          <Text style={[styles.cardTitle, { color: tc.text }]}>Foto principal</Text>
+          <Text style={[styles.cardSubtitle, { color: tc.textSub }]}>Una imagen que represente tu servicio.</Text>
+          <Pressable style={[styles.imagePicker, { backgroundColor: tc.surface2 }]} onPress={handlePickImage}>
             {imageUri ? (
               <>
                 <Image source={{ uri: imageUri }} style={styles.imagePreview} />
@@ -316,23 +318,23 @@ export default function ServiceFormScreen() {
                 </View>
               </>
             ) : (
-              <View style={styles.imagePlaceholder}>
+              <View style={[styles.imagePlaceholder, { borderColor: tc.border }]}>
                 <Text style={styles.imagePlaceholderIcon}>📷</Text>
-                <Text style={styles.imagePlaceholderText}>Tocá para agregar una foto</Text>
+                <Text style={[styles.imagePlaceholderText, { color: tc.textMuted }]}>Tocá para agregar una foto</Text>
               </View>
             )}
           </Pressable>
         </View>
 
         {/* Galería */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Galería de trabajos</Text>
-          <Text style={styles.cardSubtitle}>Subí hasta 5 fotos mostrando tus trabajos anteriores.</Text>
+        <View style={[styles.card, { backgroundColor: tc.card }]}>
+          <Text style={[styles.cardTitle, { color: tc.text }]}>Galería de trabajos</Text>
+          <Text style={[styles.cardSubtitle, { color: tc.textSub }]}>Subí hasta 5 fotos mostrando tus trabajos anteriores.</Text>
 
           <View style={styles.galleryGrid}>
             {galleryImages.map((uri, i) => (
               <View key={i} style={styles.galleryThumbWrap}>
-                <Image source={{ uri }} style={styles.galleryThumb} />
+                <Image source={{ uri }} style={[styles.galleryThumb, { backgroundColor: tc.surface2 }]} />
                 <Pressable
                   style={styles.galleryRemove}
                   onPress={() => setGalleryImages((prev) => prev.filter((_, idx) => idx !== i))}
@@ -343,7 +345,7 @@ export default function ServiceFormScreen() {
             ))}
             {galleryImages.length < 5 && (
               <Pressable
-                style={styles.galleryAdd}
+                style={[styles.galleryAdd, { backgroundColor: tc.surface2, borderColor: tc.border }]}
                 onPress={async () => {
                   const result = await ImagePicker.launchImageLibraryAsync({
                     mediaTypes: ['images'],
@@ -357,8 +359,8 @@ export default function ServiceFormScreen() {
                   }
                 }}
               >
-                <Text style={styles.galleryAddIcon}>+</Text>
-                <Text style={styles.galleryAddLabel}>Agregar</Text>
+                <Text style={[styles.galleryAddIcon, { color: tc.textSub }]}>+</Text>
+                <Text style={[styles.galleryAddLabel, { color: tc.textSub }]}>Agregar</Text>
               </Pressable>
             )}
           </View>
@@ -391,7 +393,7 @@ export default function ServiceFormScreen() {
             </Pressable>
           )}
           {galleryImages.length > 0 && !isEditing && (
-            <Text style={styles.hint}>
+            <Text style={[styles.hint, { color: tc.textMuted }]}>
               Las fotos de la galería se podrán subir luego de publicar el servicio.
             </Text>
           )}

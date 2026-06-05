@@ -219,31 +219,33 @@ export default function OnBoarding() {
 
         {/* CTA Button */}
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <Pressable
-            onPressIn={() =>
-              Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()
-            }
-            onPressOut={() =>
-              Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start()
-            }
-            onPress={handleNext}
-            style={styles.btnOuter}
-          >
-            <LinearGradient
-              colors={[Colors.colorPrimary, "#c0002d", Colors.colorPrimaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.btn}
+          <View style={styles.btnShadow}>
+            <Pressable
+              onPressIn={() =>
+                Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start()
+              }
+              onPress={handleNext}
+              style={styles.btnOuter}
             >
-              <Text style={styles.btnText}>{isLast ? "Comenzar" : "Siguiente"}</Text>
-              <Ionicons
-                name={isLast ? "checkmark" : "arrow-forward"}
-                size={18}
-                color="#fff"
-                style={styles.btnIcon}
-              />
-            </LinearGradient>
-          </Pressable>
+              <LinearGradient
+                colors={[Colors.colorPrimary, "#c0002d", Colors.colorPrimaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.btn}
+              >
+                <Text style={styles.btnText}>{isLast ? "Comenzar" : "Siguiente"}</Text>
+                <Ionicons
+                  name={isLast ? "checkmark" : "arrow-forward"}
+                  size={18}
+                  color="#fff"
+                  style={styles.btnIcon}
+                />
+              </LinearGradient>
+            </Pressable>
+          </View>
         </Animated.View>
       </View>
     </View>
@@ -379,15 +381,18 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 2,
   },
-  btnOuter: {
+  btnShadow: {
     borderRadius: 16,
-    overflow: "hidden",
     shadowColor: Colors.colorPrimary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 6,
     marginTop: 4,
+  },
+  btnOuter: {
+    borderRadius: 16,
+    overflow: "hidden",
   },
   btn: {
     flexDirection: "row",

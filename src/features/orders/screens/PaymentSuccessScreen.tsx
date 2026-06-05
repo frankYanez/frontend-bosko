@@ -12,17 +12,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
-const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  green:   '#16A34A',
-  greenBg: '#F0FFF4',
-};
+function useC() {
+  const tc = useThemeColors();
+  return {
+    primary: TOKENS.color.primary,
+    dark:    TOKENS.color.primaryDark,
+    bg:      tc.bg,
+    card:    tc.card,
+    text:    tc.text,
+    sub:     tc.textSub,
+    green:   '#16A34A',
+    greenBg: '#F0FFF4',
+  };
+}
 
 function formatCurrency(amount: string | undefined) {
   const n = parseFloat(amount ?? '0');
@@ -36,6 +40,7 @@ export function PaymentSuccessScreen() {
     amount:      string;
     serviceName: string;
   }>();
+  const C = useC();
 
   // Animations
   const bgScale   = useRef(new Animated.Value(0)).current;
@@ -80,7 +85,7 @@ export function PaymentSuccessScreen() {
   const goHome = () => router.replace('/(tabs)');
 
   return (
-    <View style={[s.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[s.root, { backgroundColor: C.bg, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
       {/* ── Success icon ────────────────────────────────────────────────── */}
@@ -89,19 +94,21 @@ export function PaymentSuccessScreen() {
         <Animated.View style={[s.outerRing, { transform: [{ scale: bgScale }] }]} />
 
         {/* Inner circle */}
-        <Animated.View
-          style={[
-            s.innerCircle,
-            { transform: [{ scale: Animated.multiply(checkScale, pulse) }], opacity: checkFade },
-          ]}
-        >
-          <LinearGradient
-            colors={[C.green, '#15803d']}
-            style={s.checkGradient}
+        <View style={s.innerCircleShadow}>
+          <Animated.View
+            style={[
+              s.innerCircle,
+              { transform: [{ scale: Animated.multiply(checkScale, pulse) }], opacity: checkFade },
+            ]}
           >
-            <Ionicons name="checkmark" size={48} color="#fff" />
-          </LinearGradient>
-        </Animated.View>
+            <LinearGradient
+              colors={[C.green, '#15803d']}
+              style={s.checkGradient}
+            >
+              <Ionicons name="checkmark" size={48} color="#fff" />
+            </LinearGradient>
+          </Animated.View>
+        </View>
       </View>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
@@ -111,24 +118,24 @@ export function PaymentSuccessScreen() {
           { opacity: contentFade, transform: [{ translateY: contentY }] },
         ]}
       >
-        <Text style={s.title}>¡Pago exitoso!</Text>
-        <Text style={s.subtitle}>Tu pago fue procesado y el proveedor ya fue notificado</Text>
+        <Text style={[s.title, { color: C.text }]}>¡Pago exitoso!</Text>
+        <Text style={[s.subtitle, { color: C.sub }]}>Tu pago fue procesado y el proveedor ya fue notificado</Text>
 
         {/* Amount pill */}
-        <View style={s.amountPill}>
-          <Text style={s.amountLabel}>Monto pagado</Text>
+        <View style={[s.amountPill, { backgroundColor: C.card }]}>
+          <Text style={[s.amountLabel, { color: C.sub }]}>Monto pagado</Text>
           <Text style={s.amountValue}>{formatCurrency(params.amount)}</Text>
         </View>
 
         {/* Service card */}
-        <View style={s.detailCard}>
+        <View style={[s.detailCard, { backgroundColor: C.card }]}>
           <View style={s.detailRow}>
             <View style={s.detailIcon}>
               <Ionicons name="construct-outline" size={16} color={C.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={s.detailLabel}>Servicio</Text>
-              <Text style={s.detailValue}>{params.serviceName}</Text>
+              <Text style={[s.detailLabel, { color: C.sub }]}>Servicio</Text>
+              <Text style={[s.detailValue, { color: C.text }]}>{params.serviceName}</Text>
             </View>
           </View>
 
@@ -139,13 +146,13 @@ export function PaymentSuccessScreen() {
               <Ionicons name="shield-checkmark-outline" size={16} color={C.green} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={s.detailLabel}>Estado del pago</Text>
+              <Text style={[s.detailLabel, { color: C.sub }]}>Estado del pago</Text>
               <Text style={[s.detailValue, { color: C.green }]}>En garantía hasta completar</Text>
             </View>
           </View>
         </View>
 
-        <Text style={s.escrowNote}>
+        <Text style={[s.escrowNote, { color: C.sub }]}>
           El dinero se liberará al proveedor cuando marques el trabajo como completado
         </Text>
       </Animated.View>
@@ -170,7 +177,7 @@ export function PaymentSuccessScreen() {
         </Pressable>
 
         <Pressable onPress={goHome} style={s.secondaryBtn}>
-          <Text style={s.secondaryBtnText}>Ir al inicio</Text>
+          <Text style={[s.secondaryBtnText, { color: C.sub }]}>Ir al inicio</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -183,7 +190,6 @@ const CIRCLE_SIZE = 120;
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.bg,
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
@@ -209,11 +215,16 @@ const s = StyleSheet.create({
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
     overflow: 'hidden',
-    shadowColor: C.green,
+  },
+  innerCircleShadow: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    shadowColor: '#16A34A',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
-    elevation: 10,
+    elevation: 6,
   },
   checkGradient: {
     flex: 1,
@@ -230,19 +241,16 @@ const s = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: C.text,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
-    color: C.sub,
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: 280,
   },
 
   amountPill: {
-    backgroundColor: C.card,
     borderRadius: 16,
     paddingHorizontal: 28,
     paddingVertical: 14,
@@ -254,12 +262,11 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  amountLabel: { fontSize: 12, color: C.sub, fontWeight: '500' },
-  amountValue: { fontSize: 26, fontWeight: '800', color: C.primary, letterSpacing: -0.5 },
+  amountLabel: { fontSize: 12, fontWeight: '500' },
+  amountValue: { fontSize: 26, fontWeight: '800', color: TOKENS.color.primary, letterSpacing: -0.5 },
 
   detailCard: {
     width: '100%',
-    backgroundColor: C.card,
     borderRadius: 16,
     padding: 16,
     gap: 10,
@@ -271,13 +278,12 @@ const s = StyleSheet.create({
   },
   detailRow:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
   detailIcon:    { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FFF0F3', alignItems: 'center', justifyContent: 'center' },
-  detailLabel:   { fontSize: 11, color: C.sub, marginBottom: 1 },
-  detailValue:   { fontSize: 14, fontWeight: '600', color: C.text },
+  detailLabel:   { fontSize: 11, marginBottom: 1 },
+  detailValue:   { fontSize: 14, fontWeight: '600' },
   detailDivider: { height: 1, backgroundColor: '#EDEDF0' },
 
   escrowNote: {
     fontSize: 12,
-    color: C.sub,
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: 280,
@@ -297,5 +303,5 @@ const s = StyleSheet.create({
   },
   primaryBtnText:   { fontSize: 16, fontWeight: '700', color: '#fff' },
   secondaryBtn:     { alignItems: 'center', paddingVertical: 14 },
-  secondaryBtnText: { fontSize: 15, fontWeight: '600', color: C.sub },
+  secondaryBtnText: { fontSize: 15, fontWeight: '600' },
 });

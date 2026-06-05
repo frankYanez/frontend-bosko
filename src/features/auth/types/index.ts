@@ -7,7 +7,11 @@ export interface Credentials {
 }
 
 /** Payload completo para registrar un nuevo usuario */
-export interface RegisterUserPayload extends Credentials {}
+export interface RegisterUserPayload extends Credentials {
+  firstName: string;
+  lastName:  string;
+  userName:  string;
+}
 
 /** Usuario incluido en la respuesta de login/register */
 export interface AuthUser {

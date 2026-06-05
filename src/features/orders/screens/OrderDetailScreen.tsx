@@ -28,6 +28,7 @@ import { useOrders } from '../state/OrdersContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 // Pasos del timeline en orden
 const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
@@ -40,6 +41,7 @@ const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
 const STATUS_ORDER: OrderStatus[] = ['pending', 'accepted', 'in_progress', 'completed'];
 
 function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
+  const tc = useThemeColors();
   // Si está cancelada o en disputa, no mostramos el timeline normal
   if (currentStatus === 'cancelled' || currentStatus === 'disputed') {
     return (
@@ -85,7 +87,7 @@ function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
                 <View style={[styles.timelineLine, done && idx < currentIdx && styles.timelineLineDone]} />
               )}
             </View>
-            <Text style={[styles.timelineLabel, done && styles.timelineLabelDone]}>
+            <Text style={[styles.timelineLabel, done && styles.timelineLabelDone, { color: done ? tc.text : tc.textSub }]}>
               {step.label}
             </Text>
           </View>
@@ -96,6 +98,7 @@ function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
 }
 
 export default function OrderDetailScreen() {
+  const tc = useThemeColors();
   const params = useLocalSearchParams<{ id: string }>();
   const { getOrder, acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
   const { profile } = useProfile();
@@ -183,7 +186,7 @@ export default function OrderDetailScreen() {
   if (!order) {
     return (
       <View style={[styles.background, styles.centered]}>
-        <Text style={styles.notFoundText}>No se encontró la orden</Text>
+        <Text style={[styles.notFoundText, { color: tc.textSub }]}>No se encontró la orden</Text>
         <Pressable onPress={() => router.back()} style={styles.backLink}>
           <Text style={styles.backLinkText}>← Volver</Text>
         </Pressable>
@@ -218,26 +221,26 @@ export default function OrderDetailScreen() {
           <Pressable
             onPress={() => router.back()}
             hitSlop={12}
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: tc.surface }]}
           >
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={styles.headerTitle}>Detalle de orden</Text>
+          <Text style={[styles.headerTitle, { color: tc.text }]}>Detalle de orden</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Nombre del servicio + fecha */}
         <Animated.View style={{ opacity: anims[0], transform: [{ translateY: anims[0].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.serviceName}>{order.service?.title || 'Servicio'}</Text>
+          <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+            <Text style={[styles.serviceName, { color: tc.text }]}>{order.service?.title || 'Servicio'}</Text>
             <View style={styles.metaRow}>
-              <MaterialIcons name="schedule" size={14} color={TOKENS.color.sub} />
-              <Text style={styles.metaText}>{date}</Text>
+              <MaterialIcons name="schedule" size={14} color={tc.textSub} />
+              <Text style={[styles.metaText, { color: tc.textSub }]}>{date}</Text>
             </View>
             {order.address && (
               <View style={styles.metaRow}>
-                <MaterialIcons name="location-on" size={14} color={TOKENS.color.sub} />
-                <Text style={styles.metaText}>{order.address}</Text>
+                <MaterialIcons name="location-on" size={14} color={tc.textSub} />
+                <Text style={[styles.metaText, { color: tc.textSub }]}>{order.address}</Text>
               </View>
             )}
           </BlurView>
@@ -245,17 +248,17 @@ export default function OrderDetailScreen() {
 
         {/* Timeline */}
         <Animated.View style={{ opacity: anims[1], transform: [{ translateY: anims[1].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.sectionTitle}>Estado de la orden</Text>
+          <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+            <Text style={[styles.sectionTitle, { color: tc.text }]}>Estado de la orden</Text>
             <Timeline currentStatus={order.status} />
           </BlurView>
         </Animated.View>
 
         {/* Mensaje del cliente */}
         <Animated.View style={{ opacity: anims[2], transform: [{ translateY: anims[2].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <BlurView intensity={25} tint="light" style={styles.card}>
-            <Text style={styles.sectionTitle}>Mensaje</Text>
-            <Text style={styles.messageText}>{order.clientMessage}</Text>
+          <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+            <Text style={[styles.sectionTitle, { color: tc.text }]}>Mensaje</Text>
+            <Text style={[styles.messageText, { color: tc.textSub }]}>{order.clientMessage}</Text>
           </BlurView>
         </Animated.View>
 
@@ -407,12 +410,12 @@ export default function OrderDetailScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>{reasonModal?.title}</Text>
+          <View style={[styles.modalBox, { backgroundColor: tc.card }]}>
+            <Text style={[styles.modalTitle, { color: tc.text }]}>{reasonModal?.title}</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, { borderColor: tc.border, backgroundColor: tc.surface2, color: tc.text }]}
               placeholder={reasonModal?.placeholder}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={tc.textSub}
               value={reasonText}
               onChangeText={setReasonText}
               multiline
@@ -420,10 +423,10 @@ export default function OrderDetailScreen() {
             />
             <View style={styles.modalActions}>
               <Pressable
-                style={styles.modalCancel}
+                style={[styles.modalCancel, { borderColor: tc.border }]}
                 onPress={() => setReasonModal(null)}
               >
-                <Text style={styles.modalCancelText}>Cancelar</Text>
+                <Text style={[styles.modalCancelText, { color: tc.textSub }]}>Cancelar</Text>
               </Pressable>
               <Pressable
                 style={[styles.modalConfirm, !reasonText.trim() && { opacity: 0.4 }]}

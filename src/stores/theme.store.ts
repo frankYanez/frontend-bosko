@@ -6,22 +6,54 @@ export type ThemeMode = 'dark' | 'light';
 
 export const THEME_COLORS = {
   dark: {
-    bg:       '#0D0D0D',
-    surface:  '#1A1A1A',
-    surface2: '#252525',
-    border:   'rgba(255,255,255,0.08)',
-    text:     '#FFFFFF',
-    textSub:  'rgba(255,255,255,0.55)',
-    card:     '#1E1E1E',
+    // Fondos
+    bg:           '#0B0A0F',
+    bgGlow:       'rgba(133,0,33,0.16)',
+    bgGlowFade:   'rgba(133,0,33,0.0)',
+    surface:      '#131118',
+    surface2:     '#1C1925',
+    card:         '#18151F',
+    cardBorder:   'rgba(255,255,255,0.07)',
+
+    // Texto
+    text:         '#F2F0F8',
+    textSub:      'rgba(242,240,248,0.52)',
+    textMuted:    'rgba(242,240,248,0.28)',
+
+    // UI
+    border:       'rgba(255,255,255,0.08)',
+    divider:      'rgba(255,255,255,0.05)',
+    overlay:      'rgba(0,0,0,0.70)',
+    accent:       'rgba(133,0,33,0.15)',
+
+    // Brand
+    primary:      '#850021',
+    primaryLight: '#C0002F',
   },
   light: {
-    bg:       '#FFFFFF',
-    surface:  '#F5F5F5',
-    surface2: '#EBEBEB',
-    border:   'rgba(0,0,0,0.08)',
-    text:     '#1A1A1A',
-    textSub:  'rgba(0,0,0,0.45)',
-    card:     '#FFFFFF',
+    // Fondos
+    bg:           '#F9F7FB',
+    bgGlow:       'rgba(133,0,33,0.06)',
+    bgGlowFade:   'rgba(133,0,33,0.0)',
+    surface:      '#FFFFFF',
+    surface2:     '#F0EDF5',
+    card:         '#FFFFFF',
+    cardBorder:   'rgba(0,0,0,0.06)',
+
+    // Texto
+    text:         '#1A1520',
+    textSub:      'rgba(26,21,32,0.52)',
+    textMuted:    'rgba(26,21,32,0.32)',
+
+    // UI
+    border:       'rgba(0,0,0,0.07)',
+    divider:      'rgba(0,0,0,0.05)',
+    overlay:      'rgba(0,0,0,0.40)',
+    accent:       'rgba(133,0,33,0.06)',
+
+    // Brand
+    primary:      '#850021',
+    primaryLight: '#C0002F',
   },
 } as const;
 

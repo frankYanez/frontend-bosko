@@ -197,8 +197,9 @@ export default function PlansScreen() {
 
             return (
               <AnimatedCard key={plan.id} index={idx}>
+                <View style={[s.planCardShadow, isPopular && s.planCardShadowPopular]}>
                 <Pressable
-                  style={[s.planCard, isPopular && s.planCardPopular]}
+                  style={s.planCard}
                   onPress={() => { if (!isCurrent && !subscribing) handleSubscribe(plan.id); }}
                   disabled={isCurrent || !!subscribing}
                 >
@@ -259,7 +260,8 @@ export default function PlansScreen() {
                     )}
                   </View>
                 </Pressable>
-              </AnimatedCard>
+              </View>
+            </AnimatedCard>
             );
           })}
         </ScrollView>
@@ -324,16 +326,19 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.9)',
   },
   freeNoteText: { flex: 1, fontSize: 13, color: TOKENS.color.text, lineHeight: 18 },
-  planCard: {
+  planCardShadow: {
     borderRadius: 24,
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
   },
-  planCardPopular: { shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+  planCardShadowPopular: { shadowOpacity: 0.15, shadowRadius: 20, elevation: 6 },
+  planCard: {
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
   planInner: {
     padding: 20,
     gap: 16,

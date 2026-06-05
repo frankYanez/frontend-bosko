@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -23,35 +23,44 @@ import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
 import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors } from '@/stores/theme.store';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const { width: W } = Dimensions.get('window');
 
-const C = {
-  primary:  TOKENS.color.primary,
-  dark:     TOKENS.color.primaryDark,
-  bg:       '#F7F7FA',
-  card:     '#FFFFFF',
-  text:     '#1A1A1A',
-  sub:      '#6B7280',
-  border:   '#EDEDF0',
-  accent:   '#FFF0F3',
-  blue:     '#3B82F6',
-  green:    '#22C55E',
-  amber:    '#F59E0B',
-  red:      '#EF4444',
+// Colores semánticos fijos (no cambian con el tema)
+const SEMANTIC = {
+  primary: TOKENS.color.primary,
+  dark:    TOKENS.color.primaryDark,
+  blue:    '#3B82F6',
+  green:   '#22C55E',
+  amber:   '#F59E0B',
+  red:     '#EF4444',
 };
+
+type CPalette = ReturnType<typeof makeC>;
+function makeC(tc: ReturnType<typeof useThemeColors>) {
+  return {
+    ...SEMANTIC,
+    bg:     tc.bg,
+    card:   tc.card,
+    text:   tc.text,
+    sub:    tc.textSub,
+    border: tc.border,
+    accent: tc.accent,
+  };
+}
 
 // ── KYC badge config ─────────────────────────────────────────────────────────
 const KYC_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
-  pending:      { label: 'KYC Pendiente',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
-  in_progress:  { label: 'KYC Pendiente',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
-  not_started:  { label: 'Sin verificar',  color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
-  approved:     { label: 'Verificado',     color: C.green,  bg: '#F0FFF4', icon: 'checkmark-circle' },
-  rejected:     { label: 'KYC Rechazado',  color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
-  declined:     { label: 'KYC Rechazado',  color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
-  failed:       { label: 'KYC Fallido',    color: C.red,    bg: '#FEF2F2', icon: 'close-circle' },
-  expired:      { label: 'KYC Vencido',    color: C.amber,  bg: '#FFF8E1', icon: 'time-outline' },
+  pending:      { label: 'KYC Pendiente',  color: SEMANTIC.amber, bg: '#FFF8E1', icon: 'time-outline' },
+  in_progress:  { label: 'KYC Pendiente',  color: SEMANTIC.amber, bg: '#FFF8E1', icon: 'time-outline' },
+  not_started:  { label: 'Sin verificar',  color: SEMANTIC.amber, bg: '#FFF8E1', icon: 'time-outline' },
+  approved:     { label: 'Verificado',     color: SEMANTIC.green, bg: '#F0FFF4', icon: 'checkmark-circle' },
+  rejected:     { label: 'KYC Rechazado',  color: SEMANTIC.red,   bg: '#FEF2F2', icon: 'close-circle' },
+  declined:     { label: 'KYC Rechazado',  color: SEMANTIC.red,   bg: '#FEF2F2', icon: 'close-circle' },
+  failed:       { label: 'KYC Fallido',    color: SEMANTIC.red,   bg: '#FEF2F2', icon: 'close-circle' },
+  expired:      { label: 'KYC Vencido',    color: SEMANTIC.amber, bg: '#FFF8E1', icon: 'time-outline' },
 };
 
 // ── Count-up hook ─────────────────────────────────────────────────────────────
@@ -79,15 +88,45 @@ function StatCell({
 }: {
   value: number; label: string; suffix?: string; color?: string;
 }) {
+  const tc = useThemeColors();
   const displayed = useCountUp(value);
   return (
-    <View style={s.statCell}>
-      <Text style={[s.statValue, color ? { color } : null]}>
+    <View style={ss.statCell}>
+      <Text style={[ss.statValue, { color: color ?? tc.text }]}>
         {suffix === 'fixed' ? displayed.toFixed(1) : displayed}
         {suffix && suffix !== 'fixed' ? suffix : ''}
       </Text>
-      <Text style={s.statLabel}>{label}</Text>
+      <Text style={[ss.statLabel, { color: tc.textSub }]}>{label}</Text>
     </View>
+  );
+}
+
+// ── Stats shimmer skeleton ────────────────────────────────────────────────────
+function StatsShimmer({ cells }: { cells: number }) {
+  const tc = useThemeColors();
+  const shimmer = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.7] });
+  const shimBg = tc.border;
+  return (
+    <>
+      {Array.from({ length: cells }).map((_, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <View style={[ss.statDivider, { backgroundColor: tc.border }]} />}
+          <Animated.View style={[ss.statCell, { opacity }]}>
+            <View style={[ss.shimmerValue, { backgroundColor: shimBg }]} />
+            <View style={[ss.shimmerLabel, { backgroundColor: shimBg }]} />
+          </Animated.View>
+        </React.Fragment>
+      ))}
+    </>
   );
 }
 
@@ -121,20 +160,25 @@ function QuickCard({
         onPressIn={() => Animated.spring(scale, { toValue: 0.93, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(scale, { toValue: 1,    useNativeDriver: true }).start()}
         onPress={onPress}
-        style={s.quickCard}
+        style={ss.quickCard}
       >
-        <Animated.View style={[s.quickIconWrap, { backgroundColor: color, transform: [{ scale }] }]}>
+        <Animated.View style={[ss.quickIconWrap, { backgroundColor: color, transform: [{ scale }] }]}>
           <Ionicons name={icon} size={22} color={iconColor} />
         </Animated.View>
-        <Text style={s.quickLabel}>{label}</Text>
+        <QuickLabel label={label} />
       </Pressable>
     </Animated.View>
   );
 }
 
+function QuickLabel({ label }: { label: string }) {
+  const tc = useThemeColors();
+  return <Text style={[ss.quickLabel, { color: tc.text }]}>{label}</Text>;
+}
+
 // ── Settings row ─────────────────────────────────────────────────────────────
 function SettingsRow({
-  icon, iconBg, iconColor, label, badge, badgeColor, badgeBg, onPress, danger,
+  icon, iconBg, iconColor, label, badge, badgeColor, badgeBg, onPress, danger, accessory,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   iconBg: string;
@@ -143,54 +187,67 @@ function SettingsRow({
   badge?: string;
   badgeColor?: string;
   badgeBg?: string;
-  onPress: () => void;
+  onPress?: () => void;
   danger?: boolean;
+  accessory?: React.ReactNode;
 }) {
+  const tc = useThemeColors();
   const scale = useRef(new Animated.Value(1)).current;
 
-  return (
-    <Pressable
-      onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true }).start()}
-      onPressOut={() => Animated.spring(scale, { toValue: 1,   useNativeDriver: true }).start()}
-      onPress={onPress}
-      style={s.settingsRow}
-    >
-      <Animated.View style={[s.settingsInner, { transform: [{ scale }] }]}>
-        <View style={[s.settingsIcon, { backgroundColor: iconBg }]}>
-          <Ionicons name={icon} size={18} color={iconColor} />
-        </View>
-        <Text style={[s.settingsLabel, danger && { color: C.red }]}>{label}</Text>
-        <View style={s.settingsRight}>
-          {badge ? (
-            <View style={[s.badge, { backgroundColor: badgeBg ?? C.accent }]}>
-              <Text style={[s.badgeText, { color: badgeColor ?? C.primary }]}>{badge}</Text>
-            </View>
-          ) : null}
-          {!danger && (
-            <Ionicons name="chevron-forward" size={16} color={C.border} />
-          )}
-        </View>
-      </Animated.View>
-    </Pressable>
+  const inner = (
+    <Animated.View style={[ss.settingsInner, { transform: [{ scale }] }]}>
+      <View style={[ss.settingsIcon, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
+      <Text style={[ss.settingsLabel, { color: danger ? SEMANTIC.red : tc.text }]}>{label}</Text>
+      <View style={ss.settingsRight}>
+        {badge ? (
+          <View style={[ss.badge, { backgroundColor: badgeBg ?? tc.accent }]}>
+            <Text style={[ss.badgeText, { color: badgeColor ?? SEMANTIC.primary }]}>{badge}</Text>
+          </View>
+        ) : null}
+        {accessory ? accessory : !danger ? (
+          <Ionicons name="chevron-forward" size={16} color={tc.border} />
+        ) : null}
+      </View>
+    </Animated.View>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true }).start()}
+        onPressOut={() => Animated.spring(scale, { toValue: 1,   useNativeDriver: true }).start()}
+        onPress={onPress}
+        style={ss.settingsRow}
+      >
+        {inner}
+      </Pressable>
+    );
+  }
+
+  return <View style={ss.settingsRow}>{inner}</View>;
 }
 
 // ── Settings group ────────────────────────────────────────────────────────────
 function SettingsGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  const tc = useThemeColors();
   return (
-    <View style={s.group}>
-      <Text style={s.groupTitle}>{title}</Text>
-      <View style={s.groupCard}>{children}</View>
+    <View style={ss.group}>
+      <Text style={[ss.groupTitle, { color: tc.textSub }]}>{title}</Text>
+      <View style={[ss.groupCard, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>{children}</View>
     </View>
   );
 }
 
 // ── Availability toggle ───────────────────────────────────────────────────────
 function AvailabilityToggle({
+  s,
   isAvailable,
   onToggle,
   toggling,
 }: {
+  s: ReturnType<typeof makeStyles>;
   isAvailable: boolean;
   onToggle: () => void;
   toggling: boolean;
@@ -206,7 +263,7 @@ function AvailabilityToggle({
     }).start();
   }, [isAvailable]);
 
-  const thumbColor = isAvailable ? C.green : C.amber;
+  const thumbColor = isAvailable ? SEMANTIC.green : SEMANTIC.amber;
   const bgColor    = isAvailable ? '#DCFCE7' : '#FFF8E1';
   const label      = isAvailable ? 'Disponible' : 'Ocupado';
   const dotX       = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [3, 27] });
@@ -231,6 +288,9 @@ function AvailabilityToggle({
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const themeColors = useThemeColors();
+  const isDark = useIsDark();
+  const C = useMemo(() => makeC(themeColors), [themeColors]);
+  const s = useMemo(() => makeStyles(C), [C]);
   const { authState, logout } = useAuth();
   const { profile, isLoading, refreshProfile, updateProfile, toggleAvailability } = useProfile();
   const { verification } = useKYC();
@@ -298,7 +358,7 @@ export const ProfileScreen: React.FC = () => {
     : '';
 
   return (
-    <View style={[s.root, { paddingTop: insets.top, backgroundColor: themeColors.bg }]}>
+    <View style={[s.root, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
 
       <ScrollView
@@ -325,26 +385,28 @@ export const ProfileScreen: React.FC = () => {
           <View style={[s.heroBubble, { width: 100, height: 100, top: 20, right: 100, opacity: 0.06 }]} />
 
           <View style={s.avatarWrap}>
-            <Animated.View
-              style={[
-                s.avatarRing,
-                {
-                  transform: [{ scale: avatarAnim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
-                  opacity: avatarAnim,
-                },
-              ]}
-            >
-              {profile?.avatarUrl ? (
-                <Image source={{ uri: profile.avatarUrl }} style={s.avatar} contentFit="cover" />
-              ) : (
-                <LinearGradient colors={[C.primary, C.dark]} style={s.avatarFallback}>
+            <View style={s.avatarShadow}>
+              <Animated.View
+                style={[
+                  s.avatarRing,
+                  {
+                    transform: [{ scale: avatarAnim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
+                    opacity: avatarAnim,
+                  },
+                ]}
+              >
+                {profile?.avatarUrl ? (
+                  <Image source={{ uri: profile.avatarUrl }} style={s.avatar} contentFit="cover" />
+                ) : (
+                  <LinearGradient colors={[C.primary, C.dark]} style={s.avatarFallback}>
                   <Text style={s.avatarInitial}>
-                    {(profile?.firstName ?? 'U')[0].toUpperCase()}
+                    {(profile?.firstName?.[0] ?? 'U').toUpperCase()}
                   </Text>
                 </LinearGradient>
               )}
             </Animated.View>
           </View>
+        </View>
         </View>
 
         {/* ── Profile info ─────────────────────────────────────────────── */}
@@ -387,6 +449,7 @@ export const ProfileScreen: React.FC = () => {
                 <Text style={[s.kycText, { color: kycCfg.color }]}>{kycCfg.label}</Text>
               </Pressable>
               <AvailabilityToggle
+                s={s}
                 isAvailable={profile?.isAvailable ?? true}
                 onToggle={handleToggleAvailability}
                 toggling={availToggling}
@@ -406,19 +469,21 @@ export const ProfileScreen: React.FC = () => {
 
         {/* ── Stats (distintas según rol) ───────────────────────────────── */}
         <Animated.View style={[s.statsCard, sec(1)]}>
-          {isProvider ? (
+          {stats === null ? (
+            <StatsShimmer cells={isProvider ? 4 : 2} />
+          ) : isProvider ? (
             <>
-              <StatCell value={stats?.servicesCount ?? 0}   label="Servicios" />
+              <StatCell value={stats.servicesCount ?? 0}   label="Servicios" />
               <View style={s.statDivider} />
-              <StatCell value={stats?.averageRating ?? 0}   label="Valoración" suffix="fixed" color="#F59E0B" />
+              <StatCell value={stats.averageRating ?? 0}   label="Valoración" suffix="fixed" color="#F59E0B" />
               <View style={s.statDivider} />
-              <StatCell value={stats?.reviewsCount ?? 0}    label="Reseñas" />
+              <StatCell value={stats.reviewsCount ?? 0}    label="Reseñas" />
               <View style={s.statDivider} />
-              <StatCell value={stats?.completedOrders ?? 0} label="Completados" color={C.green} />
+              <StatCell value={stats.completedOrders ?? 0} label="Completados" color={C.green} />
             </>
           ) : (
             <>
-              <StatCell value={stats?.completedOrders ?? 0} label="Pedidos" color={C.green} />
+              <StatCell value={stats.completedOrders ?? 0} label="Pedidos" color={C.green} />
               <View style={s.statDivider} />
               <Pressable onPress={() => router.push('/(tabs)/profile/favorites')}>
                 <StatCell value={favCount} label="Favoritos" color={C.primary} />
@@ -484,10 +549,11 @@ export const ProfileScreen: React.FC = () => {
         {/* ── CTA "Quiero ser proveedor" (solo USER) ────────────────────── */}
         {!isProvider && (
           <Animated.View style={[s.section, sec(2)]}>
-            <Pressable
-              onPress={() => router.push('/(tabs)/profile/become-provider')}
-              style={s.providerCta}
-            >
+            <View style={s.providerCtaShadow}>
+              <Pressable
+                onPress={() => router.push('/(tabs)/profile/become-provider')}
+                style={s.providerCta}
+              >
               <LinearGradient
                 colors={[C.dark, C.primary]}
                 start={{ x: 0, y: 0 }}
@@ -504,6 +570,7 @@ export const ProfileScreen: React.FC = () => {
                 <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
               </LinearGradient>
             </Pressable>
+          </View>
           </Animated.View>
         )}
 
@@ -580,6 +647,14 @@ export const ProfileScreen: React.FC = () => {
               label="Cambiar Contraseña"
               onPress={() => router.push('/(tabs)/profile/ChangePassword')}
             />
+            <View style={s.rowSep} />
+            <SettingsRow
+              icon={isDark ? 'moon-outline' : 'sunny-outline'}
+              iconBg={isDark ? 'rgba(192,132,252,0.12)' : 'rgba(245,158,11,0.12)'}
+              iconColor={isDark ? '#C084FC' : '#F59E0B'}
+              label={isDark ? 'Modo Oscuro' : 'Modo Claro'}
+              accessory={<ThemeToggle />}
+            />
           </SettingsGroup>
 
           <View style={s.dangerGroup}>
@@ -614,7 +689,32 @@ export const ProfileScreen: React.FC = () => {
 };
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
+// ss = estilos estáticos sin colores (para sub-components module-level)
+// makeStyles(C) = estilos con colores para el componente principal
+const ss = StyleSheet.create({
+  // layout-only — sub-components lean here
+  statCell:    { flex: 1, alignItems: 'center', gap: 3 },
+  statValue:   { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  statLabel:   { fontSize: 11, letterSpacing: 0.3 },
+  statDivider: { width: 1, height: 36, marginVertical: 6 },
+  shimmerValue: { width: 44, height: 22, borderRadius: 6, marginBottom: 5 },
+  shimmerLabel: { width: 36, height: 11, borderRadius: 4 },
+  quickCard:    { alignItems: 'center', gap: 7 },
+  quickIconWrap:{ width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  quickLabel:   { fontSize: 11.5, fontWeight: '500' },
+  settingsRow:  { borderRadius: 12, overflow: 'hidden' },
+  settingsInner:{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, gap: 12 },
+  settingsIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  settingsLabel:{ flex: 1, fontSize: 15, fontWeight: '500' },
+  settingsRight:{ flexDirection: 'row', alignItems: 'center', gap: 8 },
+  badge:        { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeText:    { fontSize: 12, fontWeight: '600' },
+  group:        { gap: 8 },
+  groupTitle:   { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase', paddingHorizontal: 4 },
+  groupCard:    { borderRadius: 18, overflow: 'hidden', borderWidth: 1 },
+});
+
+function makeStyles(C: CPalette) { return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: C.bg,
@@ -642,6 +742,16 @@ const s = StyleSheet.create({
     bottom: -52,
     left: 20,
   },
+  avatarShadow: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
   avatarRing: {
     width: 104,
     height: 104,
@@ -649,11 +759,6 @@ const s = StyleSheet.create({
     borderWidth: 4,
     borderColor: C.card,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
     backgroundColor: C.card,
   },
   avatar: {
@@ -807,6 +912,19 @@ const s = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
+  shimmerValue: {
+    width: 44,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    marginBottom: 5,
+  },
+  shimmerLabel: {
+    width: 36,
+    height: 11,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
   statCell: {
     flex: 1,
     alignItems: 'center',
@@ -884,15 +1002,18 @@ const s = StyleSheet.create({
     marginBottom: 8,
     paddingLeft: 4,
   },
-  groupCard: {
-    backgroundColor: C.card,
+  groupCardShadow: {
     borderRadius: 18,
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
+  },
+  groupCard: {
+    backgroundColor: C.card,
+    borderRadius: 18,
+    overflow: 'hidden',
   },
   settingsRow: {
     paddingHorizontal: 16,
@@ -971,14 +1092,17 @@ const s = StyleSheet.create({
   },
 
   // CTA "Quiero ser proveedor"
-  providerCta: {
+  providerCtaShadow: {
     borderRadius: 18,
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
+  },
+  providerCta: {
+    borderRadius: 18,
+    overflow: 'hidden',
   },
   providerCtaGrad: {
     flexDirection: 'row',
@@ -1008,4 +1132,4 @@ const s = StyleSheet.create({
     color: 'rgba(255,255,255,0.72)',
     lineHeight: 17,
   },
-});
+}); }

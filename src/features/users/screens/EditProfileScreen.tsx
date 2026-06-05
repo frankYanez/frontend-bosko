@@ -251,31 +251,33 @@ export default function EditProfileScreen() {
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 350, delay: 200 }}
         >
-          <Pressable
-            onPress={handleSave}
-            disabled={!hasChanges || saving || isLoading}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              (!hasChanges || saving || isLoading) && styles.saveBtnDisabled,
-              pressed && styles.saveBtnPressed,
-            ]}
-          >
-            <LinearGradient
-              colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.saveGrad}
+          <View style={styles.saveBtnShadow}>
+            <Pressable
+              onPress={handleSave}
+              disabled={!hasChanges || saving || isLoading}
+              style={({ pressed }) => [
+                styles.saveBtn,
+                (!hasChanges || saving || isLoading) && styles.saveBtnDisabled,
+                pressed && styles.saveBtnPressed,
+              ]}
             >
-              {saving || isLoading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <MaterialIcons name="check" size={20} color="#fff" />
-                  <Text style={styles.saveText}>Guardar Cambios</Text>
-                </>
-              )}
-            </LinearGradient>
-          </Pressable>
+              <LinearGradient
+                colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.saveGrad}
+              >
+                {saving || isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons name="check" size={20} color="#fff" />
+                    <Text style={styles.saveText}>Guardar Cambios</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </Pressable>
+          </View>
         </MotiView>
       </ScrollView>
     </LinearGradient>
@@ -415,14 +417,17 @@ const styles = StyleSheet.create({
     color: 'rgba(107,107,107,0.6)',
   },
   // Save
-  saveBtn: {
+  saveBtnShadow: {
     borderRadius: 16,
-    overflow: 'hidden',
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
+  },
+  saveBtn: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   saveBtnDisabled: { opacity: 0.5 },
   saveBtnPressed: { transform: [{ scale: 0.97 }] },

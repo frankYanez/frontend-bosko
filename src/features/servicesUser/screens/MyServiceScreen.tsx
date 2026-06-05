@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
+import { useThemeColors } from '@/stores/theme.store';
 
 const BRAND = '#850021';
 
@@ -33,27 +34,29 @@ function ServiceCard({
   service,
   onEdit,
   onDelete,
+  tc,
 }: {
   service: Service;
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
+  tc: ReturnType<typeof useThemeColors>;
 }) {
   const categoryLabel = getCategoryLabel(service.category);
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.border }]}>
       {service.image ? (
         <Image source={{ uri: service.image }} style={styles.cardImage} />
       ) : (
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>Sin imagen</Text>
+        <View style={[styles.imagePlaceholder, { backgroundColor: tc.surface2 }]}>
+          <Text style={[styles.imagePlaceholderText, { color: tc.textSub }]}>Sin imagen</Text>
         </View>
       )}
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{service.title}</Text>
-        <Text style={styles.cardDescription}>{service.description}</Text>
+        <Text style={[styles.cardTitle, { color: tc.text }]}>{service.title}</Text>
+        <Text style={[styles.cardDescription, { color: tc.textSub }]}>{service.description}</Text>
         <View style={styles.cardMeta}>
           <Text style={styles.cardCategory}>{categoryLabel}</Text>
-          <Text style={styles.cardPrice}>{formatPrice(service.price)}</Text>
+          <Text style={[styles.cardPrice, { color: tc.text }]}>{formatPrice(service.price)}</Text>
         </View>
         <View style={styles.cardActions}>
           <Pressable style={styles.editButton} onPress={() => onEdit(service)}>
@@ -74,6 +77,7 @@ function ServiceCard({
 export default function MyServiceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
   const { myServices: services, myServicesLoading: loading, loadMyServices: loadServices, removeService } = useServices();
 
   const handleEdit = (service: Service) => {
@@ -118,7 +122,7 @@ export default function MyServiceScreen() {
   );
 
   const renderService = ({ item }: { item: Service }) => (
-    <ServiceCard service={item} onEdit={handleEdit} onDelete={handleDelete} />
+    <ServiceCard service={item} onEdit={handleEdit} onDelete={handleDelete} tc={tc} />
   );
 
   const planMessage =
@@ -127,13 +131,13 @@ export default function MyServiceScreen() {
       : "Administra y actualiza tus servicios publicados.";
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
       {/* Header con back */}
       <View style={styles.headerRow}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={10}>
-          <Text style={styles.backIcon}>‹</Text>
+        <Pressable style={[styles.backBtn, { backgroundColor: tc.surface }]} onPress={() => router.back()} hitSlop={10}>
+          <Text style={[styles.backIcon, { color: tc.text }]}>‹</Text>
         </Pressable>
-        <Text style={styles.header}>Mis servicios</Text>
+        <Text style={[styles.header, { color: tc.text }]}>Mis servicios</Text>
         <Pressable
           style={styles.addBtn}
           onPress={() => router.push('/service-form')}
@@ -142,7 +146,7 @@ export default function MyServiceScreen() {
           <Text style={styles.addBtnText}>+ Publicar</Text>
         </Pressable>
       </View>
-      <Text style={styles.planMessage}>{planMessage}</Text>
+      <Text style={[styles.planMessage, { color: tc.textSub }]}>{planMessage}</Text>
 
       {loading && services.length === 0 ? (
         <View style={styles.loader}>

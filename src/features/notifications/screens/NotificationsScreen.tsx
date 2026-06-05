@@ -72,32 +72,33 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
   };
 
   return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      style={({ pressed }) => [
-        s.itemWrap,
-        !item.read && s.itemUnread,
-        pressed && s.itemPressed,
-      ]}
-    >
-      <View style={s.itemInner}>
-        {!item.read && <View style={s.unreadDot} />}
-        <View style={[s.itemIcon, { backgroundColor: cfg.bg }]}>
-          <MaterialIcons name={cfg.name} size={22} color={cfg.color} />
+    <View style={[s.itemWrapShadow, !item.read && s.itemShadowUnread]}>
+      <Pressable
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={({ pressed }) => [
+          s.itemWrap,
+          pressed && s.itemPressed,
+        ]}
+      >
+        <View style={s.itemInner}>
+          {!item.read && <View style={s.unreadDot} />}
+          <View style={[s.itemIcon, { backgroundColor: cfg.bg }]}>
+            <MaterialIcons name={cfg.name} size={22} color={cfg.color} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[s.itemTitle, !item.read && s.itemTitleUnread]} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={s.itemBody} numberOfLines={2}>{item.body}</Text>
+            <Text style={s.itemTime}>{timeAgo(item.createdAt)}</Text>
+          </View>
+          <Pressable onPress={onDelete} hitSlop={8} style={s.deleteBtn}>
+            <MaterialIcons name="close" size={16} color={TOKENS.color.sub} />
+          </Pressable>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[s.itemTitle, !item.read && s.itemTitleUnread]} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={s.itemBody} numberOfLines={2}>{item.body}</Text>
-          <Text style={s.itemTime}>{timeAgo(item.createdAt)}</Text>
-        </View>
-        <Pressable onPress={onDelete} hitSlop={8} style={s.deleteBtn}>
-          <MaterialIcons name="close" size={16} color={TOKENS.color.sub} />
-        </Pressable>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -254,13 +255,16 @@ const s = StyleSheet.create({
   itemWrap: {
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  itemWrapShadow: {
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
   },
-  itemUnread: { shadowOpacity: 0.1, elevation: 4 },
+  itemShadowUnread: { shadowOpacity: 0.1, elevation: 4 },
   itemPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
   itemInner: {
     padding: 14,

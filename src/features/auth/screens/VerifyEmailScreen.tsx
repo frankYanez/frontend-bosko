@@ -125,19 +125,21 @@ export default function VerifyEmailScreen() {
             <Text style={styles.successText}>
               Tu cuenta fue activada correctamente. Ya podés usar todas las funciones de Bosko.
             </Text>
-            <Pressable
-              onPress={() => router.replace('/(tabs)')}
-              style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
-            >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGradient}
+            <View style={styles.btnShadow}>
+              <Pressable
+                onPress={() => router.replace('/(tabs)')}
+                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
               >
-                <Text style={styles.btnText}>Ir al inicio</Text>
-              </LinearGradient>
-            </Pressable>
+                <LinearGradient
+                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.btnGradient}
+                >
+                  <Text style={styles.btnText}>Ir al inicio</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
           </BlurView>
         </Animated.View>
       </LinearGradient>
@@ -201,31 +203,32 @@ export default function VerifyEmailScreen() {
             )}
 
             {/* Botón verificar */}
-            <Pressable
-              onPress={handleVerify}
-              disabled={loading || code.length < CODE_LENGTH}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                code.length < CODE_LENGTH && styles.btnDisabled,
-                pressed && code.length === CODE_LENGTH && styles.btnPressed,
-              ]}
-            >
-              <LinearGradient
-                colors={
-                  code.length === CODE_LENGTH
-                    ? [TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]
-                    : ['#ccc', '#bbb']
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btnGradient}
+            <View style={[styles.btnShadow, code.length < CODE_LENGTH && styles.btnShadowDisabled]}>
+              <Pressable
+                onPress={handleVerify}
+                disabled={loading || code.length < CODE_LENGTH}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  pressed && code.length === CODE_LENGTH && styles.btnPressed,
+                ]}
               >
-                {loading
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.btnText}>Verificar</Text>
-                }
-              </LinearGradient>
-            </Pressable>
+                <LinearGradient
+                  colors={
+                    code.length === CODE_LENGTH
+                      ? [TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]
+                      : ['#ccc', '#bbb']
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.btnGradient}
+                >
+                  {loading
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={styles.btnText}>Verificar</Text>
+                  }
+                </LinearGradient>
+              </Pressable>
+            </View>
 
             {/* Reenviar */}
             <Pressable
@@ -330,16 +333,19 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  primaryBtn: {
+  btnShadow: {
     borderRadius: 14,
-    overflow: 'hidden',
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
-  btnDisabled: { shadowOpacity: 0, elevation: 0 },
+  primaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  btnShadowDisabled: { shadowOpacity: 0, elevation: 0 },
   btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   btnGradient: {
     paddingVertical: 16,

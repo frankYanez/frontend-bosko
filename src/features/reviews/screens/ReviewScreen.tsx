@@ -177,6 +177,7 @@ export default function ReviewScreen() {
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 400 }}
         >
+          <View style={styles.submitBtnShadow}>
           <Pressable
             onPress={handleSubmit}
             disabled={submitting || rating === 0}
@@ -202,6 +203,7 @@ export default function ReviewScreen() {
               )}
             </LinearGradient>
           </Pressable>
+          </View>
         </MotiView>
       </ScrollView>
     </LinearGradient>
@@ -285,15 +287,19 @@ const styles = StyleSheet.create({
     color: 'rgba(107,107,107,0.5)',
     alignSelf: 'flex-end',
   },
-  submitBtn: {
+  submitBtnShadow: {
     width: '100%',
     borderRadius: 16,
-    overflow: 'hidden',
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 4,
+  },
+  submitBtn: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnPressed: { transform: [{ scale: 0.97 }] },

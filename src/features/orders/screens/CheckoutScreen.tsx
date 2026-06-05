@@ -19,18 +19,22 @@ import { useOrders } from '../state/OrdersContext';
 import { usePayments } from '@/features/payments/state/PaymentContext';
 import type { Order } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
-const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  border:  '#EDEDF0',
-  green:   '#16A34A',
-  greenBg: '#F0FFF4',
-};
+function useC() {
+  const tc = useThemeColors();
+  return {
+    primary: TOKENS.color.primary,
+    dark:    TOKENS.color.primaryDark,
+    bg:      tc.bg,
+    card:    tc.card,
+    text:    tc.text,
+    sub:     tc.textSub,
+    border:  tc.border,
+    green:   '#16A34A',
+    greenBg: '#F0FFF4',
+  };
+}
 
 function formatCurrency(amount?: number) {
   if (!amount) return '—';
@@ -45,15 +49,17 @@ function formatDate(iso?: string) {
 }
 
 function InfoRow({ icon, text }: { icon: React.ComponentProps<typeof MaterialIcons>['name']; text: string }) {
+  const C = useC();
   return (
     <View style={s.infoRow}>
       <MaterialIcons name={icon} size={15} color={C.sub} />
-      <Text style={s.infoText}>{text}</Text>
+      <Text style={[s.infoText, { color: C.sub }]}>{text}</Text>
     </View>
   );
 }
 
 export function CheckoutScreen() {
+  const C = useC();
   const insets  = useSafeAreaInsets();
   const params  = useLocalSearchParams<{ orderId: string }>();
   const { getOrder } = useOrders();
@@ -102,7 +108,7 @@ export function CheckoutScreen() {
 
   if (loading) {
     return (
-      <View style={[s.root, s.centered, { paddingTop: insets.top }]}>
+      <View style={[s.root, s.centered, { paddingTop: insets.top, backgroundColor: C.bg }]}>
         <ActivityIndicator color={C.primary} size="large" />
       </View>
     );
@@ -110,10 +116,10 @@ export function CheckoutScreen() {
 
   if (!order) {
     return (
-      <View style={[s.root, s.centered, { paddingTop: insets.top }]}>
-        <Text style={s.errorText}>No se encontró la orden</Text>
+      <View style={[s.root, s.centered, { paddingTop: insets.top, backgroundColor: C.bg }]}>
+        <Text style={[s.errorText, { color: C.sub }]}>No se encontró la orden</Text>
         <Pressable onPress={() => router.back()} style={s.backLink}>
-          <Text style={s.backLinkText}>← Volver</Text>
+          <Text style={[s.backLinkText, { color: TOKENS.color.primary }]}>← Volver</Text>
         </Pressable>
       </View>
     );
@@ -128,15 +134,15 @@ export function CheckoutScreen() {
   const total    = subtotal + fee;
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
+    <View style={[s.root, { paddingTop: insets.top, backgroundColor: C.bg }]}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <View style={s.header}>
+      <View style={[s.header, { backgroundColor: C.bg }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.text} />
         </Pressable>
-        <Text style={s.headerTitle}>Confirmar pago</Text>
+        <Text style={[s.headerTitle, { color: C.text }]}>Confirmar pago</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -147,8 +153,8 @@ export function CheckoutScreen() {
         <Animated.View style={{ opacity: fade, transform: [{ translateY: slideY }] }}>
 
           {/* ── Resumen del servicio ──────────────────────────────────────── */}
-          <View style={s.card}>
-            <Text style={s.sectionLabel}>SERVICIO</Text>
+          <View style={[s.card, { backgroundColor: C.card }]}>
+            <Text style={[s.sectionLabel, { color: C.sub }]}>SERVICIO</Text>
             <View style={s.serviceRow}>
               {order.service?.thumbnail ? (
                 <Image source={{ uri: order.service.thumbnail }} style={s.thumb} contentFit="cover" />
@@ -158,12 +164,12 @@ export function CheckoutScreen() {
                 </LinearGradient>
               )}
               <View style={s.serviceInfo}>
-                <Text style={s.serviceName}>{order.service?.title ?? 'Servicio'}</Text>
-                <Text style={s.serviceProvider}>por {providerName}</Text>
+                <Text style={[s.serviceName, { color: C.text }]}>{order.service?.title ?? 'Servicio'}</Text>
+                <Text style={[s.serviceProvider, { color: C.sub }]}>por {providerName}</Text>
               </View>
             </View>
 
-            <View style={s.divider} />
+            <View style={[s.divider, { backgroundColor: C.border }]} />
 
             {order.scheduledDate && (
               <InfoRow icon="event" text={formatDate(order.scheduledDate) ?? ''} />
@@ -177,39 +183,39 @@ export function CheckoutScreen() {
           </View>
 
           {/* ── Desglose de precio ───────────────────────────────────────── */}
-          <View style={s.card}>
-            <Text style={s.sectionLabel}>RESUMEN DE PAGO</Text>
+          <View style={[s.card, { backgroundColor: C.card }]}>
+            <Text style={[s.sectionLabel, { color: C.sub }]}>RESUMEN DE PAGO</Text>
 
             <View style={s.priceRow}>
-              <Text style={s.priceLabel}>Subtotal</Text>
-              <Text style={s.priceValue}>{formatCurrency(subtotal)}</Text>
+              <Text style={[s.priceLabel, { color: C.sub }]}>Subtotal</Text>
+              <Text style={[s.priceValue, { color: C.text }]}>{formatCurrency(subtotal)}</Text>
             </View>
             <View style={s.priceRow}>
               <View style={s.feeRow}>
-                <Text style={s.priceLabel}>Comisión de servicio</Text>
+                <Text style={[s.priceLabel, { color: C.sub }]}>Comisión de servicio</Text>
                 <View style={s.feeBadge}>
                   <Text style={s.feeBadgeText}>5%</Text>
                 </View>
               </View>
-              <Text style={s.priceValue}>{formatCurrency(fee)}</Text>
+              <Text style={[s.priceValue, { color: C.text }]}>{formatCurrency(fee)}</Text>
             </View>
 
-            <View style={s.totalDivider} />
+            <View style={[s.totalDivider, { backgroundColor: C.border }]} />
 
             <View style={s.priceRow}>
-              <Text style={s.totalLabel}>Total</Text>
+              <Text style={[s.totalLabel, { color: C.text }]}>Total</Text>
               <Text style={s.totalValue}>{formatCurrency(total)}</Text>
             </View>
           </View>
 
           {/* ── Método ──────────────────────────────────────────────────── */}
-          <View style={[s.card, s.methodCard]}>
+          <View style={[s.card, s.methodCard, { backgroundColor: C.card }]}>
             <View style={s.methodIcon}>
               <Ionicons name="shield-checkmark" size={20} color={C.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={s.methodTitle}>Pago seguro Bosko</Text>
-              <Text style={s.methodSub}>El monto queda en garantía hasta que el trabajo sea completado</Text>
+              <Text style={[s.methodTitle, { color: C.text }]}>Pago seguro Bosko</Text>
+              <Text style={[s.methodSub, { color: C.sub }]}>El monto queda en garantía hasta que el trabajo sea completado</Text>
             </View>
           </View>
 
@@ -217,8 +223,8 @@ export function CheckoutScreen() {
       </ScrollView>
 
       {/* ── CTA fija ────────────────────────────────────────────────────── */}
-      <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Text style={s.footerTotal}>{formatCurrency(total)}</Text>
+      <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 16), backgroundColor: C.card, borderTopColor: C.border }]}>
+        <Text style={[s.footerTotal, { color: C.text }]}>{formatCurrency(total)}</Text>
         <Animated.View style={{ transform: [{ scale: btnScale }], flex: 1 }}>
           <Pressable
             onPressIn={() => Animated.spring(btnScale, { toValue: 0.97, useNativeDriver: true }).start()}
@@ -250,7 +256,7 @@ export function CheckoutScreen() {
 }
 
 const s = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: C.bg },
+  root:    { flex: 1 },
   centered: { alignItems: 'center', justifyContent: 'center' },
 
   header: {
@@ -259,15 +265,13 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: C.bg,
   },
   backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: C.text },
+  headerTitle: { fontSize: 17, fontWeight: '700' },
 
   scroll: { paddingHorizontal: 16, paddingTop: 8, gap: 14 },
 
   card: {
-    backgroundColor: C.card,
     borderRadius: 18,
     padding: 18,
     gap: 10,
@@ -280,7 +284,6 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: C.sub,
     letterSpacing: 0.8,
     marginBottom: 2,
   },
@@ -289,30 +292,30 @@ const s = StyleSheet.create({
   thumb:          { width: 54, height: 54, borderRadius: 12 },
   thumbFallback:  { width: 54, height: 54, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   serviceInfo:    { flex: 1, gap: 3 },
-  serviceName:    { fontSize: 16, fontWeight: '700', color: C.text },
-  serviceProvider:{ fontSize: 13, color: C.sub },
+  serviceName:    { fontSize: 16, fontWeight: '700' },
+  serviceProvider:{ fontSize: 13 },
 
-  divider: { height: 1, backgroundColor: C.border, marginVertical: 4 },
+  divider: { height: 1, marginVertical: 4 },
 
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  infoText: { fontSize: 13, color: C.sub, flex: 1 },
+  infoText: { fontSize: 13, flex: 1 },
 
   priceRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  priceLabel: { fontSize: 14, color: C.sub },
-  priceValue: { fontSize: 14, color: C.text, fontWeight: '500' },
+  priceLabel: { fontSize: 14 },
+  priceValue: { fontSize: 14, fontWeight: '500' },
 
   feeRow:    { flexDirection: 'row', alignItems: 'center', gap: 6 },
   feeBadge:  { backgroundColor: '#FFF0F3', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  feeBadgeText: { fontSize: 11, fontWeight: '700', color: C.primary },
+  feeBadgeText: { fontSize: 11, fontWeight: '700', color: TOKENS.color.primary },
 
-  totalDivider: { height: 1, backgroundColor: C.border, marginVertical: 4 },
-  totalLabel:   { fontSize: 16, fontWeight: '700', color: C.text },
-  totalValue:   { fontSize: 18, fontWeight: '800', color: C.primary },
+  totalDivider: { height: 1, marginVertical: 4 },
+  totalLabel:   { fontSize: 16, fontWeight: '700' },
+  totalValue:   { fontSize: 18, fontWeight: '800', color: TOKENS.color.primary },
 
   methodCard:  { flexDirection: 'row', alignItems: 'center', gap: 14 },
   methodIcon:  { width: 44, height: 44, borderRadius: 13, backgroundColor: '#FFF0F3', alignItems: 'center', justifyContent: 'center' },
-  methodTitle: { fontSize: 14, fontWeight: '600', color: C.text },
-  methodSub:   { fontSize: 12, color: C.sub, lineHeight: 17, marginTop: 2 },
+  methodTitle: { fontSize: 14, fontWeight: '600' },
+  methodSub:   { fontSize: 12, lineHeight: 17, marginTop: 2 },
 
   footer: {
     position: 'absolute',
@@ -324,16 +327,14 @@ const s = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingTop: 14,
-    backgroundColor: C.card,
     borderTopWidth: 1,
-    borderTopColor: C.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 10,
   },
-  footerTotal: { fontSize: 20, fontWeight: '800', color: C.text, minWidth: 100 },
+  footerTotal: { fontSize: 20, fontWeight: '800', minWidth: 100 },
   payBtnWrap:  { flex: 1 },
   payBtn: {
     flexDirection: 'row',
@@ -345,7 +346,7 @@ const s = StyleSheet.create({
   },
   payBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
-  errorText:    { fontSize: 15, color: C.sub, marginBottom: 12 },
+  errorText:    { fontSize: 15, marginBottom: 12 },
   backLink:     { paddingHorizontal: 16, paddingVertical: 10 },
-  backLinkText: { color: C.primary, fontWeight: '600' },
+  backLinkText: { fontWeight: '600' },
 });

@@ -55,7 +55,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
           <Image source={{ uri: item.avatarUrl }} style={s.avatar} contentFit="cover" />
         ) : (
           <LinearGradient colors={[C.dark, C.primary]} style={s.avatarFallback}>
-            <Text style={s.avatarInitial}>{(item.firstName ?? 'P')[0].toUpperCase()}</Text>
+            <Text style={s.avatarInitial}>{(item.firstName?.[0] ?? 'P').toUpperCase()}</Text>
           </LinearGradient>
         )}
         <View style={{ flex: 1 }}>
@@ -111,30 +111,32 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
           <Text style={[s.actionText, { color: C.red }]}>Rechazar</Text>
         </Pressable>
 
-        <Pressable
-          style={s.approveBtn}
-          onPress={() => {
-            Alert.alert('Aprobar antecedentes', `¿Aprobar el certificado de ${item.firstName}?`, [
-              { text: 'Cancelar', style: 'cancel' },
-              {
-                text: 'Aprobar',
-                onPress: async () => {
-                  try {
-                    await adminReview(item.id, true);
-                    onReview(item.id);
-                  } catch {
-                    Alert.alert('Error', 'No se pudo aprobar.');
-                  }
+        <View style={s.approveBtnShadow}>
+          <Pressable
+            style={s.approveBtn}
+            onPress={() => {
+              Alert.alert('Aprobar antecedentes', `¿Aprobar el certificado de ${item.firstName}?`, [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                  text: 'Aprobar',
+                  onPress: async () => {
+                    try {
+                      await adminReview(item.id, true);
+                      onReview(item.id);
+                    } catch {
+                      Alert.alert('Error', 'No se pudo aprobar.');
+                    }
+                  },
                 },
-              },
-            ]);
-          }}
-        >
-          <LinearGradient colors={[C.dark, C.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.approveBtnGrad}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-            <Text style={s.approveBtnText}>Aprobar</Text>
-          </LinearGradient>
-        </Pressable>
+              ]);
+            }}
+          >
+            <LinearGradient colors={[C.dark, C.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.approveBtnGrad}>
+              <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+              <Text style={s.approveBtnText}>Aprobar</Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
       </View>
     </Animated.View>
   );
@@ -228,7 +230,8 @@ const s = StyleSheet.create({
   actionsRow:  { flexDirection: 'row', gap: 10 },
   rejectBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, borderWidth: 1.5, borderColor: C.red, paddingVertical: 11 },
   actionText:  { fontSize: 14, fontWeight: '600' },
-  approveBtn:  { flex: 2, borderRadius: 12, overflow: 'hidden', elevation: 3, shadowColor: C.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 8 },
+  approveBtnShadow: { flex: 2, borderRadius: 12, elevation: 3, shadowColor: C.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 8 },
+  approveBtn:  { flex: 2, borderRadius: 12, overflow: 'hidden' },
   approveBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
   approveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 

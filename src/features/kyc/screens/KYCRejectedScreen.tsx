@@ -140,11 +140,12 @@ export default function KYCRejectedScreen() {
 
         {canRetry ? (
           <FadeSlide delay={250}>
-            <Pressable
-              onPress={handleRetry}
-              disabled={loading}
-              style={({ pressed }) => [s.primaryBtn, pressed && s.btnPressed]}
-            >
+            <View style={s.primaryBtnShadow}>
+              <Pressable
+                onPress={handleRetry}
+                disabled={loading}
+                style={({ pressed }) => [s.primaryBtn, pressed && s.btnPressed]}
+              >
               <LinearGradient
                 colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
                 start={{ x: 0, y: 0 }}
@@ -162,6 +163,7 @@ export default function KYCRejectedScreen() {
                 }
               </LinearGradient>
             </Pressable>
+            </View>
           </FadeSlide>
         ) : (
           <View style={s.supportCard}>
@@ -268,11 +270,14 @@ const s = StyleSheet.create({
   primaryBtn: {
     borderRadius: 14,
     overflow: 'hidden',
+  },
+  primaryBtnShadow: {
+    borderRadius: 14,
     shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 4,
   },
   btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   btnGradient: {
