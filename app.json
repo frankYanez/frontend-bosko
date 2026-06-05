@@ -57,7 +57,8 @@
           "sounds": []
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      ["@didit-protocol/sdk-react-native", { "iosNfcEnabled": false, "androidNfcEnabled": false }]
     ],
     "experiments": {
       "typedRoutes": true

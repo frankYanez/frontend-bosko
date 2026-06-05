@@ -21,6 +21,7 @@
     }
   },
   "dependencies": {
+    "@didit-protocol/sdk-react-native": "^4.0.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@expo/metro-runtime": "^6.1.2",
