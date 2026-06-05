@@ -25,6 +25,8 @@ import {
   registerUserService,
 } from '../services/auth';
 import api from '@/core/api/axiosinstance';
+import { queryClient } from '@/core/query/queryClient';
+import { useChatStore } from '@/stores/chat.store';
 import type {
   AuthContextType,
   AuthResponse,
@@ -67,6 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // expirado, limpia el estado y redirige al login sin importar la pantalla actual.
   useEffect(() => {
     tokenStorage.setForceLogoutCallback(() => {
+      queryClient.clear();
+      useChatStore.getState().reset();
       setAuthState(EMPTY_STATE);
       router.replace('/login');
     });
@@ -178,6 +182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Si falla el servidor igual limpiamos localmente
     }
     await tokenStorage.clear();
+    queryClient.clear();
+    useChatStore.getState().reset();
     setAuthState(EMPTY_STATE);
   }, []);
 

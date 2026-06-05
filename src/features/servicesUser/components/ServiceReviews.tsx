@@ -117,6 +117,12 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId, orderId }) =
         </View>
         <StarRating value={item.rating} editable={false} size={18} />
         <Text style={styles.reviewComment}>{item.comment}</Text>
+        {item.reply ? (
+          <View style={styles.replyBox}>
+            <Text style={styles.replyLabel}>Respuesta del proveedor</Text>
+            <Text style={styles.replyText}>{item.reply}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -254,6 +260,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: TOKENS.color.sub,
     lineHeight: 20,
+  },
+  replyBox: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: TOKENS.color.primary,
+    backgroundColor: 'rgba(133,0,33,0.05)',
+  },
+  replyLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: TOKENS.color.primary,
+    marginBottom: 2,
+  },
+  replyText: {
+    fontSize: 13,
+    color: TOKENS.color.sub,
+    lineHeight: 18,
   },
   separator: {
     height: 16,

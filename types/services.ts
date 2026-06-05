@@ -62,6 +62,7 @@ export type Review = {
   userAvatar?: string;
   rating: number;
   comment: string;
+  reply?: string;
   createdAt: string;
 };
 

@@ -15,6 +15,8 @@ interface ChatState {
 
   typingUsers: Record<string, boolean>;
   setTyping: (convId: string, isTyping: boolean) => void;
+
+  reset: () => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -45,6 +47,9 @@ export const useChatStore = create<ChatState>((set) => ({
     set((state) => ({
       typingUsers: { ...state.typingUsers, [convId]: isTyping },
     })),
+
+  reset: () =>
+    set({ conversations: [], unreadTotal: 0, socketReady: false, typingUsers: {} }),
 }));
 
 export const useUnreadTotal = () => useChatStore((s) => s.unreadTotal);

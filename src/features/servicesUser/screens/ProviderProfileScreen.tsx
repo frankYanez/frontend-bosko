@@ -25,6 +25,7 @@ interface ReviewItem {
   id: string;
   rating: number;
   comment: string | null;
+  reply: string | null;
   createdAt: string;
   reviewer: { firstName: string; lastName: string; avatarUrl: string | null };
 }
@@ -155,6 +156,7 @@ export default function ProviderProfileScreen() {
           id: r.id,
           rating: Number(r.rating ?? 0),
           comment: r.comment ?? null,
+          reply: r.reply ?? null,
           createdAt: r.createdAt ?? '',
           reviewer: {
             firstName: r.reviewer?.firstName ?? '',
@@ -373,6 +375,12 @@ export default function ProviderProfileScreen() {
                     </View>
                   </View>
                   {r.comment ? <Text style={[s.reviewComment, { color: c.sub }]}>{r.comment}</Text> : null}
+                  {r.reply ? (
+                    <View style={[s.replyBox, { backgroundColor: c.surface2, borderLeftColor: TOKENS.color.primary }]}>
+                      <Text style={[s.replyLabel, { color: TOKENS.color.primary }]}>Respuesta del proveedor</Text>
+                      <Text style={[s.replyText, { color: c.sub }]}>{r.reply}</Text>
+                    </View>
+                  ) : null}
                 </View>
               );
             })}
@@ -514,6 +522,9 @@ const s = StyleSheet.create({
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
   reviewDate: { fontSize: 11, marginLeft: 4 },
   reviewComment: { fontSize: 13, lineHeight: 19 },
+  replyBox: { marginTop: 6, padding: 10, borderRadius: 8, borderLeftWidth: 3 },
+  replyLabel: { fontSize: 11, fontWeight: '700', marginBottom: 2 },
+  replyText: { fontSize: 13, lineHeight: 18 },
 
   // Empty
   emptyServices: { alignItems: 'center', paddingVertical: 24 },
