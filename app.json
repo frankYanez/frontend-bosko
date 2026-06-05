@@ -58,7 +58,14 @@
         }
       ],
       "expo-web-browser",
-      ["@didit-protocol/sdk-react-native", { "iosNfcEnabled": false, "androidNfcEnabled": false }]
+      [
+        "@didit-protocol/sdk-react-native",
+        {
+          "iosNfcEnabled": false,
+          "androidNfcEnabled": false
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
