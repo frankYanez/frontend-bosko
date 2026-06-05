@@ -25,15 +25,9 @@ export function useStartKYC() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const response = await startVerification();
-      const { sessionToken, verificationUrl, inquiryId } = response;
-      const url =
-        verificationUrl ||
-        (inquiryId && sessionToken
-          ? `https://withpersona.com/verify?inquiry-id=${inquiryId}&session-token=${sessionToken}`
-          : null);
-      if (!url) throw new Error('No se recibió URL de verificación del servidor');
-      await WebBrowser.openBrowserAsync(url);
+      const { verificationUrl } = await startVerification();
+      if (!verificationUrl) throw new Error('No se recibió URL de verificación del servidor');
+      await WebBrowser.openBrowserAsync(verificationUrl);
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kycStatus });
@@ -45,14 +39,9 @@ export function useRetryKYC() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { sessionToken, verificationUrl, inquiryId } = await retryVerification();
-      const url =
-        verificationUrl ||
-        (inquiryId && sessionToken
-          ? `https://withpersona.com/verify?inquiry-id=${inquiryId}&session-token=${sessionToken}`
-          : null);
-      if (!url) throw new Error('No se recibió URL de verificación del servidor');
-      await WebBrowser.openBrowserAsync(url);
+      const { verificationUrl } = await retryVerification();
+      if (!verificationUrl) throw new Error('No se recibió URL de verificación del servidor');
+      await WebBrowser.openBrowserAsync(verificationUrl);
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kycStatus });
