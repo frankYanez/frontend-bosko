@@ -47,10 +47,10 @@ interface FormData {
 }
 
 const STEPS: Step[] = [
-  { label: 'Nombre',     placeholder: 'Tu nombre',          field: 'firstName', keyboardType: 'default',       icon: 'person'  },
-  { label: 'Apellido',   placeholder: 'Tu apellido',         field: 'lastName',  keyboardType: 'default',       icon: 'person'  },
-  { label: 'Email',      placeholder: 'tucorreo@ejemplo.com',field: 'email',     keyboardType: 'email-address', icon: 'email'   },
-  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres', field: 'password',  secure: true,                  icon: 'lock'    },
+  { label: 'Nombre',     placeholder: 'Tu nombre',            field: 'firstName', keyboardType: 'default',       icon: 'person' },
+  { label: 'Apellido',   placeholder: 'Tu apellido',          field: 'lastName',  keyboardType: 'default',       icon: 'person' },
+  { label: 'Email',      placeholder: 'tucorreo@ejemplo.com', field: 'email',     keyboardType: 'email-address', icon: 'email'  },
+  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres',  field: 'password',  secure: true,                  icon: 'lock'   },
 ];
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
@@ -96,9 +96,19 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
       }
     }
 
-    if (currentStep.field === 'password' && value.length < 8) {
-      setFieldError('La contraseña debe tener al menos 8 caracteres');
-      return false;
+    if (currentStep.field === 'password') {
+      if (value.length < 8) {
+        setFieldError('La contraseña debe tener al menos 8 caracteres');
+        return false;
+      }
+      if (!/[A-Z]/.test(value)) {
+        setFieldError('La contraseña debe tener al menos una mayúscula');
+        return false;
+      }
+      if (!/[0-9]/.test(value)) {
+        setFieldError('La contraseña debe tener al menos un número');
+        return false;
+      }
     }
 
     return true;
@@ -135,10 +145,8 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     const email     = formData.email.trim().toLowerCase();
     const firstName = formData.firstName.trim();
     const lastName  = formData.lastName.trim();
-    const base      = (firstName + lastName).toLowerCase().replace(/[^a-z0-9]/g, '');
-    const userName  = base + Math.floor(1000 + Math.random() * 9000);
     try {
-      await registerUser({ email, password: formData.password, firstName, lastName, userName });
+      await registerUser({ firstName, lastName, email, password: formData.password });
       router.replace(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Error al registrar la cuenta';

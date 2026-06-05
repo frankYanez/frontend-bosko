@@ -30,21 +30,27 @@ async function launchDidit(sessionToken: string): Promise<void> {
   });
 
   if (result.type === 'failed') {
-    if (result.error.type !== 'sessionExpired') {
-      throw new Error(result.error.message ?? 'Error en la verificación');
-    }
+    // sessionExpired: la sesión venció antes de que el usuario terminara.
+    // Lanzamos el error para que la mutación falle y el usuario pueda
+    // reintentar (en lugar de quedar con estado "En revisión" fantasma).
+    throw new Error(
+      result.error.type === 'sessionExpired'
+        ? 'La sesión de verificación expiró. Por favor, intentá de nuevo.'
+        : (result.error.message ?? 'Error en la verificación'),
+    );
   }
   // 'completed' y 'cancelled' se resuelven normalmente —
-  // el estado final llega por webhook al backend
+  // el estado final llega por webhook al backend.
 }
 
 export function useStartKYC() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { sessionToken } = await startVerification();
-      if (!sessionToken) throw new Error('No se recibió token de verificación del servidor');
-      await launchDidit(sessionToken);
+      const response = await startVerification();
+      if (response.alreadyProvider) return; // ya verificado, no hay nada que lanzar
+      if (!response.sessionToken) throw new Error('No se recibió token de verificación del servidor');
+      await launchDidit(response.sessionToken);
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kycStatus });
@@ -56,9 +62,9 @@ export function useRetryKYC() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { sessionToken } = await retryVerification();
-      if (!sessionToken) throw new Error('No se recibió token de verificación del servidor');
-      await launchDidit(sessionToken);
+      const response = await retryVerification();
+      if (!response.sessionToken) throw new Error('No se recibió token de verificación del servidor');
+      await launchDidit(response.sessionToken);
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kycStatus });

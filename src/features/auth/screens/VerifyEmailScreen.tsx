@@ -20,13 +20,14 @@ import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Animated } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import api from '@/core/api/axiosinstance';
+import { useAuth } from '@/features/auth/state/AuthContext';
 import { TOKENS } from '@/core/design-system/tokens';
 
 const CODE_LENGTH = 6;
 
 export default function VerifyEmailScreen() {
   const { email = '' } = useLocalSearchParams<{ email: string }>();
+  const { verifyEmail } = useAuth();
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
@@ -81,7 +82,7 @@ export default function VerifyEmailScreen() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/verify-email', { email, code });
+      await verifyEmail(email, code);
       setSuccess(true);
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;
@@ -100,17 +101,8 @@ export default function VerifyEmailScreen() {
   };
 
   const handleResend = async () => {
-    if (cooldown > 0) return;
-    setResending(true);
-    setError('');
-    try {
-      await api.post('/auth/forgot-password', { email });
-      setCooldown(60);
-    } catch {
-      setError('No se pudo reenviar el código.');
-    } finally {
-      setResending(false);
-    }
+    // TODO: el backend necesita POST /auth/resend-verification para reenviar el OTP de registro
+    setError('Por ahora si el código expiró, registrate de nuevo con el mismo email.');
   };
 
   if (success) {

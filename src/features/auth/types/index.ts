@@ -6,11 +6,16 @@ export interface Credentials {
   password: string;
 }
 
-/** Payload completo para registrar un nuevo usuario */
+/** Payload para registrar un nuevo usuario */
 export interface RegisterUserPayload extends Credentials {
   firstName: string;
   lastName:  string;
-  userName:  string;
+}
+
+/** Respuesta del endpoint POST /auth/register */
+export interface RegisterResponse {
+  message: string;
+  userId:  string;
 }
 
 /** Usuario incluido en la respuesta de login/register */
@@ -59,7 +64,8 @@ export interface AuthContextType {
   isLoading:                   boolean;
   error:                       string | null;
   login:                       (credentials: Credentials) => Promise<AuthResponse>;
-  registerUser:                (data: RegisterUserPayload) => Promise<AuthResponse>;
+  registerUser:                (data: RegisterUserPayload) => Promise<RegisterResponse>;
+  verifyEmail:                 (email: string, code: string) => Promise<void>;
   logout:                      () => Promise<void>;
   clearError:                  () => void;
 }

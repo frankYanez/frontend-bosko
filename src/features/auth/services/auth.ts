@@ -6,7 +6,7 @@
  */
 
 import api from '@/core/api/axiosinstance';
-import type { AuthResponse, Credentials, RegisterUserPayload } from '../types';
+import type { AuthResponse, Credentials, RegisterResponse, RegisterUserPayload } from '../types';
 
 export async function loginService(credentials: Credentials): Promise<AuthResponse> {
   const { data } = await api.post<AuthResponse>('/auth/login', credentials);
@@ -15,8 +15,8 @@ export async function loginService(credentials: Credentials): Promise<AuthRespon
 
 export async function registerUserService(
   payload: RegisterUserPayload,
-): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>('/auth/register', payload);
+): Promise<RegisterResponse> {
+  const { data } = await api.post<RegisterResponse>('/auth/register', payload);
   return data;
 }
 

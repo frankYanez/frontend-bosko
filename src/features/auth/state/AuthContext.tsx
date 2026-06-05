@@ -33,6 +33,7 @@ import type {
   AuthState,
   AuthUser,
   Credentials,
+  RegisterResponse,
   RegisterUserPayload,
 } from '../types';
 
@@ -137,30 +138,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Registro ───────────────────────────────────────────────────────────
   const registerUser = useCallback(
-    async (data: RegisterUserPayload): Promise<AuthResponse> => {
+    async (data: RegisterUserPayload): Promise<RegisterResponse> => {
       setIsLoading(true);
       setError(null);
-
       try {
-        const response = await registerUserService(data);
-
-        // Persistimos los tokens para que la verificación de email y el acceso
-        // posterior a las tabs no requieran volver a hacer login.
-        // El backend valida el email en endpoints protegidos si lo requiere.
-        await tokenStorage.save(
-          response.accessToken,
-          response.refreshToken,
-          data.email,
-        );
-
-        setAuthState({
-          token: response.accessToken,
-          refreshToken: response.refreshToken,
-          userEmail: data.email,
-          user: response.user ?? null,
-        });
-
-        return response;
+        return await registerUserService(data);
       } catch (err: any) {
         const raw = err?.response?.data?.message ?? 'Error al registrar usuario';
         const msg = Array.isArray(raw) ? raw.join(', ') : raw;
@@ -172,6 +154,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  // ── Verificación de email ──────────────────────────────────────────────
+  const verifyEmail = useCallback(async (email: string, code: string): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.post<AuthResponse>('/auth/verify-email', { email, code });
+      await tokenStorage.save(data.accessToken, data.refreshToken, email);
+      setAuthState({
+        token: data.accessToken,
+        refreshToken: data.refreshToken,
+        userEmail: email,
+        user: data.user ?? null,
+      });
+    } catch (err: any) {
+      const raw = err?.response?.data?.message ?? 'Error al verificar email';
+      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
+      setError(msg);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
@@ -202,6 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         login,
         registerUser,
+        verifyEmail,
         logout,
         clearError,
       }}
