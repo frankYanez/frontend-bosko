@@ -4,6 +4,7 @@ import {
   getKYCStatus,
   startVerification,
   retryVerification,
+  cancelVerification,
 } from '@/features/kyc/services/kyc.service';
 import { startVerification as diditStartVerification } from '@didit-protocol/sdk-react-native';
 import { useAuth } from '@/features/auth/state/AuthContext';
@@ -21,7 +22,7 @@ export function useKYCStatus() {
   });
 }
 
-async function launchDidit(sessionToken: string): Promise<void> {
+async function launchDidit(sessionToken: string): Promise<'completed' | 'cancelled'> {
   const result = await diditStartVerification(sessionToken, {
     languageCode: 'es',
     showCloseButton: true,
@@ -30,17 +31,14 @@ async function launchDidit(sessionToken: string): Promise<void> {
   });
 
   if (result.type === 'failed') {
-    // sessionExpired: la sesión venció antes de que el usuario terminara.
-    // Lanzamos el error para que la mutación falle y el usuario pueda
-    // reintentar (en lugar de quedar con estado "En revisión" fantasma).
     throw new Error(
       result.error.type === 'sessionExpired'
         ? 'La sesión de verificación expiró. Por favor, intentá de nuevo.'
         : (result.error.message ?? 'Error en la verificación'),
     );
   }
-  // 'completed' y 'cancelled' se resuelven normalmente —
-  // el estado final llega por webhook al backend.
+
+  return result.type === 'completed' ? 'completed' : 'cancelled';
 }
 
 export function useStartKYC() {
@@ -48,9 +46,10 @@ export function useStartKYC() {
   return useMutation({
     mutationFn: async () => {
       const response = await startVerification();
-      if (response.alreadyProvider) return; // ya verificado, no hay nada que lanzar
+      if (response.alreadyProvider) return;
       if (!response.sessionToken) throw new Error('No se recibió token de verificación del servidor');
-      await launchDidit(response.sessionToken);
+      const outcome = await launchDidit(response.sessionToken);
+      if (outcome === 'cancelled') await cancelVerification();
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kycStatus });
@@ -64,7 +63,8 @@ export function useRetryKYC() {
     mutationFn: async () => {
       const response = await retryVerification();
       if (!response.sessionToken) throw new Error('No se recibió token de verificación del servidor');
-      await launchDidit(response.sessionToken);
+      const outcome = await launchDidit(response.sessionToken);
+      if (outcome === 'cancelled') await cancelVerification();
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.kycStatus });

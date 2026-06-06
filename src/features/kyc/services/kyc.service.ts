@@ -27,3 +27,7 @@ export async function retryVerification(): Promise<StartVerificationResponse> {
   const { data } = await api.post<StartVerificationResponse>('/identity/retry');
   return data;
 }
+
+export async function cancelVerification(): Promise<void> {
+  await api.post('/identity/cancel');
+}
