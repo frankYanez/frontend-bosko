@@ -84,6 +84,7 @@
           "microphonePermission": "Bosko necesita acceso al micrófono para grabar videos."
         }
       ],
+      "expo-document-picker",
       "expo-web-browser",
       [
         "@didit-protocol/sdk-react-native",
