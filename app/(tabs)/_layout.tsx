@@ -8,17 +8,17 @@
 
 import { Redirect, Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TOKENS } from '@/core/design-system/tokens';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { useThemeColors } from '@/stores/theme.store';
 
 export default function TabsLayout() {
   const { authLoaded, isAuthenticated } = useAuth();
   const { data: profile } = useProfile();
-  const insets = useSafeAreaInsets();
-  const isProvider = (profile?.role as string) === 'provider';
+  const tc = useThemeColors();
+  const isProvider = profile?.isProvider === true;
 
   if (!authLoaded) return null;
 
@@ -26,7 +26,7 @@ export default function TabsLayout() {
 
   return (
     <SafeAreaView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: tc.bg }]}
       edges={['left', 'right']}
     >
       <Tabs
@@ -54,6 +54,5 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7FA',
   },
 });

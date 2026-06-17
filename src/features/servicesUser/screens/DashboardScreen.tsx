@@ -24,6 +24,7 @@ import { fetchFeaturedServices } from '@/features/servicesUser/services/services
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 
 const { width: W } = Dimensions.get('window');
 
@@ -61,7 +62,7 @@ const HERO_SLIDES_CLIENT = [
     cta: 'Ver pedidos',
     icon: 'clipboard' as const,
     gradient: ['#2D1B69', '#11998E', '#38EF7D'] as const,
-    route: '/(tabs)/profile' as const,
+    route: '/(tabs)/orders' as const,
   },
 ];
 
@@ -82,7 +83,7 @@ const HERO_SLIDES_PROVIDER = [
     cta: 'Publicar',
     icon: 'add-circle' as const,
     gradient: ['#1A1A2E', '#16213E', '#0F3460'] as const,
-    route: '/(tabs)/profile' as const,
+    route: '/service-form' as const,
   },
   {
     id: '3',
@@ -91,7 +92,7 @@ const HERO_SLIDES_PROVIDER = [
     cta: 'Ver pedidos',
     icon: 'clipboard' as const,
     gradient: ['#2D1B69', '#11998E', '#38EF7D'] as const,
-    route: '/(tabs)/profile' as const,
+    route: '/(tabs)/orders' as const,
   },
 ];
 
@@ -216,6 +217,18 @@ function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
 
 function ServiceCardInner({ item, scaleA }: { item: ServiceSummary; scaleA: Animated.Value }) {
   const tc = useThemeColors();
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(item.id);
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  const handleFavorite = () => {
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true }),
+      Animated.spring(heartScale, { toValue: 1,   useNativeDriver: true }),
+    ]).start();
+    toggle(item);
+  };
+
   const pressIn  = () => Animated.spring(scaleA, { toValue: 0.96, useNativeDriver: true }).start();
   const pressOut = () => Animated.spring(scaleA, { toValue: 1,    useNativeDriver: true }).start();
   return (
@@ -223,16 +236,27 @@ function ServiceCardInner({ item, scaleA }: { item: ServiceSummary; scaleA: Anim
     <Pressable
       onPressIn={pressIn}
       onPressOut={pressOut}
-      onPress={() => {}}
+      onPress={() => router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: item.providerId ?? item.id } })}
       style={[ds.serviceCard, { backgroundColor: tc.card }]}
     >
-      {(item.thumbnail || item.images?.[0]) ? (
-        <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={ds.serviceThumb} contentFit="cover" />
-      ) : (
-        <LinearGradient colors={[tc.surface2, tc.surface]} style={ds.serviceThumb}>
-          <Ionicons name="image-outline" size={28} color={tc.textSub} />
-        </LinearGradient>
-      )}
+      <View>
+        {(item.thumbnail || item.images?.[0]) ? (
+          <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={ds.serviceThumb} contentFit="cover" />
+        ) : (
+          <LinearGradient colors={[tc.surface2, tc.surface]} style={ds.serviceThumb}>
+            <Ionicons name="image-outline" size={28} color={tc.textSub} />
+          </LinearGradient>
+        )}
+        <Pressable onPress={handleFavorite} hitSlop={8} style={ds.heartBtn}>
+          <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+            <Ionicons
+              name={fav ? 'heart' : 'heart-outline'}
+              size={18}
+              color={fav ? '#EF4444' : 'rgba(255,255,255,0.9)'}
+            />
+          </Animated.View>
+        </Pressable>
+      </View>
       <View style={ds.serviceInfo}>
         <Text style={[ds.serviceTitle, { color: tc.text }]} numberOfLines={2}>{item.title ?? item.name}</Text>
         <View style={ds.serviceRow}>
@@ -319,6 +343,8 @@ export default function DashboardScreen() {
   // ── Estado ────────────────────────────────────────────────────────────────
   const [heroIndex, setHeroIndex] = useState(0);
   const [featuredServices, setFeaturedServices] = useState<ServiceSummary[]>([]);
+  const [featuredLoading, setFeaturedLoading]   = useState(true);
+  const [featuredError, setFeaturedError]       = useState(false);
 
   // ── Animaciones de entrada ────────────────────────────────────────────────
   const sections = useRef(
@@ -373,11 +399,21 @@ export default function DashboardScreen() {
     fetchCategories().catch(() => {});
   }, []);
 
-  useEffect(() => {
+  const loadFeatured = useCallback(() => {
+    setFeaturedLoading(true);
+    setFeaturedError(false);
     fetchFeaturedServices()
-      .then(services => setFeaturedServices(services.slice(0, 6)))
-      .catch(() => {});
+      .then(services => {
+        setFeaturedServices(services.slice(0, 6));
+        setFeaturedLoading(false);
+      })
+      .catch(() => {
+        setFeaturedError(true);
+        setFeaturedLoading(false);
+      });
   }, []);
+
+  useEffect(() => { loadFeatured(); }, [loadFeatured]);
 
   // ── Datos derivados ───────────────────────────────────────────────────────
   const displayName = profile?.firstName ?? 'Bienvenido';
@@ -507,6 +543,12 @@ export default function DashboardScreen() {
                 <View key={i} style={[s.pillSkeletonItem, { width: w }]} />
               ))}
             </View>
+          ) : categoriesStatus.error && !categories.length ? (
+            <ErrorBanner
+              message="No se pudieron cargar las categorías"
+              onRetry={() => fetchCategories().catch(() => {})}
+              C={C}
+            />
           ) : (
             <ScrollView
               horizontal
@@ -534,7 +576,11 @@ export default function DashboardScreen() {
             onPress={() => router.push('/(tabs)/services')}
           />
 
-          {featuredServices.length > 0 ? (
+          {featuredLoading ? (
+            <SkeletonGrid s={s} />
+          ) : featuredError ? (
+            <ErrorBanner message="No se pudieron cargar los servicios" onRetry={loadFeatured} C={C} />
+          ) : featuredServices.length > 0 ? (
             <View style={s.servicesGrid}>
               {featuredServices.map((item, idx) => (
                 <ServiceCard key={item.id} item={item} delay={idx * 50} />
@@ -553,6 +599,22 @@ export default function DashboardScreen() {
         )}
 
       </ScrollView>
+    </View>
+  );
+}
+
+// ── ErrorBanner ──────────────────────────────────────────────────────────────
+function ErrorBanner({ message, onRetry, C }: { message: string; onRetry: () => void; C: CPalette }) {
+  return (
+    <View style={{ alignItems: 'center', paddingVertical: 24, gap: 10 }}>
+      <Ionicons name="cloud-offline-outline" size={32} color={C.sub} />
+      <Text style={{ color: C.sub, fontSize: 13 }}>{message}</Text>
+      <Pressable
+        onPress={onRetry}
+        style={{ backgroundColor: C.primary, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 8 }}
+      >
+        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Reintentar</Text>
+      </Pressable>
     </View>
   );
 }
@@ -669,6 +731,7 @@ const ds = StyleSheet.create({
   serviceStar:   { fontSize: 11, fontWeight: '700', color: '#F59E0B' },
   serviceReviews:{ fontSize: 11 },
   servicePrice:  { fontSize: 13, fontWeight: '700', marginTop: 2 },
+  heartBtn:      { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 14, padding: 6 },
   qaBtn:         { alignItems: 'center', gap: 7 },
   qaIcon:        { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
   qaLabel:       { fontSize: 11.5, fontWeight: '500' },
