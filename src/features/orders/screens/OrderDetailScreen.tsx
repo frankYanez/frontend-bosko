@@ -20,8 +20,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
@@ -177,7 +175,7 @@ export default function OrderDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.background, styles.centered]}>
+      <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
         <ActivityIndicator color={TOKENS.color.primary} size="large" />
       </View>
     );
@@ -185,7 +183,7 @@ export default function OrderDetailScreen() {
 
   if (!order) {
     return (
-      <View style={[styles.background, styles.centered]}>
+      <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
         <Text style={[styles.notFoundText, { color: tc.textSub }]}>No se encontró la orden</Text>
         <Pressable onPress={() => router.back()} style={styles.backLink}>
           <Text style={styles.backLinkText}>← Volver</Text>
@@ -199,12 +197,7 @@ export default function OrderDetailScreen() {
   });
 
   return (
-    <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.background}
-    >
+    <View style={[styles.background, { backgroundColor: tc.bg }]}>
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
@@ -221,7 +214,7 @@ export default function OrderDetailScreen() {
           <Pressable
             onPress={() => router.back()}
             hitSlop={12}
-            style={[styles.backButton, { backgroundColor: tc.surface }]}
+            style={[styles.backButton, { backgroundColor: tc.card, borderWidth: 1, borderColor: tc.cardBorder }]}
           >
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
@@ -231,7 +224,7 @@ export default function OrderDetailScreen() {
 
         {/* Nombre del servicio + fecha */}
         <Animated.View style={{ opacity: anims[0], transform: [{ translateY: anims[0].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+          <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
             <Text style={[styles.serviceName, { color: tc.text }]}>{order.service?.title || 'Servicio'}</Text>
             <View style={styles.metaRow}>
               <MaterialIcons name="schedule" size={14} color={tc.textSub} />
@@ -243,23 +236,23 @@ export default function OrderDetailScreen() {
                 <Text style={[styles.metaText, { color: tc.textSub }]}>{order.address}</Text>
               </View>
             )}
-          </BlurView>
+          </View>
         </Animated.View>
 
         {/* Timeline */}
         <Animated.View style={{ opacity: anims[1], transform: [{ translateY: anims[1].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+          <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: tc.text }]}>Estado de la orden</Text>
             <Timeline currentStatus={order.status} />
-          </BlurView>
+          </View>
         </Animated.View>
 
         {/* Mensaje del cliente */}
         <Animated.View style={{ opacity: anims[2], transform: [{ translateY: anims[2].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <BlurView intensity={25} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+          <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: tc.text }]}>Mensaje</Text>
             <Text style={[styles.messageText, { color: tc.textSub }]}>{order.clientMessage}</Text>
-          </BlurView>
+          </View>
         </Animated.View>
 
         {/* Botón ir al chat */}
@@ -399,7 +392,7 @@ export default function OrderDetailScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* Modal de motivo — reemplaza Alert.prompt (no disponible en Android) */}
+      {/* Modal de motivo */}
       <Modal
         visible={!!reasonModal}
         transparent
@@ -442,7 +435,7 @@ export default function OrderDetailScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -497,7 +490,6 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   headerTitle: {
     fontSize: 18,

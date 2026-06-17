@@ -56,6 +56,7 @@ import { useThemeColors } from '@/stores/theme.store';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { TOKENS } from '@/core/design-system/tokens';
+import { toast } from '@/core/components/Toast';
 
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
@@ -688,7 +689,7 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, text, profile?.id ?? '');
     } catch (err) {
       setInput(text);
-      console.error('Error sending message:', err);
+      toast.error('No se pudo enviar', 'Revisá tu conexión e intentá de nuevo');
     } finally {
       setSending(false);
     }

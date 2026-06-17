@@ -16,7 +16,6 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { EmptyState } from '@/core/components/EmptyState';
 import { Animated } from 'react-native';
@@ -167,12 +166,7 @@ export default function ConversationsListScreen() {
   const totalUnread = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 
   return (
-    <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.background}
-    >
+    <View style={[styles.background, { backgroundColor: tc.bg }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: tc.divider }]}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Mensajes</Text>
@@ -216,7 +210,7 @@ export default function ConversationsListScreen() {
           }
         />
       )}
-    </LinearGradient>
+    </View>
   );
 }
 

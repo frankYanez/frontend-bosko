@@ -1,23 +1,28 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
   Pressable,
+  StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useSearch } from "@/contexts/SearchContext";
-import { SearchBar } from "@/shared/ui/SearchBar";
-import { Category } from "@/interfaces/category";
-import { Provider } from "@/interfaces/provider";
-import { Service } from "@/interfaces/service";
 import { TOKENS } from "@/core/design-system/tokens";
+import { useThemeColors } from "@/stores/theme.store";
+import type { Category } from "@/interfaces/category";
+import type { Provider } from "@/interfaces/provider";
+import type { Service } from "@/interfaces/service";
 
 type ResultItem =
   | { key: string; type: "category"; data: Category }
@@ -26,276 +31,356 @@ type ResultItem =
 
 const isServiceArray = (value: unknown): value is Service[] =>
   Array.isArray(value) &&
-  value.every(
-    (item) => typeof item === "object" && item !== null && "id" in item
-  );
+  value.every((item) => typeof item === "object" && item !== null && "id" in item);
 
 export const SearchPage = () => {
+  const tc = useThemeColors();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const inputRef = useRef<TextInput>(null);
   const [value, setValue] = useState("");
   const debouncedValue = useDebouncedValue(value, 320);
-  const router = useRouter();
   const { results, loading, error, runSearch, lastQuery } = useSearch();
 
   useEffect(() => {
-    if (!debouncedValue.trim()) {
-      return;
-    }
-    runSearch(debouncedValue).catch((err) => console.error(err));
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
+
+  useEffect(() => {
+    if (!debouncedValue.trim()) return;
+    runSearch(debouncedValue).catch(() => {});
   }, [debouncedValue, runSearch]);
 
   const items = useMemo<ResultItem[]>(() => {
     if (!results || !debouncedValue.trim()) return [];
     const list: ResultItem[] = [];
-
     if (isServiceArray(results)) {
-      results.forEach((service) =>
-        list.push({ key: `svc-${service.id}`, type: "service", data: service })
-      );
+      results.forEach((s) => list.push({ key: `svc-${s.id}`, type: "service", data: s }));
       return list;
     }
-
-    results.categories?.forEach((category) =>
-      list.push({ key: `cat-${category.id}`, type: "category", data: category })
-    );
-    results.providers?.forEach((provider) =>
-      list.push({
-        key: `prov-${provider.id}`,
-        type: "provider",
-        data: provider,
-      })
-    );
-    results.services?.forEach((service) =>
-      list.push({ key: `svc-${service.id}`, type: "service", data: service })
-    );
+    results.categories?.forEach((c) => list.push({ key: `cat-${c.id}`, type: "category", data: c }));
+    results.providers?.forEach((p) => list.push({ key: `prov-${p.id}`, type: "provider", data: p }));
+    results.services?.forEach((s) => list.push({ key: `svc-${s.id}`, type: "service", data: s }));
     return list;
   }, [results, debouncedValue]);
 
   const renderItem = ({ item }: { item: ResultItem }) => {
-    switch (item.type) {
-      case "category":
-        return (
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/services/category/[id]",
-                params: { id: item.data.id },
-              })
-            }
-            style={[styles.card, styles.categoryCard]}
-          >
-            <View style={styles.cardRow}>
-              <View style={styles.badge} />
-              <View style={{ flex: 1, gap: 6 }}>
-                <Text style={styles.cardTitle}>{item.data.name}</Text>
-                <Text style={styles.cardSubtitle}>{item.data.description}</Text>
-                <Text style={styles.pill}>Ver categoría</Text>
-              </View>
+    if (item.type === "category") {
+      return (
+        <Pressable
+          onPress={() => router.push({ pathname: "/(tabs)/services/category/[id]", params: { id: item.data.id } })}
+          style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
+        >
+          <View style={[s.categoryAccent, { backgroundColor: TOKENS.color.primary }]} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.name}</Text>
+            {item.data.description ? (
+              <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={1}>{item.data.description}</Text>
+            ) : null}
+          </View>
+          <View style={s.pill}>
+            <Text style={s.pillText}>Categoría</Text>
+          </View>
+        </Pressable>
+      );
+    }
+
+    if (item.type === "provider") {
+      const initial = (item.data.name?.[0] ?? "?").toUpperCase();
+      return (
+        <Pressable
+          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.id as string } })}
+          style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
+        >
+          {item.data.avatar ? (
+            <Image source={{ uri: item.data.avatar }} style={s.avatar} contentFit="cover" />
+          ) : (
+            <View style={[s.avatarFallback, { backgroundColor: TOKENS.color.primary + "22" }]}>
+              <Text style={[s.avatarInitial, { color: TOKENS.color.primary }]}>{initial}</Text>
             </View>
-          </Pressable>
-        );
-      case "provider":
-        return (
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/services/provider/[id]",
-                params: { id: item.data.id as string },
-              })
-            }
-            style={styles.card}
-          >
-            <View style={[styles.row, { alignItems: "center" }]}>
-              <View style={styles.avatar} />
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={styles.cardTitle}>{item.data.name}</Text>
-                <Text style={styles.cardSubtitle}>{item.data.title}</Text>
-                <View style={styles.metaRow}>
-                  <Text style={styles.metaHighlight}>
-                    {item.data.rating ? item.data.rating.toFixed(1) : "N/D"} ★
-                  </Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.meta}>
-                    {item.data.location ?? "Sin ubicación"}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </View>
-          </Pressable>
-        );
-      case "service":
-        return (
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/services/provider/[id]",
-                params: { id: item.data.providerId ?? item.data.userId ?? "" },
-              })
-            }
-            style={styles.card}
-          >
-            <View style={{ gap: 6, flex: 1 }}>
-              <Text style={styles.cardTitle}>{item.data.title}</Text>
-              <Text style={styles.cardSubtitle} numberOfLines={2}>
-                {item.data.description}
-              </Text>
-              <View style={styles.metaRow}>
-                {item.data.categoryName ? (
+          )}
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.name}</Text>
+            {item.data.title ? (
+              <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={1}>{item.data.title}</Text>
+            ) : null}
+            {item.data.rating != null ? (
+              <View style={s.ratingRow}>
+                <Ionicons name="star" size={11} color="#F59E0B" />
+                <Text style={s.ratingText}>{Number(item.data.rating).toFixed(1)}</Text>
+                {item.data.location ? (
                   <>
-                    <Text style={styles.pill}>{item.data.categoryName}</Text>
-                    <View style={styles.dot} />
+                    <Text style={[s.dot, { color: tc.border }]}>·</Text>
+                    <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={1}>{item.data.location}</Text>
                   </>
                 ) : null}
-                <Text style={styles.meta}>
-                  {item.data.price
-                    ? `Desde $${item.data.price}`
-                    : "Precio a consultar"}
-                </Text>
               </View>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
-        );
-      default:
-        return null;
+            ) : null}
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={tc.border} />
+        </Pressable>
+      );
     }
+
+    if (item.type === "service") {
+      return (
+        <Pressable
+          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.providerId ?? item.data.userId ?? "" } })}
+          style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
+        >
+          <View style={[s.serviceIcon, { backgroundColor: TOKENS.color.primary + "15" }]}>
+            <Ionicons name="briefcase-outline" size={20} color={TOKENS.color.primary} />
+          </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.title}</Text>
+            {item.data.description ? (
+              <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={2}>{item.data.description}</Text>
+            ) : null}
+            <View style={s.ratingRow}>
+              {item.data.categoryName ? (
+                <View style={s.pill}>
+                  <Text style={s.pillText}>{item.data.categoryName}</Text>
+                </View>
+              ) : null}
+              {item.data.price ? (
+                <Text style={[s.priceText, { color: TOKENS.color.primary }]}>
+                  Desde ${item.data.price}
+                </Text>
+              ) : (
+                <Text style={[s.cardSub, { color: tc.textSub }]}>Consultar precio</Text>
+              )}
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={tc.border} />
+        </Pressable>
+      );
+    }
+
+    return null;
   };
 
-  const showEmpty =
-    !loading &&
-    debouncedValue.trim().length > 0 &&
-    items.length === 0 &&
-    !error;
+  const showEmpty = !loading && debouncedValue.trim().length > 0 && items.length === 0 && !error;
+  const showInitial = !debouncedValue.trim() && !loading;
 
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View style={styles.container}>
-        <SearchBar value={value} onChange={setValue} />
-        {loading ? <ActivityIndicator style={styles.loader} /> : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {showEmpty ? (
-          <Text style={styles.empty}>
-            No encontramos resultados para "{lastQuery}"
-          </Text>
-        ) : null}
-        {items.length > 0 ? (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+        <StatusBar barStyle={tc.bg === '#ffffff' || tc.bg === '#f8f9fa' ? 'dark-content' : 'light-content'} />
+
+        {/* Header */}
+        <View style={[s.header, { borderBottomColor: tc.border }]}>
+          <Pressable onPress={() => router.back()} hitSlop={10} style={s.backBtn}>
+            <Ionicons name="arrow-back" size={22} color={tc.text} />
+          </Pressable>
+          <View style={[s.inputWrap, { backgroundColor: tc.card, borderColor: tc.border }]}>
+            <Ionicons name="search-outline" size={17} color={tc.textSub} />
+            <TextInput
+              ref={inputRef}
+              style={[s.input, { color: tc.text }]}
+              placeholder="Buscar servicios, profesionales…"
+              placeholderTextColor={tc.textSub}
+              value={value}
+              onChangeText={setValue}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {value.length > 0 && (
+              <Pressable onPress={() => setValue("")} hitSlop={8}>
+                <Ionicons name="close-circle" size={17} color={tc.textSub} />
+              </Pressable>
+            )}
+          </View>
+        </View>
+
+        {/* Loading */}
+        {loading && (
+          <View style={s.loaderWrap}>
+            <ActivityIndicator color={TOKENS.color.primary} />
+          </View>
+        )}
+
+        {/* Error */}
+        {error && !loading && (
+          <View style={s.centered}>
+            <Ionicons name="alert-circle-outline" size={36} color={tc.textSub} />
+            <Text style={[s.feedbackText, { color: tc.textSub }]}>{error}</Text>
+          </View>
+        )}
+
+        {/* Empty result */}
+        {showEmpty && (
+          <View style={s.centered}>
+            <Ionicons name="search-outline" size={42} color={tc.textSub} />
+            <Text style={[s.feedbackTitle, { color: tc.text }]}>Sin resultados</Text>
+            <Text style={[s.feedbackText, { color: tc.textSub }]}>
+              No encontramos nada para "{lastQuery}"
+            </Text>
+          </View>
+        )}
+
+        {/* Initial state */}
+        {showInitial && (
+          <View style={s.centered}>
+            <Ionicons name="search-outline" size={42} color={tc.textSub} />
+            <Text style={[s.feedbackTitle, { color: tc.text }]}>¿Qué estás buscando?</Text>
+            <Text style={[s.feedbackText, { color: tc.textSub }]}>
+              Buscá servicios, profesionales o categorías
+            </Text>
+          </View>
+        )}
+
+        {/* Results */}
+        {items.length > 0 && (
           <FlatList
             data={items}
             keyExtractor={(item) => item.key}
             renderItem={renderItem}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={s.list}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           />
-        ) : null}
+        )}
       </View>
     </TouchableWithoutFeedback>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inputWrap: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f9fafb",
-    gap: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    padding: 0,
+  },
+  loaderWrap: {
+    paddingTop: 32,
+    alignItems: "center",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 40,
+    paddingBottom: 60,
+  },
+  feedbackTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  feedbackText: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
   },
   list: {
-    paddingTop: 4,
-    paddingBottom: 32,
-    gap: 12,
-  },
-  loader: {
-    marginTop: 12,
+    padding: 16,
+    gap: 10,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 14,
-    ...TOKENS.shadow.soft,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "#EEF2F7",
     flexDirection: "row",
     alignItems: "center",
-  },
-  categoryCard: {
-    backgroundColor: "#F8FAFF",
-  },
-  cardRow: {
-    flexDirection: "row",
     gap: 12,
-    alignItems: "center",
-    flex: 1,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  badge: {
-    width: 10,
-    height: 42,
-    borderRadius: 8,
-    backgroundColor: TOKENS.color.primary,
+  categoryAccent: {
+    width: 4,
+    height: 36,
+    borderRadius: 4,
     opacity: 0.85,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  pill: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#EEF2FF",
-    color: TOKENS.color.primary,
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: "#E5E7EB",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
-  metaRow: {
+  avatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarInitial: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  serviceIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  cardSub: {
+    fontSize: 13,
+  },
+  ratingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
+    flexWrap: "wrap",
   },
-  metaHighlight: {
-    fontSize: 13,
+  ratingText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#F59E0B",
+  },
+  dot: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 99,
+    backgroundColor: TOKENS.color.primary + "15",
+  },
+  pillText: {
+    fontSize: 11,
     fontWeight: "700",
     color: TOKENS.color.primary,
   },
-  meta: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#D1D5DB",
-  },
-  chevron: {
-    fontSize: 22,
-    color: TOKENS.color.sub,
-    paddingLeft: 6,
-  },
-  empty: {
-    marginTop: 12,
-    color: TOKENS.color.sub,
-    textAlign: "center",
-  },
-  error: {
-    color: "#DC2626",
-    marginTop: 8,
-    textAlign: "center",
+  priceText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

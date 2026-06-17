@@ -19,21 +19,19 @@ import React, {
   useState,
 } from 'react';
 import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import {
   loginService,
   registerUserService,
 } from '../services/auth';
 import api from '@/core/api/axiosinstance';
-import { queryClient } from '@/core/query/queryClient';
-import { useChatStore } from '@/stores/chat.store';
 import type {
   AuthContextType,
   AuthResponse,
   AuthState,
   AuthUser,
   Credentials,
-  RegisterResponse,
   RegisterUserPayload,
 } from '../types';
 
@@ -60,6 +58,7 @@ export function useAuth(): AuthContextType {
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const qc = useQueryClient();
   const [authState, setAuthState] = useState<AuthState>(EMPTY_STATE);
   const [authLoaded, setAuthLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,8 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // expirado, limpia el estado y redirige al login sin importar la pantalla actual.
   useEffect(() => {
     tokenStorage.setForceLogoutCallback(() => {
-      queryClient.clear();
-      useChatStore.getState().reset();
+      qc.clear();
       setAuthState(EMPTY_STATE);
       router.replace('/login');
     });
@@ -138,11 +136,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Registro ───────────────────────────────────────────────────────────
   const registerUser = useCallback(
-    async (data: RegisterUserPayload): Promise<RegisterResponse> => {
+    async (data: RegisterUserPayload): Promise<AuthResponse> => {
       setIsLoading(true);
       setError(null);
+
       try {
-        return await registerUserService(data);
+        const response = await registerUserService(data);
+
+        // Persistimos los tokens para que la verificación de email y el acceso
+        // posterior a las tabs no requieran volver a hacer login.
+        // El backend valida el email en endpoints protegidos si lo requiere.
+        await tokenStorage.save(
+          response.accessToken,
+          response.refreshToken,
+          data.email,
+        );
+
+        setAuthState({
+          token: response.accessToken,
+          refreshToken: response.refreshToken,
+          userEmail: data.email,
+          user: response.user ?? null,
+        });
+
+        return response;
       } catch (err: any) {
         const raw = err?.response?.data?.message ?? 'Error al registrar usuario';
         const msg = Array.isArray(raw) ? raw.join(', ') : raw;
@@ -155,29 +172,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  // ── Verificación de email ──────────────────────────────────────────────
-  const verifyEmail = useCallback(async (email: string, code: string): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data } = await api.post<AuthResponse>('/auth/verify-email', { email, code });
-      await tokenStorage.save(data.accessToken, data.refreshToken, email);
-      setAuthState({
-        token: data.accessToken,
-        refreshToken: data.refreshToken,
-        userEmail: email,
-        user: data.user ?? null,
-      });
-    } catch (err: any) {
-      const raw = err?.response?.data?.message ?? 'Error al verificar email';
-      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
-      setError(msg);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
     const refreshToken = tokenStorage.getRefreshToken();
@@ -187,10 +181,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Si falla el servidor igual limpiamos localmente
     }
     await tokenStorage.clear();
-    queryClient.clear();
-    useChatStore.getState().reset();
+    qc.clear();
     setAuthState(EMPTY_STATE);
-  }, []);
+  }, [qc]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -207,7 +200,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         login,
         registerUser,
-        verifyEmail,
         logout,
         clearError,
       }}

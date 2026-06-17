@@ -741,8 +741,10 @@ export default function ReelsScreen() {
           ) : null
         }
         ListEmptyComponent={
-          <View style={s.center}>
-            <Text style={s.emptyText}>No hay reels todavía</Text>
+          <View style={s.emptyContainer}>
+            <Ionicons name="videocam-off-outline" size={56} color="rgba(255,255,255,0.25)" />
+            <Text style={s.emptyTitle}>Sin reels todavía</Text>
+            <Text style={s.emptySubtitle}>Los proveedores aún no han publicado videos. Volvé pronto.</Text>
           </View>
         }
       />
@@ -765,9 +767,25 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#000',
   },
-  emptyText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 16,
+  emptyContainer: {
+    height: H,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 40,
+    backgroundColor: '#000',
+  },
+  emptyTitle: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   footerLoader: {
     height: H,

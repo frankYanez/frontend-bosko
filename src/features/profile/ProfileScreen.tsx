@@ -25,6 +25,7 @@ import { EditProfileModal } from './components/EditProfileModal';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { toast } from '@/core/components/Toast';
 
 const { width: W } = Dimensions.get('window');
 
@@ -332,7 +333,13 @@ export const ProfileScreen: React.FC = () => {
   }, [refreshProfile]);
 
   const handleSave = async (data: UpdateProfilePayload) => {
-    await updateProfile(data);
+    try {
+      await updateProfile(data);
+      toast.success('Perfil actualizado');
+    } catch (err) {
+      toast.error('No se pudo guardar', 'Intenta de nuevo');
+      throw err;
+    }
   };
 
   const handleToggleAvailability = async () => {

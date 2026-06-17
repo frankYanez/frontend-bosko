@@ -117,7 +117,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       await onSave(formData);
       onClose();
     } catch {
-      Alert.alert("Error", "No se pudieron guardar los cambios.");
+      // toast shown by caller
     } finally {
       setIsSaving(false);
     }

@@ -14,7 +14,6 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
@@ -140,12 +139,7 @@ export default function OrdersListScreen() {
     );
 
   return (
-    <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.background}
-    >
+    <View style={[styles.background, { backgroundColor: tc.bg }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Mis órdenes</Text>
@@ -203,7 +197,7 @@ export default function OrdersListScreen() {
           }
         />
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
