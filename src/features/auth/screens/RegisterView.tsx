@@ -1,202 +1,408 @@
-import React from "react";
+/**
+ * RegisterView — Pantalla de registro multi-paso.
+ * Cada paso es un campo distinto con validación progresiva.
+ * Diseño glassmorphism consistente con LogInView.
+ */
+
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
+  TextInput,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-} from "react-native";
-import { useSharedValue } from "react-native-reanimated";
-import Carousel, {
-  ICarouselInstance,
-  Pagination,
-} from "react-native-reanimated-carousel";
-import { router } from "expo-router";
-import ButtonBosko from "@/shared/components/ButtonBosko";
-import { Image } from "expo-image";
-import { useAuth } from "@/features/auth/state/AuthContext";
-import { globalStyles } from "@/core/design-system/global-styles";
+  ActivityIndicator,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from '@/core/components/BlurView';
+import { Image } from 'expo-image';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Animated } from 'react-native';
+import { router } from 'expo-router';
+import { useAuth } from '@/features/auth/state/AuthContext';
+import { TOKENS } from '@/core/design-system/tokens';
 
-export default function RegisterView({ toLogin }: { toLogin: () => void }) {
-  const { registerUser } = useAuth();
-  const ref = React.useRef<ICarouselInstance>(null);
-  const progress = useSharedValue<number>(0);
-  const [currentIndex, setCurrentIndex] = React.useState(0);
+const { width } = Dimensions.get('window');
 
-  type FormField =
-    | "password"
-    | "email"
-    | "firstName"
-    | "lastName"
-    | "userName"
-    | "phone"
-    | "location";
+interface Step {
+  label: string;
+  placeholder: string;
+  field: keyof FormData;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  secure?: boolean;
+  icon: keyof typeof MaterialIcons.glyphMap;
+}
 
-  type RegisterFormData = {
-    password: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userName: string;
-    phone: string;
-    location: string;
-  };
+interface FormData {
+  firstName: string;
+  lastName:  string;
+  email:     string;
+  password:  string;
+}
 
-  const [formData, setFormData] = React.useState<RegisterFormData>({
-    password: "",
-    email: "",
-    firstName: "",
-    lastName: "",
-    userName: "",
-    phone: "",
-    location: "",
+const STEPS: Step[] = [
+  { label: 'Nombre',     placeholder: 'Tu nombre',            field: 'firstName', keyboardType: 'default',       icon: 'person' },
+  { label: 'Apellido',   placeholder: 'Tu apellido',          field: 'lastName',  keyboardType: 'default',       icon: 'person' },
+  { label: 'Email',      placeholder: 'tucorreo@ejemplo.com', field: 'email',     keyboardType: 'email-address', icon: 'email'  },
+  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres',  field: 'password',  secure: true,                  icon: 'lock'   },
+];
+
+export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
+  const { registerUser, isLoading, error, clearError } = useAuth();
+
+  const [step, setStep] = useState(0);
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName:  '',
+    email:     '',
+    password:  '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [fieldError, setFieldError] = useState('');
 
-  const steps: { label: string; field: FormField }[] = [
-    { label: "Correo electrónico", field: "email" },
-    { label: "Contraseña", field: "password" },
-    { label: "Nombre", field: "firstName" },
-    { label: "Apellido", field: "lastName" },
-    { label: "Nombre de usuario", field: "userName" },
-    { label: "Teléfono", field: "phone" },
-    { label: "Ubicación", field: "location" },
-  ];
+  const inputRef = useRef<TextInput>(null);
+  const progress = useRef(new Animated.Value(1 / STEPS.length)).current;
 
-  const onPressPagination = (index: number) => {
-    ref.current?.scrollTo({
-      count: index - progress.value,
-      animated: true,
-    });
+  const currentStep = STEPS[step];
+  const isLastStep = step === STEPS.length - 1;
+
+  const progressStyle = {
+    width: progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0%', '100%'],
+    }),
   };
 
-  const handleFinish = async () => {
-    try {
-      const response = await registerUser(formData);
+  // Validar el campo del paso actual antes de avanzar
+  const validateCurrent = async (): Promise<boolean> => {
+    const value = formData[currentStep.field].trim();
 
-      console.log("Registration successful, navigating to tabs");
-      // Navigation will happen automatically when authState updates
-      // OnBoarding will detect the token and redirect
-      router.replace("/(tabs)");
-    } catch (error) {
-      console.error("Error al registrar usuario:", error);
+    if (!value) {
+      setFieldError('Este campo es obligatorio');
+      return false;
+    }
+
+    if (currentStep.field === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        setFieldError('Ingresá un email válido');
+        return false;
+      }
+    }
+
+    if (currentStep.field === 'password') {
+      if (value.length < 8) {
+        setFieldError('La contraseña debe tener al menos 8 caracteres');
+        return false;
+      }
+      if (!/[A-Z]/.test(value)) {
+        setFieldError('La contraseña debe tener al menos una mayúscula');
+        return false;
+      }
+      if (!/[0-9]/.test(value)) {
+        setFieldError('La contraseña debe tener al menos un número');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleNext = async () => {
+    Keyboard.dismiss();
+    setFieldError('');
+    const valid = await validateCurrent();
+    if (!valid) return;
+
+    if (isLastStep) {
+      await handleFinish();
+    } else {
+      setStep(s => s + 1);
+      // Actualizar progress para la barra animada
+      Animated.timing(progress, { toValue: (step + 2) / STEPS.length, duration: 300, useNativeDriver: false }).start();
+      // Foco en el nuevo input
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
+  const handleBack = () => {
+    setFieldError('');
+    if (step > 0) {
+      setStep(s => s - 1);
+      Animated.timing(progress, { toValue: step / STEPS.length, duration: 300, useNativeDriver: false }).start();
+    } else {
+      toRegister?.();
+    }
+  };
+
+  const handleFinish = async () => {
+    const email     = formData.email.trim().toLowerCase();
+    const firstName = formData.firstName.trim();
+    const lastName  = formData.lastName.trim();
+    try {
+      await registerUser({ firstName, lastName, email, password: formData.password });
+      router.replace(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Error al registrar la cuenta';
+      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+    }
+  };
+
+  const displayError = fieldError || error || '';
+
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        // Dismiss keyboard on press outside of input
-        Keyboard.dismiss();
-      }}
-      style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-    >
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <LinearGradient
+        colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.background}
       >
-        <Image
-          source={require("@/assets/images/bosko-logo.png")}
-          style={{ width: 200, height: 200, marginBottom: 20 }}
-          contentFit="contain"
-        />
-        <Carousel
-          loop={false}
-          width={350}
-          height={200}
-          autoPlay={false}
-          ref={ref}
-          data={steps}
-          renderItem={({ item }) => (
-            <View style={styles.stepContainer}>
-              <Text style={styles.title}>{item.label}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={item.label}
-                value={formData[item.field]}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, [item.field]: text })
-                }
-                keyboardType={
-                  item.field === "email"
-                    ? "email-address"
-                    : item.field === "phone"
-                      ? "phone-pad"
-                      : "default"
-                }
-                autoCapitalize="none"
-              />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.flex}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <View style={styles.container}>
+            {/* Logo compacto */}
+            <Image
+              source={require('@/assets/images/bosko-logo.png')}
+              style={styles.logo}
+              contentFit="contain"
+            />
+
+            {/* Tarjeta glass */}
+            <View style={styles.cardShadow}>
+              <BlurView intensity={30} tint="light" style={styles.card}>
+                {/* Header con barra de progreso */}
+                <View style={styles.cardHeader}>
+                  <Pressable onPress={handleBack} hitSlop={8}>
+                    <MaterialIcons name="arrow-back" size={22} color={TOKENS.color.text} />
+                  </Pressable>
+                  <Text style={styles.stepCounter}>
+                    {step + 1} / {STEPS.length}
+                  </Text>
+                </View>
+
+                {/* Barra de progreso */}
+                <View style={styles.progressTrack}>
+                  <Animated.View style={[styles.progressFill, progressStyle]} />
+                </View>
+
+                <Text style={styles.cardTitle}>Crear cuenta</Text>
+                <Text style={styles.stepLabel}>{currentStep.label}</Text>
+
+                {/* Input del paso actual */}
+                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name={currentStep.icon} size={20} color={TOKENS.color.sub} />
+                  <TextInput
+                    ref={inputRef}
+                    style={styles.input}
+                    placeholder={currentStep.placeholder}
+                    placeholderTextColor={TOKENS.color.sub}
+                    value={formData[currentStep.field]}
+                    onChangeText={text => {
+                      setFormData(prev => ({ ...prev, [currentStep.field]: text }));
+                      setFieldError('');
+                      clearError();
+                    }}
+                    keyboardType={currentStep.keyboardType || 'default'}
+                    secureTextEntry={currentStep.secure && !showPassword}
+                    autoCapitalize={['firstName', 'lastName'].includes(currentStep.field) ? 'words' : 'none'}
+                    autoCorrect={false}
+                    returnKeyType={isLastStep ? 'done' : 'next'}
+                    onSubmitEditing={handleNext}
+                    autoFocus
+                  />
+                  {currentStep.secure && (
+                    <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
+                      <MaterialIcons
+                        name={showPassword ? 'visibility' : 'visibility-off'}
+                        size={20}
+                        color={TOKENS.color.sub}
+                      />
+                    </Pressable>
+                  )}
+                </View>
+
+                {!!displayError && (
+                  <Text style={styles.errorText}>{displayError}</Text>
+                )}
+
+                {/* Botón siguiente / finalizar */}
+                <View style={styles.buttonShadow}>
+                  <Pressable
+                    onPress={handleNext}
+                    disabled={isLoading}
+                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+                  >
+                    <LinearGradient
+                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.buttonGradient}
+                    >
+                      {isLoading
+                        ? <ActivityIndicator color="#fff" size="small" />
+                        : <Text style={styles.buttonText}>{isLastStep ? 'Crear cuenta' : 'Siguiente'}</Text>
+                      }
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+
+                {/* Link a login */}
+                {step === 0 && (
+                  <View style={styles.loginRow}>
+                    <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
+                    <Pressable onPress={toRegister}>
+                      <Text style={styles.loginLink}>Ingresar</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </BlurView>
             </View>
-          )}
-          onProgressChange={(offsetProgress, absoluteProgress) => {
-            progress.value = absoluteProgress;
-            setCurrentIndex(Math.round(absoluteProgress));
-          }}
-        />
-
-        <Pagination.Basic
-          progress={progress}
-          data={steps}
-          size={14}
-          dotStyle={{
-            width: 14,
-            borderRadius: 14,
-            backgroundColor: "gray",
-          }}
-          activeDotStyle={{
-            borderRadius: 14,
-            overflow: "hidden",
-            backgroundColor: globalStyles.colorPrimary,
-          }}
-          containerStyle={[
-            {
-              gap: 5,
-              marginBottom: 10,
-            },
-          ]}
-          horizontal
-          onPress={onPressPagination}
-        />
-
-        {currentIndex === steps.length - 1 ? (
-          <ButtonBosko title="Finalizar Registro" onPress={handleFinish} />
-        ) : (
-          <ButtonBosko
-            title="Siguiente"
-            onPress={() => ref.current?.scrollTo({ count: 1, animated: true })}
-          />
-        )}
-      </KeyboardAvoidingView>
+          </View>
+        </KeyboardAvoidingView>
+      </LinearGradient>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
+  background: { flex: 1 },
+  flex: { flex: 1 },
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
-  stepContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 20,
   },
-  title: {
+  cardShadow: {
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
+  card: {
+    width: width - 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.85)',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  stepCounter: {
+    fontSize: 13,
+    color: TOKENS.color.sub,
+    fontWeight: '500',
+  },
+  progressTrack: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 2,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: TOKENS.color.primary,
+    borderRadius: 2,
+  },
+  cardTitle: {
     fontSize: 22,
-    fontWeight: "600",
-    marginBottom: 10,
-    textAlign: "center",
+    fontWeight: '700',
+    color: TOKENS.color.text,
+    marginBottom: 4,
+  },
+  stepLabel: {
+    fontSize: 15,
+    color: TOKENS.color.sub,
+    marginBottom: 16,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.75)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(200,200,220,0.5)',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    gap: 10,
+    marginBottom: 8,
+    minHeight: 52,
+  },
+  inputError: {
+    borderColor: '#ef4444',
   },
   input: {
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 10,
-    width: "100%",
-    padding: 15,
+    flex: 1,
+    fontSize: 15,
+    color: TOKENS.color.text,
+    paddingVertical: 8,
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#ef4444',
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  buttonShadow: {
+    borderRadius: 14,
+    marginTop: 8,
+    marginBottom: 16,
+    shadowColor: TOKENS.color.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  button: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  buttonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+  },
+  buttonText: {
+    color: '#fff',
     fontSize: 16,
-    backgroundColor: "#fff",
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  loginRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginPrompt: { fontSize: 14, color: TOKENS.color.sub },
+  loginLink: {
+    fontSize: 14,
+    color: TOKENS.color.primary,
+    fontWeight: '600',
   },
 });

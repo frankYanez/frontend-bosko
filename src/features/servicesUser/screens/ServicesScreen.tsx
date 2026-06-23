@@ -1,292 +1,529 @@
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
+  Animated,
+  Dimensions,
   Pressable,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { MotiView } from "moti";
-import { useCallback, useEffect, useMemo } from "react";
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
-import { useCategories } from "@/src/contexts/CategoriesContext";
-import { useProviders } from "@/src/contexts/ProvidersContext";
-import { Category } from "@/src/interfaces/category";
-import { useServices } from "../state/ServicesContext";
-import { TOKENS } from "@/core/design-system/tokens";
+import { useServices } from '../state/ServicesContext';
+import type { Category } from '@/types/services';
+import { EmptyState } from '@/core/components/EmptyState';
+import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
-type CategoryWithCount = Category & { servicesCount: number };
-type CategoryListItem = CategoryWithCount;
+const { width: W } = Dimensions.get('window');
+const CARD_GAP   = 12;
+const H_PAD      = 16;
+const HALF_W     = (W - H_PAD * 2 - CARD_GAP) / 2;
 
-const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
+// ── Curated gradients per category index ─────────────────────────────────────
+const GRADIENTS: [string, string, string][] = [
+  ['#0f0c29', '#302b63', '#24243e'],   // 0  deep violet
+  ['#134e5e', '#71b280', '#134e5e'],   // 1  teal forest
+  [TOKENS.color.primaryDark, TOKENS.color.primary, '#c0002f'],   // 2  bosko red
+  ['#0d0d0d', '#2c3e50', '#4ca1af'],   // 3  midnight steel
+  ['#1a1a2e', '#16213e', '#0f3460'],   // 4  deep navy
+  ['#2d1b69', '#553c9a', '#6d28d9'],   // 5  purple
+  ['#065f46', '#047857', '#059669'],   // 6  emerald
+  ['#7c2d12', '#c2410c', '#ea580c'],   // 7  burnt orange
+  ['#831843', '#9d174d', '#be185d'],   // 8  pink
+  ['#78350f', '#b45309', '#d97706'],   // 9  amber
+];
 
-export default function ServicesScreen() {
-  const router = useRouter();
-  const { services } = useServices();
+function getGradient(index: number, accent?: string): [string, string, string] {
+  return GRADIENTS[index % GRADIENTS.length];
+}
 
-  const {
-    categories,
-    loading: categoriesLoading,
-    error: categoriesError,
-  } = useCategories();
-  const {
-    providers,
-    loading: providersLoading,
-    error: providersError,
-    loadProviders,
-  } = useProviders();
-
+// ── Shimmer skeleton ──────────────────────────────────────────────────────────
+function Shimmer({ width, height, radius = 12, style }: {
+  width: number | string; height: number; radius?: number; style?: object;
+}) {
+  const tc = useThemeColors();
+  const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (providers.length === 0) {
-      loadProviders().catch((err) => console.error(err));
-    }
-  }, [providers.length, loadProviders]);
+    Animated.loop(
+      Animated.timing(shimmer, { toValue: 1, duration: 1100, useNativeDriver: true })
+    ).start();
+  }, []);
 
-  const categoriesWithCounts = useMemo<CategoryListItem[]>(() => {
-    const counts = providers.reduce<Record<string, number>>((acc, provider) => {
-      const categoryId =
-        provider.categoryId ??
-        (provider as any)?.category?.id ??
-        (provider as any)?.category_id;
-      if (categoryId) {
-        acc[categoryId] = (acc[categoryId] ?? 0) + 1;
-      }
-      return acc;
-    }, {});
-
-    return categories.map((category, index) => ({
-      ...category,
-      accent:
-        category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
-      icon: category.icon ?? "*",
-      servicesCount: counts[category.id] ?? 0,
-    }));
-  }, [categories, providers]);
-
-  const loading = categoriesLoading || providersLoading;
-
-  const handleCategoryPress = useCallback(
-    (category: Category) => {
-      router.push({
-        pathname: "/(tabs)/services/category/[id]",
-        params: { id: category.id },
-      });
-    },
-    [router]
-  );
-
-  const featuredServices = useMemo(() => {
-    const collected = categories.flatMap((category) =>
-      services.filter((service) => service.categoryId === category.id)
-    );
-    return collected.slice(0, 6);
-  }, [categories, services]);
-
-  const listEmpty = (
-    <View style={styles.emptyState}>
-      {categoriesLoading ? (
-        <ActivityIndicator />
-      ) : (
-        <Text style={styles.emptyText}>
-          Pronto habra categorias disponibles.
-        </Text>
-      )}
-      {categoriesError ? (
-        <Text style={styles.errorText}>{categoriesError}</Text>
-      ) : null}
-    </View>
-  );
+  const translateX = shimmer.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-300, 300],
+  });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {loading ? (
-        <View style={styles.header}>
-          <Text style={styles.heading}>Cargando categorias...</Text>
-        </View>
-      ) : null}
-      {categoriesError || providersError ? (
-        <View style={styles.header}>
-          <Text style={styles.subheading}>
-            {categoriesError ||
-              providersError ||
-              "Ocurrio un error al cargar los datos"}
-          </Text>
-        </View>
-      ) : null}
-      {!loading && categoriesWithCounts.length === 0 ? (
-        <View style={styles.header}>
-          <Text style={styles.heading}>No hay categorias para mostrar</Text>
-          <Text style={styles.subheading}>Intenta nuevamente mas tarde.</Text>
-        </View>
-      ) : null}
-      <FlatList
-        data={categoriesWithCounts}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={listEmpty}
-        renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateY: 24 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 400, delay: index * 60 }}
-            style={styles.cardWrapper}
-          >
-            <Pressable
-              onPress={() => handleCategoryPress(item)}
-              style={[styles.card, { backgroundColor: item.accent }]}
-              android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
-            >
-              <Text style={styles.icon}>{item.icon}</Text>
-              <View>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardDescription}>{item.description}</Text>
-              </View>
-              <Text style={styles.cardCount}>
-                {item.servicesCount ?? 0} servicios
-              </Text>
-            </Pressable>
-          </MotiView>
-        )}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.heading}>Categorias sugeridas</Text>
-            <Text style={styles.subheading}>
-              Elige una categoria para ver profesionales disponibles.
-            </Text>
-          </View>
-        }
-        ListFooterComponent={
-          featuredServices.length > 0 ? (
-            <View style={styles.servicesSection}>
-              <Text style={styles.sectionTitle}>Servicios destacados</Text>
-              <Text style={styles.sectionSubtitle}>
-                Toca cualquier profesional para conocer su perfil.
-              </Text>
-              {featuredServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  serviceId={service.id}
-                  onPress={() =>
-                    router.push({
-                      pathname: "./provider/[id]",
-                      params: { id: service.id },
-                    })
-                  }
-                  accessibilityHint={`Abrir perfil de ${service.title}`}
-                  style={styles.serviceCard}
-                />
-              ))}
-            </View>
-          ) : null
-        }
-      />
-    </SafeAreaView>
+    <View style={[{ width, height, borderRadius: radius, backgroundColor: tc.surface2, overflow: 'hidden' }, style]}>
+      <Animated.View
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          transform: [{ translateX }],
+        }}
+      >
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        />
+      </Animated.View>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
+function SkeletonScreen() {
+  return (
+    <View style={sk.wrap}>
+      {/* Featured skeleton */}
+      <Shimmer width={W - H_PAD * 2} height={220} radius={24} style={{ marginBottom: 12 }} />
+      {/* 2-col grid */}
+      {[0, 1, 2].map(row => (
+        <View key={row} style={sk.row}>
+          <Shimmer width={HALF_W} height={160} radius={20} />
+          <Shimmer width={HALF_W} height={160} radius={20} />
+        </View>
+      ))}
+    </View>
+  );
+}
+const sk = StyleSheet.create({
+  wrap: { paddingHorizontal: H_PAD, gap: 12 },
+  row:  { flexDirection: 'row', gap: CARD_GAP },
+});
+
+// ── Category card (featured = full-width) ────────────────────────────────────
+function CategoryCard({
+  category,
+  index,
+  featured,
+  delay,
+}: {
+  category: Category;
+  index: number;
+  featured?: boolean;
+  delay: number;
+}) {
+  const gradient = getGradient(index, category.accent);
+
+  // Entrance: perspective flip-in (rotateY 40° → 0°) + scale
+  const flipAnim  = useRef(new Animated.Value(0)).current;
+  // Press depth: rotateX + scale
+  const pressDepth = useRef(new Animated.Value(0)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.spring(flipAnim, {
+      toValue: 1,
+      delay,
+      tension: 55,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const pressIn = () => {
+    Animated.parallel([
+      Animated.spring(pressDepth, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
+      Animated.spring(pressScale, { toValue: 0.96, useNativeDriver: true, tension: 200, friction: 10 }),
+    ]).start();
+  };
+
+  const pressOut = () => {
+    Animated.parallel([
+      Animated.spring(pressDepth, { toValue: 0, useNativeDriver: true, tension: 200, friction: 10 }),
+      Animated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
+    ]).start();
+  };
+
+  const cardW   = featured ? W - H_PAD * 2 : HALF_W;
+  const cardH   = featured ? 220 : 165;
+
+  return (
+    <Animated.View
+      style={{
+        width: cardW,
+        height: cardH,
+        opacity: flipAnim,
+        transform: [
+          { perspective: 1000 },
+          {
+            rotateY: flipAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['40deg', '0deg'],
+            }),
+          },
+          {
+            scale: flipAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.88, 1],
+            }),
+          },
+        ],
+      }}
+    >
+      <Pressable
+        onPressIn={pressIn}
+        onPressOut={pressOut}
+        onPress={() =>
+          router.push({
+            pathname: '/(tabs)/services/category/[id]',
+            params: { id: category.id },
+          })
+        }
+        style={{ flex: 1 }}
+      >
+        <Animated.View
+          style={[
+            s.card,
+            {
+              flex: 1,
+              transform: [
+                { perspective: 800 },
+                {
+                  rotateX: pressDepth.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '6deg'],
+                  }),
+                },
+                { scale: pressScale },
+              ],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: featured ? 24 : 20 }]}
+          />
+
+          {/* Decorative blobs */}
+          <View style={[s.blob, { width: cardW * 0.8, height: cardW * 0.8, top: -cardW * 0.3, right: -cardW * 0.2, opacity: 0.12 }]} />
+          <View style={[s.blob, { width: cardW * 0.4, height: cardW * 0.4, bottom: -20, right: cardW * 0.3, opacity: 0.08 }]} />
+
+          {/* Service count badge */}
+          {(category.servicesCount ?? 0) > 0 && (
+            <View style={s.countBadge}>
+              <Text style={s.countText}>{category.servicesCount} servicios</Text>
+            </View>
+          )}
+
+          {/* Icon */}
+          <View style={[s.iconBg, featured && { width: 68, height: 68, borderRadius: 20 }]}>
+            <Text style={[s.icon, featured && { fontSize: 34 }]}>{category.icon ?? '🔧'}</Text>
+          </View>
+
+          {/* Text */}
+          <View style={s.cardText}>
+            <Text style={[s.cardName, featured && { fontSize: 22 }]} numberOfLines={1}>
+              {category.name}
+            </Text>
+            {category.description ? (
+              <Text style={[s.cardDesc, featured && { fontSize: 13 }]} numberOfLines={featured ? 2 : 1}>
+                {category.description}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Arrow */}
+          <View style={s.arrowWrap}>
+            <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.8)" />
+          </View>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+function Header({ titleAnim }: { titleAnim: Animated.Value }) {
+  const tc = useThemeColors();
+  return (
+    <Animated.View style={[s.header, { opacity: titleAnim, transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }] }]}>
+      <View>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Explorar</Text>
+        <Text style={[s.headerSub, { color: tc.textSub }]}>Descubrí profesionales cerca tuyo</Text>
+      </View>
+      <Pressable style={[s.searchIcon, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
+        <Ionicons name="search" size={20} color={tc.text} />
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ── Search bar ────────────────────────────────────────────────────────────────
+function SearchBar({ anim }: { anim: Animated.Value }) {
+  const tc = useThemeColors();
+  return (
+    <Animated.View style={[s.searchWrap, { opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
+      <Pressable style={[s.searchBar, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
+        <Ionicons name="search-outline" size={16} color={tc.textMuted} />
+        <Text style={[s.searchPlaceholder, { color: tc.textMuted }]}>Buscar servicios o profesionales…</Text>
+        <View style={[s.searchFilter, { backgroundColor: tc.accent }]}>
+          <Ionicons name="options-outline" size={15} color={TOKENS.color.primary} />
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+export default function ServicesScreen() {
+  const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
+  const { categories, categoriesStatus, fetchCategories } = useServices();
+
+  const loading = categoriesStatus.loading && categories.length === 0;
+
+  useEffect(() => {
+    fetchCategories().catch(() => {});
+  }, []);
+
+  // Header animations
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const searchAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(80, [
+      Animated.timing(headerAnim, { toValue: 1, duration: 360, useNativeDriver: true }),
+      Animated.timing(searchAnim, { toValue: 1, duration: 360, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const [featured, ...rest] = categories;
+
+  // 2-column rows from remaining categories
+  const rows: Category[][] = [];
+  for (let i = 0; i < rest.length; i += 2) {
+    rows.push(rest.slice(i, i + 2));
+  }
+
+  return (
+    <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={tc.bg} />
+
+      <Header titleAnim={headerAnim} />
+      <SearchBar anim={searchAnim} />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 100 }]}
+      >
+        {loading ? (
+          <SkeletonScreen />
+        ) : categories.length === 0 ? (
+          <EmptyState
+            icon="grid-outline"
+            title="Categorías próximamente"
+            subtitle="Estamos cargando los servicios disponibles. Volvé en breve."
+            iconColor={tc.textSub}
+            iconBg={tc.surface2}
+          />
+        ) : (
+          <View style={s.grid}>
+            {/* Featured card (first category, full width) */}
+            {featured && (
+              <CategoryCard
+                category={featured}
+                index={0}
+                featured
+                delay={0}
+              />
+            )}
+
+            {/* 2-column grid for the rest */}
+            {rows.map((row, rowIdx) => (
+              <View key={rowIdx} style={s.row}>
+                {row.map((cat, colIdx) => {
+                  const globalIdx = 1 + rowIdx * 2 + colIdx;
+                  return (
+                    <CategoryCard
+                      key={cat.id}
+                      category={cat}
+                      index={globalIdx}
+                      delay={globalIdx * 55}
+                    />
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: {
     flex: 1,
-    backgroundColor: "white",
   },
-  listContent: {
-    paddingHorizontal: 10,
-    paddingBottom: 40,
-    gap: 18,
-  },
-  columnWrapper: {
-    gap: 18,
-  },
+
+  // Header
   header: {
-    gap: 4,
-    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: H_PAD,
+    paddingTop: 10,
+    paddingBottom: 4,
   },
-  heading: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: TOKENS.color.primary,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
   },
-  subheading: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
+  headerSub: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
   },
-  cardWrapper: {
-    flex: 1,
-  },
-  card: {
-    flex: 1,
-    minHeight: 150,
-    borderRadius: TOKENS.radius.xl,
-    padding: 18,
-    gap: 12,
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+  searchIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
     elevation: 3,
   },
-  icon: {
-    fontSize: 32,
+
+  // Search bar
+  searchWrap: {
+    paddingHorizontal: H_PAD,
+    paddingBottom: 14,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TOKENS.color.text,
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  cardDescription: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-  },
-  cardCount: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  servicesSection: {
-    marginTop: 32,
-    gap: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  sectionSubtitle: {
+  searchPlaceholder: {
+    flex: 1,
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: '#9CA3AF',
   },
-  serviceCard: {
-    marginBottom: 12,
+  searchFilter: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#FFF0F3',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  emptyState: {
-    width: "100%",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 40,
+
+  // Grid
+  scroll: { paddingTop: 2 },
+  grid: {
+    paddingHorizontal: H_PAD,
+    gap: CARD_GAP,
   },
-  emptyText: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
+  row: {
+    flexDirection: 'row',
+    gap: CARD_GAP,
   },
-  errorText: {
-    fontSize: 12,
-    color: "#DC2626",
+
+  // Card base
+  card: {
+    borderRadius: 20,
+    padding: 18,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
-  countBadge: { alignItems: "flex-end" },
+  blob: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+  },
+  countBadge: {
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 99,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
   countText: {
-    fontSize: 16,
-    color: "white",
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
   },
-  countLabel: { fontSize: 12, color: "white" },
-  cardContent: { marginTop: 10, gap: 4 },
+  iconBg: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.20)',
+  },
+  icon: {
+    fontSize: 26,
+  },
+  cardText: {
+    gap: 4,
+  },
+  cardName: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  cardDesc: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.65)',
+    lineHeight: 17,
+  },
+  arrowWrap: {
+    position: 'absolute',
+    bottom: 18,
+    right: 18,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Empty
+  empty: {
+    paddingTop: 80,
+    alignItems: 'center',
+    gap: 10,
+  },
+  emptyIcon: { fontSize: 48 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A' },
+  emptySub: { fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 40 },
 });

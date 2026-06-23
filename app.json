@@ -2,26 +2,57 @@
   "expo": {
     "name": "Bosko",
     "slug": "Bosko",
+    "owner": "gonzachabit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/bosko-logo.png",
     "scheme": "bosko",
     "userInterfaceStyle": "light",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "red"
+      "backgroundColor": "#850021"
     },
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
+      "package": "com.boskoapp.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "googleServicesFile": "./google-services.json",
+      "androidNavigationBar": {
+        "backgroundColor": "#000000",
+        "barStyle": "light"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.boskoapp.mobile",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Bosko necesita acceso a la cámara para que puedas subir fotos y videos de tus servicios.",
+        "NSPhotoLibraryUsageDescription": "Bosko necesita acceso a tu galería para que puedas subir fotos y videos de tus servicios.",
+        "NSPhotoLibraryAddUsageDescription": "Bosko necesita permiso para guardar fotos en tu galería.",
+        "NSMicrophoneUsageDescription": "Bosko necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz."
+      }
     },
     "web": {
       "bundler": "metro",
@@ -31,10 +62,47 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "expo-video",
+      "expo-audio",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/bosko-logo.png",
+          "color": "#850021",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bosko necesita acceso a tu galería para subir fotos y videos de tus servicios.",
+          "cameraPermission": "Bosko necesita acceso a la cámara para subir fotos y videos de tus servicios.",
+          "microphonePermission": "Bosko necesita acceso al micrófono para grabar videos."
+        }
+      ],
+      "expo-document-picker",
+      "expo-web-browser",
+      [
+        "@didit-protocol/sdk-react-native",
+        {
+          "iosNfcEnabled": false,
+          "androidNfcEnabled": false
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "481e79c0-a1dd-409f-a1d0-af9bd2881eb8"
+      }
     }
   }
 }

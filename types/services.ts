@@ -21,11 +21,13 @@ export type ServiceSummary = {
   name: string;
   title: string;
   summary: string;
-  thumbnail: string;
+  thumbnail?: string;
+  images?: string[];
   location: string;
   rate: Rate;
   averageRating: number;
   reviewsCount: number;
+  isAvailable?: boolean;
 };
 
 export type ProviderProfile = {
@@ -49,6 +51,7 @@ export type ProviderProfile = {
   averageRating: number;
   reviewsCount: number;
   rate: Rate;
+  isAvailable?: boolean;
 };
 
 export type Review = {
@@ -59,19 +62,12 @@ export type Review = {
   userAvatar?: string;
   rating: number;
   comment: string;
+  reply?: string;
   createdAt: string;
 };
 
-export type Purchase = {
-  id: string;
-  serviceId: string;
-  userId: string;
-  completedAt: string;
-};
-
 export type AddReviewPayload = {
-  serviceId: string;
-  userId: string;
+  orderId: string;
   rating: number;
   comment: string;
 };

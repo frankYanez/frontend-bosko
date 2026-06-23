@@ -21,7 +21,6 @@ export const ProfileDetailPage = () => {
     >
       <Text style={styles.title}>
         {[profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
-          profile.username ||
           "Perfil"}
       </Text>
       <Text style={styles.subtitle}>{profile.bio || ""}</Text>

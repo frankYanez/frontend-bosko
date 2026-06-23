@@ -9,9 +9,9 @@ import {
   View,
 } from "react-native";
 
-import { useServices } from "@/context/ServicesContext";
+import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Rate } from "@/types/services";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 import { PremiumButton } from "@/src/components/PremiumButton";
 
 const formatRate = (rate: Rate) => {
@@ -112,13 +112,12 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
             <Text style={styles.heroTitle}>{provider.title}</Text>
             <Text style={styles.heroSummary}>{provider.summary}</Text>
             <View style={styles.heroStats}>
-              <Text style={styles.heroRating}>★ {rating.averageRating.toFixed(1)}</Text>
+              <Text style={styles.heroRating}>★ {rating.averageRating ? Number(rating.averageRating).toFixed(1) : '0.0'}</Text>
               <View style={styles.dot} />
               <Text style={styles.heroReviews}>{rating.reviewsCount} reseñas</Text>
             </View>
             <Text style={styles.heroLocation}>{provider.location}</Text>
             <View style={styles.heroActions}>
-              <Text style={styles.heroRate}>Desde {formatRate(provider.rate)}</Text>
               <PremiumButton
                 title="Cotizar servicio"
                 onPress={() => onRequestQuote && onRequestQuote()}

@@ -1,301 +1,293 @@
-import React from "react";
-import {
-  View,
-  Pressable,
-  StyleSheet,
-  Dimensions,
-  Platform,
-} from "react-native";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { BlurView } from "expo-blur";
-import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUnreadTotal } from '@/stores/chat.store';
+import { TOKENS } from '@/core/design-system/tokens';
 
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/core/design-system/Colors";
+// ── Constants ─────────────────────────────────────────────────────────────────
+const BAR_H   = 64;
+const BAR_R   = 26;
+const BUBBLE  = 54;
+const BR      = BUBBLE / 2;
+const NOTCH_W = BR + 6;
+const NOTCH_D = BR + 4;   // deeper than BR so notch fully receives bubble
+const EASE    = 20;
+const LIFT    = BR;       // center of bubble sits at bar top edge
 
-const { width } = Dimensions.get("window");
-const TAB_HEIGHT = 60;
-const CURVE_WIDTH = 80;
-const CURVE_DEPTH = 35; // How deep the curve goes
-const CENTER = width / 2;
-const SIDE_MARGIN = 20; // Margin from screen edges
-const RADIUS = 35; // Corner radius for the pill
+const C = { bar: '#141414', bordo: TOKENS.color.primary, white: '#FFFFFF' };
 
-const TabBarBackground = () => {
-  // Path: Rounded Pill with top-center curve
-  // Drawing area: from (SIDE_MARGIN) to (width - SIDE_MARGIN)
-  const START_X = SIDE_MARGIN;
-  const END_X = width - SIDE_MARGIN;
+const SPRING = { tension: 120, friction: 10, useNativeDriver: true };
 
-  const path = `
-        M ${START_X + RADIUS} 0
-        L ${CENTER - CURVE_WIDTH / 2} 0
-        C ${CENTER - CURVE_WIDTH / 4} 0, ${
-    CENTER - CURVE_WIDTH / 4
-  } ${CURVE_DEPTH}, ${CENTER} ${CURVE_DEPTH}
-        C ${CENTER + CURVE_WIDTH / 4} ${CURVE_DEPTH}, ${
-    CENTER + CURVE_WIDTH / 4
-  } 0, ${CENTER + CURVE_WIDTH / 2} 0
-        L ${END_X - RADIUS} 0
-        Q ${END_X} 0, ${END_X} ${RADIUS}
-        L ${END_X} ${TAB_HEIGHT - RADIUS}
-        Q ${END_X} ${TAB_HEIGHT}, ${END_X - RADIUS} ${TAB_HEIGHT}
-        L ${START_X + RADIUS} ${TAB_HEIGHT}
-        Q ${START_X} ${TAB_HEIGHT}, ${START_X} ${TAB_HEIGHT - RADIUS}
-        L ${START_X} ${RADIUS}
-        Q ${START_X} 0, ${START_X + RADIUS} 0
-        Z
-    `;
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-  return (
-    <Svg width={width} height={TAB_HEIGHT} style={styles.svg}>
-      <Defs>
-        <LinearGradient id="grad" x1="0.5" y1="0" x2="0.5" y2="1">
-          <Stop offset="0" stopColor="#3d0a0f" stopOpacity="1" />
-          <Stop offset="0.5" stopColor={Colors.colorPrimary} stopOpacity="1" />
-          <Stop offset="1" stopColor="#3d0a0f" stopOpacity="1" />
-        </LinearGradient>
-      </Defs>
-      {/* Shadow path (rendered slightly offset if needed, or rely on container shadow) */}
-
-      {/* Main Path */}
-      <Path
-        d={path}
-        fill="url(#grad)"
-        stroke="rgba(0, 0, 0, 0.2)" // Gold border
-        strokeWidth="1"
-      />
-    </Svg>
-  );
+const TABS: Record<string, { icon: IconName; active: IconName; label: string }> = {
+  index:    { icon: 'home-outline',                active: 'home',                label: 'Inicio'    },
+  services: { icon: 'grid-outline',                active: 'grid',                label: 'Servicios' },
+  orders:   { icon: 'receipt-outline',             active: 'receipt',             label: 'Pedidos'   },
+  reels:    { icon: 'play-circle-outline',         active: 'play-circle',         label: 'Reels'     },
+  chat:     { icon: 'chatbubble-ellipses-outline', active: 'chatbubble-ellipses', label: 'Mensajes'  },
+  profile:  { icon: 'person-outline',              active: 'person',              label: 'Perfil'    },
 };
 
-const TabIcon = ({
-  name,
-  isFocused,
-  isCenter,
-}: {
-  name: any;
-  isFocused: boolean;
-  isCenter?: boolean;
-}) => {
-  const scale = useSharedValue(isCenter ? 1 : isFocused ? 1.2 : 1);
-  const opacity = useSharedValue(isFocused ? 1 : 0.6);
-
-  React.useEffect(() => {
-    scale.value = withSpring(isCenter ? 1 : isFocused ? 1.2 : 1);
-    opacity.value = withTiming(isFocused ? 1 : 0.6);
-  }, [isFocused, isCenter]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: isCenter ? 1 : opacity.value, // Center icon always full opacity
-  }));
-
-  if (isCenter) {
-    return (
-      <View style={styles.centerButtonContainer}>
-        <View
-          style={[
-            styles.centerButton,
-            {
-              // Gold glow for center button
-              ...Colors.premium.shadows.global,
-            },
-          ]}
-        >
-          <Ionicons name="add" size={32} color="#FFF" />
-        </View>
-      </View>
-    );
-  }
-
+// ── SVG path ──────────────────────────────────────────────────────────────────
+function buildPath(W: number, cx: number): string {
+  if (W <= 0) return '';
+  const lx = cx - NOTCH_W;
+  const rx = cx + NOTCH_W;
+  const la = Math.max(lx - EASE, BAR_R);
+  const ra = Math.min(rx + EASE, W - BAR_R);
   return (
-    <Animated.View style={[styles.iconContainer, animatedStyle]}>
-      <Ionicons
-        name={name}
-        size={24}
-        color={isFocused ? Colors.premium.gold : Colors.premium.textPrimary}
-      />
-      {isFocused && <View style={styles.indicator} />}
-    </Animated.View>
+    `M ${BAR_R} 0 L ${la} 0 ` +
+    `C ${lx} 0 ${lx} ${NOTCH_D} ${cx} ${NOTCH_D} ` +
+    `C ${rx} ${NOTCH_D} ${rx} 0 ${ra} 0 ` +
+    `L ${W - BAR_R} 0 Q ${W} 0 ${W} ${BAR_R} ` +
+    `L ${W} ${BAR_H - BAR_R} Q ${W} ${BAR_H} ${W - BAR_R} ${BAR_H} ` +
+    `L ${BAR_R} ${BAR_H} Q 0 ${BAR_H} 0 ${BAR_H - BAR_R} ` +
+    `L 0 ${BAR_R} Q 0 0 ${BAR_R} 0 Z`
   );
-};
+}
 
-export const CustomTabBar = ({
-  state,
-  descriptors,
-  navigation,
-}: BottomTabBarProps) => {
-  const insets = useSafeAreaInsets();
+// ── Component ─────────────────────────────────────────────────────────────────
+export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+  const unread = useUnreadTotal();
+  const insets   = useSafeAreaInsets();
+  const [barW, setBarW] = useState(Dimensions.get('window').width - 32);
+
+  const tabCount = state.routes.length;
+  const tabW     = barW / Math.max(1, tabCount);
+  const getCx    = (idx: number) => idx * tabW + tabW / 2;
+
+  // Bubble translateX — react-native Animated (works in Expo Go)
+  const bubbleAnim = useRef(new Animated.Value(getCx(state.index) - BR)).current;
+
+  // SVG path updated in JS (no reanimated needed)
+  const [pathD, setPathD] = useState(() => buildPath(barW, getCx(state.index)));
+
+  // Interpolate notch position alongside bubble for smooth SVG update
+  const notchAnim = useRef(new Animated.Value(getCx(state.index))).current;
+
+  useEffect(() => {
+    const cx = getCx(state.index);
+    Animated.spring(bubbleAnim, { toValue: cx - BR, ...SPRING }).start();
+    Animated.spring(notchAnim,  { toValue: cx,      ...SPRING }).start();
+  }, [state.index, tabW]);
+
+  // Drive SVG path from notchAnim listener
+  useEffect(() => {
+    const id = notchAnim.addListener(({ value }) => {
+      setPathD(buildPath(barW, value));
+    });
+    return () => notchAnim.removeListener(id);
+  }, [barW]);
+
+  // Reset on barW change
+  useEffect(() => {
+    const cx = getCx(state.index);
+    bubbleAnim.setValue(cx - BR);
+    notchAnim.setValue(cx);
+    setPathD(buildPath(barW, cx));
+  }, [barW]);
+
+  const onPress = useCallback((i: number) => {
+    const route = state.routes[i];
+    if (!route) return;
+    const focused = state.index === i;
+    const ev = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    if (!focused && !ev.defaultPrevented) navigation.navigate(route.name, route.params);
+  }, [navigation, state]);
+
+  const onLongPress = useCallback((i: number) => {
+    const route = state.routes[i];
+    if (route) navigation.emit({ type: 'tabLongPress', target: route.key });
+  }, [navigation, state.routes]);
+
+  const activeTab = TABS[state.routes[state.index]?.name ?? ''] ?? TABS.index;
 
   return (
-    <View style={[styles.container, { paddingBottom: 0 }]}>
-      {/* Background Container with Shadow */}
-      <View style={styles.backgroundContainer}>
-        {/*  We use a dedicated View for the overall drop shadow behind the SVG */}
-        <View style={styles.shadowTarget}>
-          <TabBarBackground />
+    <View
+      pointerEvents="box-none"
+      style={[styles.shell, { bottom: Math.max(insets.bottom, 16) }]}
+    >
+      {/* ── Bar shadow wrapper — elevation sin overflow (Android fix) ── */}
+      <View
+        style={styles.barShadow}
+        onLayout={e => setBarW(e.nativeEvent.layout.width)}
+      >
+        {/* ── Bar clip — overflow hidden sin elevation ── */}
+        <View style={styles.bar}>
+          <Svg
+            width={barW}
+            height={BAR_H}
+            viewBox={`0 0 ${barW} ${BAR_H}`}
+            style={StyleSheet.absoluteFill}
+          >
+            <Path d={pathD} fill={C.bar} />
+          </Svg>
+
+          <View style={styles.row}>
+            {state.routes.map((route, idx) => {
+              const cfg     = TABS[route.name] ?? TABS.index;
+              const focused = idx === state.index;
+              return (
+                <TabSlot
+                  key={route.key}
+                  icon={cfg.icon}
+                  focused={focused}
+                  badge={route.name === 'chat' ? unread : 0}
+                  onPress={() => onPress(idx)}
+                  onLongPress={() => onLongPress(idx)}
+                />
+              );
+            })}
+          </View>
         </View>
       </View>
 
-      <View style={styles.contentContainer}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key] as { options: any };
-          // console.log(options); // Removed console.log as per instructions
-
-          // Skip hidden tabs or tabs explicitly excluded
-          if (options.href === null) return null;
-
-          // Removed label logic as it's not used in the new structure for icons
-
-          const isFocused = state.index === index;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          // Map route names to icons
-          let iconName: any = "square";
-          if (route.name === "index")
-            iconName = isFocused ? "home" : "home-outline";
-          if (route.name === "services")
-            iconName = isFocused ? "grid" : "grid-outline";
-          // Center item usually
-          if (route.name === "reels") iconName = "add"; // We treat this as the + button visually
-          if (route.name === "profile")
-            iconName = isFocused ? "person" : "person-outline";
-          if (route.name === "chat")
-            iconName = isFocused ? "chatbubble" : "chatbubble-outline";
-
-          // Center button logic: Middle index (2) in a zero-indexed 5-item list
-          const isCenter = index === 2;
-
-          return (
-            <Pressable
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
-              onPress={onPress}
-              style={[styles.tabItem, isCenter && styles.centerTabItem]}
-            >
-              <TabIcon
-                name={iconName}
-                isFocused={isFocused}
-                isCenter={isCenter}
-              />
-            </Pressable>
-          );
-        })}
-      </View>
+      {/* ── Bubble ── */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.bubble, { transform: [{ translateX: bubbleAnim }] }]}
+      >
+        <View style={styles.bubbleInner}>
+          <Ionicons name={activeTab.active} size={26} color={C.white} />
+        </View>
+        <View style={styles.bubbleRing} />
+      </Animated.View>
     </View>
   );
-};
+}
 
+// ── Tab slot ──────────────────────────────────────────────────────────────────
+function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
+  icon: IconName; focused: boolean; badge: number;
+  onPress: () => void; onLongPress: () => void;
+}) {
+  const opacity = useRef(new Animated.Value(focused ? 0 : 0.42)).current;
+
+  useEffect(() => {
+    Animated.spring(opacity, {
+      toValue: focused ? 0 : 0.42,
+      ...SPRING,
+    }).start();
+  }, [focused]);
+
+  return (
+    <Pressable
+      style={styles.slot}
+      accessibilityRole="button"
+      accessibilityState={focused ? { selected: true } : {}}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      hitSlop={8}
+    >
+      <Animated.View style={[styles.iconWrap, { opacity }]}>
+        <Ionicons name={icon} size={22} color={C.white} />
+        {badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
+          </View>
+        )}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    bottom: 30,
-    left: 0,
-    right: 0,
-    height: TAB_HEIGHT, // Reserve space
-    alignItems: "center",
-    justifyContent: "center",
-    // Removed width 80% and margin hacks to ensure full width container for SVG
+  shell: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    height: LIFT + BAR_H,
+    zIndex: 9999,
+    elevation: 0,
   },
-  backgroundContainer: {
-    position: "absolute",
+  // Wrapper: provee elevation en Android (sin overflow)
+  // Sin backgroundColor — SVG es el background visual, notch transparente
+  barShadow: {
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: TAB_HEIGHT,
-    alignItems: "center",
-  },
-  shadowTarget: {
-    // Apply global shadow to the SVG container
-    shadowColor: Colors.premium.shadows.global.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
+    height: BAR_H,
+    borderRadius: BAR_R,
     elevation: 20,
-    backgroundColor: "transparent", // Important for shadow to wrap shape? No, usually shadow needs a bg.
-    // Note: Generic View shadow on SVG works on iOS, Android might just shadow the box.
-    // For Android exact shape shadow, one would need a duplicate dark SVG layer behind.
-    // For now, let's rely on standard elevation which might box-shadow.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
   },
-  svg: {
-    // backgroundColor: 'transparent'
+  // Inner: overflow hidden para clipear el SVG a la forma redondeada
+  bar: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: BAR_R,
+    overflow: 'hidden',
   },
-  contentContainer: {
-    flexDirection: "row",
-    height: TAB_HEIGHT,
-    alignItems: "center",
-    paddingHorizontal: 20, // Match the visual margin of the bar
-    paddingBottom: 10, // Adjust for icon alignment
+  row: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
   },
-  tabItem: {
+  slot: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    marginTop: 10, // Push icons down a bit into the bar
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  centerTabItem: {
-    marginTop: -25, // Pull center item up
-    justifyContent: "flex-start",
+  iconWrap: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  iconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    // Optional: Add subtle drop shadow to icons for floating effect inside the "cave"
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
+  bubble: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: BUBBLE,
+    height: BUBBLE,
   },
-  centerButtonContainer: {
-    width: 60,
-    height: 60,
-    // Removed manual margins
-    // No explicit bg here, the round button has it
+  bubbleInner: {
+    width: BUBBLE,
+    height: BUBBLE,
+    borderRadius: BR,
+    backgroundColor: C.bordo,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: C.bordo,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.55,
+    shadowRadius: 14,
+    elevation: 14,
   },
-  centerButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.colorPrimary,
-    alignItems: "center",
-    justifyContent: "center",
+  bubbleRing: {
+    position: 'absolute',
+    top: -3,
+    left: -3,
+    width: BUBBLE + 6,
+    height: BUBBLE + 6,
+    borderRadius: BR + 3,
     borderWidth: 2,
-    borderColor: Colors.premium.gold,
-    left: 30,
-    top: -15,
+    borderColor: 'rgba(133,0,33,0.22)',
   },
-  indicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.premium.gold,
-    marginTop: 4,
-    shadowColor: Colors.premium.gold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: C.bar,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#fff',
   },
 });

@@ -1,7 +1,9 @@
-import React, { createContext, useCallback, useContext, useState } from "react";
-import { extractApiError } from "../lib/errors";
-import { SearchResponse } from "../interfaces/search";
-import { search as searchApi } from "../features/search/services/search.service";
+import React, { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { extractApiError } from '../lib/errors';
+import type { SearchResponse } from '../interfaces/search';
+import { search as searchApi } from '../features/search/services/search.service';
 
 interface SearchState {
   lastQuery: string;
@@ -11,45 +13,36 @@ interface SearchState {
   runSearch: (query: string) => Promise<SearchResponse | null>;
 }
 
-const SearchContext = createContext<SearchState | undefined>(undefined);
+export const SearchProvider: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <>{children}</>
+);
 
-export const SearchProvider: React.FC<React.PropsWithChildren> = ({
-  children,
-}) => {
-  const [results, setResults] = useState<SearchResponse | null>(null);
+export const useSearch = (): SearchState => {
+  const qc = useQueryClient();
+  const [lastQuery, setLastQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastQuery, setLastQuery] = useState("");
+  const [results, setResults] = useState<SearchResponse | null>(null);
 
   const runSearch = useCallback(async (query: string) => {
+    setLastQuery(query);
     setLoading(true);
     setError(null);
-    setLastQuery(query);
     try {
-      const data = await searchApi(query);
-      setResults(data);
-      return data;
+      const data = await qc.fetchQuery({
+        queryKey: QUERY_KEYS.search(query),
+        queryFn: () => searchApi(query),
+        staleTime: 5 * 60 * 1000,
+      });
+      setResults(data as SearchResponse);
+      return data as SearchResponse;
     } catch (err) {
       setError(extractApiError(err));
       return null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [qc]);
 
-  return (
-    <SearchContext.Provider
-      value={{ results, loading, error, lastQuery, runSearch }}
-    >
-      {children}
-    </SearchContext.Provider>
-  );
-};
-
-export const useSearch = () => {
-  const context = useContext(SearchContext);
-  if (!context) {
-    throw new Error("useSearch debe usarse dentro de un SearchProvider");
-  }
-  return context;
+  return { results, loading, error, lastQuery, runSearch };
 };

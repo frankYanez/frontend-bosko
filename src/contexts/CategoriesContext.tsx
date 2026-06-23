@@ -1,19 +1,16 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { extractApiError } from "../lib/errors";
-import { Id } from "../interfaces/common";
-import { Category } from "../interfaces/category";
+import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { extractApiError } from '../lib/errors';
+import type { Id } from '../interfaces/common';
+import type { Category } from '../interfaces/category';
 import {
-  deleteCategory,
-  getCategory,
   listCategories,
+  getCategory,
   updateCategory,
-} from "../services/categories.service";
+  deleteCategory,
+} from '../services/categories.service';
+import { useCategories as useCategoriesQuery } from '@/hooks/queries/useMarketplaceQuery';
 
 interface CategoriesState {
   categories: Category[];
@@ -22,112 +19,64 @@ interface CategoriesState {
   loadCategories: () => Promise<void>;
   findCategory: (id: Id) => Category | undefined;
   refreshCategory: (id: Id) => Promise<Category | null>;
-  editCategory: (
-    id: Id,
-    payload: Partial<Category>
-  ) => Promise<Category | null>;
+  editCategory: (id: Id, payload: Partial<Category>) => Promise<Category | null>;
   removeCategory: (id: Id) => Promise<void>;
 }
 
-const CategoriesContext = createContext<CategoriesState | undefined>(undefined);
+export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <>{children}</>
+);
 
-export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({
-  children,
-}) => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const useCategories = (): CategoriesState => {
+  const qc = useQueryClient();
+  const query = useCategoriesQuery();
 
-  const loadCategories = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listCategories();
-      console.log(data, "data de categories");
+  const categories = (query.data ?? []) as Category[];
 
-      setCategories(data);
-    } catch (err) {
-      setError(extractApiError(err));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  return {
+    categories,
+    loading: query.isLoading,
+    error: query.error?.message ?? null,
 
-  useEffect(() => {
-    loadCategories().catch(() => {});
-  }, [loadCategories]);
+    loadCategories: async () => {
+      await query.refetch();
+    },
 
-  const findCategory = useCallback(
-    (id: Id) => categories.find((category) => category.id === id),
-    [categories]
-  );
+    findCategory: (id: Id) => categories.find((c) => c.id === id),
 
-  const refreshCategory = useCallback(async (id: Id) => {
-    try {
-      const data = await getCategory(id);
-      setCategories((prev) => {
-        const exists = prev.some((item) => item.id === id);
-        if (exists) {
-          return prev.map((item) => (item.id === id ? data : item));
-        }
-        return [...prev, data];
-      });
-      return data;
-    } catch (err) {
-      setError(extractApiError(err));
-      return null;
-    }
-  }, []);
-
-  const editCategory = useCallback(
-    async (id: Id, payload: Partial<Category>) => {
+    refreshCategory: async (id: Id) => {
       try {
-        const updated = await updateCategory(id, payload);
-        setCategories((prev) =>
-          prev.map((cat) => (cat.id === id ? updated : cat))
-        );
-        return updated;
+        const data = await getCategory(id);
+        qc.setQueryData(QUERY_KEYS.categories, (old: Category[] | undefined) => {
+          if (!old) return [data];
+          const exists = old.some((c) => c.id === id);
+          return exists ? old.map((c) => (c.id === id ? data : c)) : [...old, data];
+        });
+        return data;
       } catch (err) {
-        setError(extractApiError(err));
         return null;
       }
     },
-    []
-  );
 
-  const removeCategory = useCallback(async (id: Id) => {
-    try {
-      await deleteCategory(id);
-      setCategories((prev) => prev.filter((cat) => cat.id !== id));
-    } catch (err) {
-      setError(extractApiError(err));
-    }
-  }, []);
+    editCategory: async (id: Id, payload: Partial<Category>) => {
+      try {
+        const updated = await updateCategory(id, payload);
+        qc.setQueryData(QUERY_KEYS.categories, (old: Category[] | undefined) =>
+          old ? old.map((c) => (c.id === id ? updated : c)) : old,
+        );
+        return updated;
+      } catch {
+        return null;
+      }
+    },
 
-  return (
-    <CategoriesContext.Provider
-      value={{
-        categories,
-        loading,
-        error,
-        loadCategories,
-        findCategory,
-        refreshCategory,
-        editCategory,
-        removeCategory,
-      }}
-    >
-      {children}
-    </CategoriesContext.Provider>
-  );
-};
-
-export const useCategories = () => {
-  const context = useContext(CategoriesContext);
-  if (!context) {
-    throw new Error(
-      "useCategories debe usarse dentro de un CategoriesProvider"
-    );
-  }
-  return context;
+    removeCategory: async (id: Id) => {
+      try {
+        await deleteCategory(id);
+        qc.setQueryData(QUERY_KEYS.categories, (old: Category[] | undefined) =>
+          old ? old.filter((c) => c.id !== id) : old,
+        );
+      } catch {}
+    },
+  };
 };

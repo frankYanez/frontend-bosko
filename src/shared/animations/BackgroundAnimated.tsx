@@ -1,48 +1,35 @@
-import React, { useEffect } from "react";
-import { Dimensions, View, StyleSheet } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-} from "react-native-reanimated";
+import React, { useEffect, useRef } from "react";
+import { Dimensions, View, StyleSheet, Animated } from "react-native";
 
-const { width, height } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 export default function AnimatedBarsBackground() {
-  // Creamos varias shared values (1 por barra)
-  const bars = Array.from({ length: 6 }).map(() => useSharedValue(0));
+  const bars = Array.from({ length: 6 }).map(() => useRef(new Animated.Value(0)).current);
 
   useEffect(() => {
     bars.forEach((bar, index) => {
-      const delay = index * 400; // cada barra empieza más tarde
       setTimeout(() => {
-        bar.value = withRepeat(withTiming(20, { duration: 3000 }), -1, true);
-      }, delay);
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(bar, { toValue: 20, duration: 3000, useNativeDriver: true }),
+            Animated.timing(bar, { toValue: 0, duration: 3000, useNativeDriver: true }),
+          ])
+        ).start();
+      }, index * 400);
     });
   }, []);
 
   return (
     <View style={StyleSheet.absoluteFill}>
-      {bars.map((bar, index) => {
-        const animStyle = useAnimatedStyle(() => ({
-          transform: [{ translateY: bar.value }],
-        }));
-
-        return (
-          <Animated.View
-            key={index}
-            style={[
-              styles.bar,
-              animStyle,
-              {
-                left: index * 60 + 20,
-                backgroundColor: "red",
-              },
-            ]}
-          />
-        );
-      })}
+      {bars.map((bar, index) => (
+        <Animated.View
+          key={index}
+          style={[
+            styles.bar,
+            { left: index * 60 + 20, backgroundColor: "red", transform: [{ translateY: bar }] },
+          ]}
+        />
+      ))}
     </View>
   );
 }

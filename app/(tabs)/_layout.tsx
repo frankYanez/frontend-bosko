@@ -1,71 +1,58 @@
-// app/(tabs)/_layout.tsx
-import { Tabs, useRouter, Redirect } from "expo-router";
-import { View, Pressable, Text, StyleSheet } from "react-native";
-// import { useUser } from "@/hooks/useUser";
-import { TOKENS } from "@/core/design-system/tokens";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { CustomTabBar } from "@/src/components/CustomTabBar";
-import { useAuth } from "@/features/auth/state/AuthContext";
+/**
+ * Layout de las tabs autenticadas.
+ *
+ * Actúa como guarda secundaria: si alguien llega a esta ruta sin sesión
+ * (deep link, recarga en dev, etc.) es redirigido al login.
+ * La guarda primaria está en app/index.tsx.
+ */
+
+import { Redirect, Tabs } from 'expo-router';
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CustomTabBar } from '@/components/CustomTabBar';
+import { useAuth } from '@/features/auth/state/AuthContext';
+import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { useThemeColors } from '@/stores/theme.store';
 
 export default function TabsLayout() {
-  const router = useRouter();
-  const { authLoaded, authState } = useAuth();
-
-  const onFabPress = () => {
-    router.push("/(tabs)/services");
-  };
+  const { authLoaded, isAuthenticated } = useAuth();
+  const { data: profile } = useProfile();
+  const tc = useThemeColors();
+  const isProvider = profile?.isProvider === true;
 
   if (!authLoaded) return null;
-  if (!authState.token) return <Redirect href="/login" />;
+
+  if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: TOKENS.color.primary }}
-      edges={["top", "left", "right"]}
+      style={[styles.container, { backgroundColor: tc.bg }]}
+      edges={['left', 'right']}
     >
       <Tabs
-        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
           tabBarHideOnKeyboard: true,
         }}
+        tabBar={(props) => (
+          <CustomTabBar
+            {...props}
+          />
+        )}
       >
-        <Tabs.Screen name="index" options={{ title: "Inicio" }} />
-
-        <Tabs.Screen name="services" options={{ title: "Servicios" }} />
-        <Tabs.Screen name="reels" options={{ title: "Reels" }} />
-        <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
-        <Tabs.Screen
-          name="chat"
-          options={{
-            title: "Mensajes",
-          }}
-        />
+        <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
+        <Tabs.Screen name="services" options={{ title: 'Servicios' }} />
+        <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
+        <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
+        <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
+        <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />
       </Tabs>
-
-      {/* <Pressable style={styles.fab} onPress={onFabPress}>
-        <Text style={styles.fabText}>＋</Text>
-      </Pressable> */}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: {
-    position: "absolute",
-    bottom: 32,
-    left: "50%",
-    transform: [{ translateX: -34 }],
-    width: 68,
-    height: 68,
-    borderRadius: 999,
-    backgroundColor: TOKENS.color.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+  container: {
+    flex: 1,
   },
-  fabText: { color: "#fff", fontSize: 32, lineHeight: 32, fontWeight: "800" },
 });

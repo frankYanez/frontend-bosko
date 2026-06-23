@@ -1,231 +1,212 @@
+/**
+ * AuthContext — Estado global de autenticación.
+ *
+ * Responsabilidades:
+ *  - Restaurar la sesión desde SecureStore al iniciar la app
+ *  - Exponer login, register y logout al árbol de componentes
+ *  - Registrar el callback de logout forzado para el interceptor de axios
+ *  - Indicar si la sesión ya fue comprobada (authLoaded) para que las
+ *    pantallas protejan el acceso mientras se carga
+ *
+ * NO gestiona el perfil del usuario (eso lo hace ProfileContext).
+ */
+
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { tokenStorage } from '@/core/auth/tokenStorage';
 import {
-  checkUsernameAvailabilityService,
   loginService,
   registerUserService,
-  refreshTokenService,
-} from "@/features/auth/services/auth";
-import {
+} from '../services/auth';
+import api from '@/core/api/axiosinstance';
+import type {
+  AuthContextType,
   AuthResponse,
+  AuthState,
+  AuthUser,
   Credentials,
   RegisterUserPayload,
-} from "@/features/auth/types";
-import { router } from "expo-router";
-import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
-import { createContext, useContext, useEffect, useState } from "react";
+} from '../types';
 
-interface AuthContextType {
-  login: (credentials: Credentials) => Promise<AuthResponse>;
-  registerUser: (data: RegisterUserPayload) => Promise<AuthResponse>;
-  checkUsernameAvailability: (username: string) => Promise<boolean>;
-  isLoading: boolean;
-  error: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  authLoaded: boolean;
-  authState: {
-    token: string | null;
-    refreshToken: string | null;
-    userEmail: string | null;
-    user: any | null;
-  };
-  clearError: () => void;
-  logout: () => Promise<void>;
-}
+// ── Estado vacío reutilizable ────────────────────────────────────────────────
+const EMPTY_STATE: AuthState = {
+  token: null,
+  refreshToken: null,
+  userEmail: null,
+  user: null,
+};
 
+// ── Contexto ─────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+/**
+ * Hook para consumir el contexto.
+ * Lanza un error descriptivo si se usa fuera del provider.
+ */
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth debe usarse dentro de <AuthProvider>');
+  return ctx;
+}
 
-const parseUser = (raw: string | null): AuthResponse | null => {
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as AuthResponse;
-  } catch (error) {
-    console.warn("Could not parse stored user", error);
-    return null;
-  }
-};
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+// ── Provider ─────────────────────────────────────────────────────────────────
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const qc = useQueryClient();
+  const [authState, setAuthState] = useState<AuthState>(EMPTY_STATE);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [authLoaded, setAuthLoaded] = useState(false);
-  const [authState, setAuthState] = useState<{
-    token: string | null;
-    refreshToken: string | null;
-    userEmail: string | null;
-    user: any;
-  }>({
-    token: null,
-    refreshToken: null,
-    userEmail: null,
-    user: null,
-  });
 
-  const persistSession = async (response: AuthResponse, email: string) => {
-    console.log("💾 [AuthContext] Persisting session...");
-    if (response.accessToken) {
-      setAccessToken(response.accessToken);
-      setRefreshToken(response.refreshToken);
+  // ── Logout forzado desde axios ─────────────────────────────────────────
+  // Registrar una sola vez: cuando el interceptor detecta refresh token
+  // expirado, limpia el estado y redirige al login sin importar la pantalla actual.
+  useEffect(() => {
+    tokenStorage.setForceLogoutCallback(() => {
+      qc.clear();
+      setAuthState(EMPTY_STATE);
+      router.replace('/login');
+    });
+  }, []);
 
-      await setItemAsync("token", response.accessToken);
-      await setItemAsync("refreshToken", response.refreshToken);
-      await setItemAsync("userEmail", email);
+  // ── Restaurar sesión al arrancar ──────────────────────────────────────
+  useEffect(() => {
 
-      // Update authState so ProfileContext and other contexts can react
-      console.log("✅ [AuthContext] Session persisted, updating authState");
+    (async () => {
+      try {
+        // Hidratar el cache en memoria con los tokens guardados en SecureStore
+        await tokenStorage.hydrate();
+
+        const token = tokenStorage.getAccessToken();
+        const refreshToken = tokenStorage.getRefreshToken();
+        const userEmail = tokenStorage.getUserEmail();
+
+        if (token && refreshToken) {
+          // Sesión válida encontrada: restaurar estado
+          setAuthState({ token, refreshToken, userEmail, user: null });
+        }
+      } catch (err) {
+        // Si falla la lectura, dejamos la sesión en blanco (usuario deberá re-loguearse)
+        console.error('[AuthContext] Error al restaurar sesión:', err);
+        await tokenStorage.clear();
+      } finally {
+        // Señal para que las pantallas sepan que la verificación inicial terminó
+        setAuthLoaded(true);
+      }
+    })();
+  }, []);
+
+  // ── Login ──────────────────────────────────────────────────────────────
+  const login = useCallback(async (credentials: Credentials): Promise<AuthResponse> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await loginService(credentials);
+
+      await tokenStorage.save(
+        response.accessToken,
+        response.refreshToken,
+        credentials.email,
+      );
+
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
-        userEmail: email,
-        user: null, // API auth does not return user object
+        userEmail: credentials.email,
+        user: response.user ?? null,
       });
-    }
-  };
 
-  const loginFn = async ({ email, password }: Credentials) => {
-    console.log("🔑 [AuthContext] Starting login...");
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await loginService({ email, password });
-      console.log("✅ [AuthContext] Login successful");
-
-      await persistSession(response, email);
       return response;
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Error al iniciar sesión";
-      setError(message);
-      throw error;
+    } catch (err: any) {
+      const raw = err?.response?.data?.message ?? 'Error al iniciar sesión';
+      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
+      setError(msg);
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const registerUser = async (data: RegisterUserPayload) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await registerUserService(data);
-
-      await persistSession(response, data.email);
-      return response;
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Error al registrar usuario";
-      setError(message);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const checkUsernameAvailability = async (username: string) => {
-    try {
-      setError(null);
-      const exists = await checkUsernameAvailabilityService(username);
-      // La API devuelve true si existe, false si está disponible
-      return exists;
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "No se pudo validar el usuario";
-      setError(message);
-      throw new Error(message);
-    }
-  };
-
-  const logout = async () => {
-    console.log("🚪 [AuthContext] Logging out...");
-    await deleteItemAsync("token");
-    await deleteItemAsync("refreshToken");
-    await deleteItemAsync("userEmail");
-    await deleteItemAsync("user");
-    console.log("✅ [AuthContext] Cleared storage, updating authState");
-    setAuthState({
-      token: null,
-      refreshToken: null,
-      userEmail: null,
-      user: null,
-    });
-    setAccessToken(null);
-    setRefreshToken(null);
-    console.log("✅ [AuthContext] Logout complete");
-  };
-
-  useEffect(() => {
-
-    const checkAuth = async () => {
-      console.log("🔍 [AuthContext] Checking auth on mount...");
-      try {
-        const savedToken = await getItemAsync("token");
-        const savedRefreshToken = await getItemAsync("refreshToken");
-        const savedUserEmail = await getItemAsync("userEmail");
-        const savedUserRaw = await getItemAsync("user");
-        const savedUser = parseUser(savedUserRaw);
-
-        console.log("📦 [AuthContext] Stored credentials:", {
-          hasToken: !!savedToken,
-          hasRefreshToken: !!savedRefreshToken,
-          email: savedUserEmail,
-          hasUser: !!savedUser,
-        });
-
-        if (!savedToken || !savedRefreshToken) {
-          console.log("❌ [AuthContext] No stored credentials found");
-          setAuthLoaded(true);
-          return;
-        }
-
-        console.log("✅ [AuthContext] Restoring session from storage");
-        setAuthState({
-          token: savedToken,
-          refreshToken: savedRefreshToken,
-          userEmail: savedUserEmail,
-          user: savedUser,
-        });
-
-        setAuthLoaded(true);
-      } catch (error) {
-        console.error("Error en checkAuth:", error);
-        await logout();
-        setAuthLoaded(true);
-      }
-    };
-
-    checkAuth();
   }, []);
+
+  // ── Registro ───────────────────────────────────────────────────────────
+  const registerUser = useCallback(
+    async (data: RegisterUserPayload): Promise<AuthResponse> => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await registerUserService(data);
+
+        // Persistimos los tokens para que la verificación de email y el acceso
+        // posterior a las tabs no requieran volver a hacer login.
+        // El backend valida el email en endpoints protegidos si lo requiere.
+        await tokenStorage.save(
+          response.accessToken,
+          response.refreshToken,
+          data.email,
+        );
+
+        setAuthState({
+          token: response.accessToken,
+          refreshToken: response.refreshToken,
+          userEmail: data.email,
+          user: response.user ?? null,
+        });
+
+        return response;
+      } catch (err: any) {
+        const raw = err?.response?.data?.message ?? 'Error al registrar usuario';
+        const msg = Array.isArray(raw) ? raw.join(', ') : raw;
+        setError(msg);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  // ── Logout ─────────────────────────────────────────────────────────────
+  const logout = useCallback(async (): Promise<void> => {
+    const refreshToken = tokenStorage.getRefreshToken();
+    try {
+      await api.post('/auth/logout', { refreshToken });
+    } catch {
+      // Si falla el servidor igual limpiamos localmente
+    }
+    await tokenStorage.clear();
+    qc.clear();
+    setAuthState(EMPTY_STATE);
+  }, [qc]);
+
+  const clearError = useCallback(() => setError(null), []);
+
+  // `isAuthenticated` es un booleano derivado, más cómodo para las guardas
+  const isAuthenticated = !!authState.token;
 
   return (
     <AuthContext.Provider
       value={{
-        login: loginFn,
-        registerUser,
-        checkUsernameAvailability,
+        authState,
+        authLoaded,
+        isAuthenticated,
         isLoading,
         error,
-        accessToken,
-        refreshToken,
-        authLoaded,
-        authState,
-        clearError: () => setError(null),
+        login,
+        registerUser,
         logout,
+        clearError,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 export default AuthProvider;

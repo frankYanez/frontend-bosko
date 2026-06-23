@@ -12,14 +12,15 @@ import {
   View,
 } from "react-native";
 
-import { useServices } from "@/context/ServicesContext";
-import { useAuth } from "@/context/AuthContext";
+import { useServices } from "@/features/servicesUser/state/ServicesContext";
+import { useAuth } from "@/features/auth/state/AuthContext";
 import type { Review } from "@/types/services";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 import { StarRating } from "./StarRating";
 
 interface ServiceReviewsProps {
   serviceId: string;
+  orderId?: string;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
@@ -32,14 +33,12 @@ const formatDate = (date: string) => {
   }
 };
 
-const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
+const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId, orderId }) => {
   const {
     fetchServiceReviews,
     getReviewsForService,
     reviewsStatus,
     addReviewWithRating,
-    canReviewService,
-    ensureCanReviewService,
   } = useServices();
   const { authState } = useAuth();
   const userId = authState.user?.id ?? "";
@@ -57,21 +56,7 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
     fetchServiceReviews(serviceId).catch((err) => console.error(err));
   }, [fetchServiceReviews, serviceId]);
 
-  useEffect(() => {
-    if (!userId) {
-      return;
-    }
-    ensureCanReviewService(serviceId, userId).catch((err) => console.error(err));
-  }, [ensureCanReviewService, serviceId, userId]);
-
-  const eligibility = userId ? canReviewService(serviceId, userId) : false;
-
-  const canSubmit = useMemo(() => {
-    if (!userId) {
-      return false;
-    }
-    return eligibility !== false;
-  }, [eligibility, userId]);
+  const canSubmit = useMemo(() => Boolean(userId), [userId]);
 
   const handleSubmit = async () => {
     if (!userId) {
@@ -88,10 +73,13 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
     }
     setErrorMessage(null);
     setSubmitting(true);
+    if (!orderId) {
+      Alert.alert("Sin orden", "Solo podés dejar una reseña desde una orden completada.");
+      return;
+    }
     try {
       await addReviewWithRating({
-        serviceId,
-        userId,
+        orderId,
         rating,
         comment: comment.trim(),
       });
@@ -129,6 +117,12 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
         </View>
         <StarRating value={item.rating} editable={false} size={18} />
         <Text style={styles.reviewComment}>{item.comment}</Text>
+        {item.reply ? (
+          <View style={styles.replyBox}>
+            <Text style={styles.replyLabel}>Respuesta del proveedor</Text>
+            <Text style={styles.replyText}>{item.reply}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -184,10 +178,6 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId }) => {
         {!userId ? (
           <Text style={styles.helperText}>
             Iniciá sesión para poder dejar un comentario y una calificación.
-          </Text>
-        ) : eligibility === false ? (
-          <Text style={styles.helperText}>
-            Solo quienes contrataron este servicio pueden dejar una reseña.
           </Text>
         ) : null}
         <Pressable
@@ -270,6 +260,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: TOKENS.color.sub,
     lineHeight: 20,
+  },
+  replyBox: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: TOKENS.color.primary,
+    backgroundColor: 'rgba(133,0,33,0.05)',
+  },
+  replyLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: TOKENS.color.primary,
+    marginBottom: 2,
+  },
+  replyText: {
+    fontSize: 13,
+    color: TOKENS.color.sub,
+    lineHeight: 18,
   },
   separator: {
     height: 16,

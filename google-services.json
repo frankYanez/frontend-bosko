@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "462077821358",
+    "project_id": "bosko-5b526",
+    "storage_bucket": "bosko-5b526.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462077821358:android:fd98c5a6660e74f458083f",
+        "android_client_info": {
+          "package_name": "com.boskoapp.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4CVkC_tYP8420cRL2FSb-F1xxqE4Fb78"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

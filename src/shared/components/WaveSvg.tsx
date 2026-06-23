@@ -1,10 +1,11 @@
-import React from "react";
+﻿import React from "react";
 import { Dimensions } from "react-native";
 import { Svg, Path } from "react-native-svg";
+import { TOKENS } from '@/core/design-system/tokens';
 
 const { width } = Dimensions.get("window");
 
-export default function WaveSvg({ color = "#850021" }: { color?: string }) {
+export default function WaveSvg({ color = TOKENS.color.primary }: { color?: string }) {
   return (
     <Svg
       width={width}

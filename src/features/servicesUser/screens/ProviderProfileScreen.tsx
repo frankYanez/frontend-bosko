@@ -1,488 +1,534 @@
-import { useEffect, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
-  Image,
-  ImageBackground,
+  Animated,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MotiView } from "moti";
+  ActivityIndicator,
+} from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
+import api from '@/core/api/axiosinstance';
+import { ServiceDetailModal } from '../components/ServiceDetailModal';
+import type { ServiceSummary } from '@/types/services';
+import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
-import { Provider } from "@/src/interfaces/provider";
-import { useProviders } from "@/contexts/ProvidersContext";
-import { useCategories } from "@/contexts/CategoriesContext";
-import { TOKENS } from "@/core/design-system/tokens";
-import { Service } from "@/src/interfaces/service";
-import ServiceCard from "../components/ServiceCard";
-import { ServiceSummary } from "@/types/services";
-import { ServiceDetailModal } from "../components/ServiceDetailModal";
+interface ReviewItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  reply: string | null;
+  createdAt: string;
+  reviewer: { firstName: string; lastName: string; avatarUrl: string | null };
+}
+
+const AMBER = '#F59E0B';
+
+function useC() {
+  const tc = useThemeColors();
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: AMBER };
+}
+
+interface PublicProvider {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  kycApproved?: boolean;
+  rating: number | null;
+  reviewsCount: number;
+  location?: string;
+  bio?: string;
+}
+
+function formatRate(rate?: ServiceSummary['rate']) {
+  if (!rate || !rate.amount) return 'Consultar';
+  const sym = rate.currency === 'ARS' ? '$' : rate.currency === 'USD' ? 'US$' : rate.currency;
+  const price = `${sym}${Number(rate.amount).toLocaleString('es-AR')}`;
+  return rate.unit ? `${price} / ${rate.unit}` : price;
+}
+
+function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => void }) {
+  const c = useC();
+  const scaleA = useRef(new Animated.Value(1)).current;
+  return (
+    <Pressable
+      onPressIn={() => Animated.spring(scaleA, { toValue: 0.97, useNativeDriver: true }).start()}
+      onPressOut={() => Animated.spring(scaleA, { toValue: 1, useNativeDriver: true }).start()}
+      onPress={onPress}
+    >
+      <Animated.View style={[s.serviceRow, { transform: [{ scale: scaleA }], borderBottomColor: c.border }]}>
+        {item.thumbnail ? (
+          <Image source={{ uri: item.thumbnail }} style={[s.serviceThumb, { backgroundColor: c.surface2 }]} contentFit="cover" />
+        ) : (
+          <LinearGradient colors={['#f0f0f4', '#e4e4ea']} style={[s.serviceThumb, { backgroundColor: c.surface2 }]}>
+            <Ionicons name="construct-outline" size={20} color={c.sub} />
+          </LinearGradient>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={[s.serviceTitle, { color: c.text }]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[s.serviceSummary, { color: c.sub }]} numberOfLines={2}>{item.summary}</Text>
+          {item.rate?.amount ? (
+            <Text style={[s.servicePrice, { color: c.sub }]}>{formatRate(item.rate)}</Text>
+          ) : null}
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={c.border} />
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function ProviderProfileScreen() {
-  const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
+  const c = useC();
   const router = useRouter();
-  const { fetchProvider, findProvider, loadProviderServices } = useProviders();
-  const { categories } = useCategories();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [provider, setProvider] = useState<Provider | undefined>();
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  const [provider, setProvider] = useState<PublicProvider | null>(null);
+  const [services, setServices] = useState<ServiceSummary[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<ServiceSummary | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    const providerId = typeof params.id === "string" ? params.id : undefined;
-    console.log(providerId, "providerId en providerProfileScreen");
+    if (!id) return;
+    let mounted = true;
 
-    if (!providerId) return;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [profileRes, servicesRes, reviewsRes] = await Promise.all([
+          api.get<PublicProvider>(`/users/${id}/public`),
+          api.get<any>(`/services`, { params: { providerId: id, limit: 20 } }),
+          api.get<any>(`/reviews/providers/${id}/reviews`, { params: { limit: 10 } }).catch(() => ({ data: { data: [] } })),
+        ]);
 
-    let isMounted = true;
+        if (!mounted) return;
 
-    const loadData = async () => {
-      const foundProvider = await findProvider(providerId);
-      console.log(foundProvider, "foundProvider en providerProfileScreen");
+        const providerData = profileRes.data as any;
+        setProvider({
+          id: providerData.id,
+          firstName: providerData.firstName ?? '',
+          lastName: providerData.lastName ?? '',
+          avatarUrl: providerData.avatarUrl ?? null,
+          isVerified: providerData.isVerified ?? false,
+          kycApproved: providerData.kycApproved ?? providerData.isVerified ?? false,
+          rating: providerData.rating != null ? Number(providerData.rating) : null,
+          reviewsCount: providerData.reviewsCount ?? 0,
+          location: providerData.location ?? '',
+          bio: providerData.bio ?? '',
+        });
 
+        const rawServices: any[] = servicesRes.data?.data ?? servicesRes.data ?? [];
+        setServices(rawServices.map(s => ({
+          id: s.id,
+          categoryId: s.category?.id ?? '',
+          providerId: id,
+          name: [providerData.firstName, providerData.lastName].filter(Boolean).join(' '),
+          title: s.title ?? '',
+          summary: s.description ?? '',
+          thumbnail: s.images?.[0] ?? undefined,
+          images: s.images ?? [],
+          location: providerData.location ?? '',
+          rate: {
+            amount: parseFloat(s.price?.amount ?? 0) || 0,
+            currency: s.price?.currency ?? 'ARS',
+            unit: s.price?.unit ?? undefined,
+          },
+          averageRating: Number(providerData.rating ?? 0),
+          reviewsCount: providerData.reviewsCount ?? 0,
+        })));
 
-      if (foundProvider) {
-        if (isMounted) setProvider(foundProvider);
-      } else {
-        if (isMounted) setLoading(true);
-        try {
-          const data = await fetchProvider(providerId);
-          console.log(data, "data provider en providerProfileScreen");
-          if (data && isMounted) setProvider(data);
-        } catch (err) {
-          console.error(err);
-        } finally {
-          if (isMounted) setLoading(false);
-        }
+        const rawReviews: any[] = reviewsRes.data?.data ?? reviewsRes.data ?? [];
+        setReviews(rawReviews.map(r => ({
+          id: r.id,
+          rating: Number(r.rating ?? 0),
+          comment: r.comment ?? null,
+          reply: r.reply ?? null,
+          createdAt: r.createdAt ?? '',
+          reviewer: {
+            firstName: r.reviewer?.firstName ?? '',
+            lastName: r.reviewer?.lastName ?? '',
+            avatarUrl: r.reviewer?.avatarUrl ?? null,
+          },
+        })));
+
+        Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+      } catch (err) {
+        console.error('Error loading provider profile:', err);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
+    load();
+    return () => { mounted = false; };
+  }, [id]);
 
-    loadData();
+  const fullName = provider ? [provider.firstName, provider.lastName].filter(Boolean).join(' ') : '';
+  const initials = provider ? (provider.firstName[0] ?? '') + (provider.lastName?.[0] ?? '') : '';
 
-    return () => {
-      isMounted = false;
-    };
-  }, [params.id, findProvider, fetchProvider]);
-
-  // Fetch services for the provider
-  useEffect(() => {
-    if (!provider?.id) return;
-
-    let isMounted = true;
-
-    loadProviderServices(provider.id)
-      .then(data => {
-        if (isMounted && data) {
-          setServices(data);
-        }
-      })
-      .catch(err => console.error("Error loading services:", err));
-
-    return () => { isMounted = false; };
-  }, [provider?.id, loadProviderServices]);
-
-  function handleBack() {
-    router.back();
-  }
-
-  function formatRate(rate: Provider["rate"]) {
-    if (!rate) return "Consultar";
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-          ? "US$"
-          : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
-  }
-
-  if (!provider) {
-    if (loading) {
-      return (
-        <SafeAreaView style={styles.safeArea}>
-          <Stack.Screen options={{ headerShown: false }} />
-          <View style={styles.emptyState}>
-            <MotiView
-              from={{ opacity: 0.5, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                type: "timing",
-                duration: 800,
-                loop: true,
-              }}
-            >
-              <Text style={styles.emptyTitle}>Cargando perfil...</Text>
-            </MotiView>
-          </View>
-        </SafeAreaView>
-      )
-    }
+  if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.emptyState}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
-          </Pressable>
-          <Text style={styles.emptyTitle}>No encontramos este profesional</Text>
-          <Text style={styles.emptySubtitle}>
-            Volvé a la lista y elegí otro servicio disponible.
-          </Text>
-        </View>
-      </SafeAreaView>
+        <ActivityIndicator size="large" color={TOKENS.color.primary} />
+      </View>
     );
   }
 
-  const category = categories.find(
-    (item) => item.id === (provider.categoryId as string)
-  );
-  const accentColor = category?.id ? TOKENS.color.primary : "#E8ECF2"; // Fallback color logic
+  if (!provider) {
+    return (
+      <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Pressable onPress={() => router.back()} style={[s.backBtn, { backgroundColor: c.card }]}>
+          <Ionicons name="arrow-back" size={22} color={c.text} />
+        </Pressable>
+        <Text style={[s.errorTitle, { color: c.text }]}>Perfil no encontrado</Text>
+        <Text style={[s.errorSub, { color: c.sub }]}>Volvé y elegí otro profesional.</Text>
+      </View>
+    );
+  }
+
+  const handleRequest = () => {
+    if (services.length === 0) return;
+    router.push({
+      pathname: '/(tabs)/orders/quote',
+      params: {
+        serviceId: services[0].id,
+        providerName: fullName,
+        serviceTitle: services[0].title,
+      },
+    });
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
+    <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+
+      {/* Back button flotante */}
+      <Pressable onPress={() => router.back()} style={[s.backBtn, s.backBtnFloat, { backgroundColor: c.card }]}>
+        <Ionicons name="arrow-back" size={22} color={c.text} />
+      </Pressable>
+
+      <Animated.ScrollView
+        style={{ opacity: fadeAnim }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 110 }]}
       >
-        <View style={styles.headerRow}>
-          <Pressable onPress={handleBack} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
-          </Pressable>
-        </View>
+        {/* ── Hero ── */}
+        <LinearGradient
+          colors={[TOKENS.color.primary, '#c0002f', TOKENS.color.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.hero}
+        >
+          <View style={s.heroBubble1} />
+          <View style={s.heroBubble2} />
 
-        <View style={styles.heroCard}>
-          <ImageBackground
-            source={{ uri: provider.heroImage }}
-            style={styles.heroBackground}
-            imageStyle={styles.heroBackgroundImage}
-          >
-            <View style={styles.heroOverlay} />
-            <View style={styles.heroContent}>
-              <Image
-                source={{ uri: provider.photo }}
-                style={[styles.heroAvatar, { borderColor: accentColor }]}
+          <View style={s.heroBody}>
+            {provider.avatarUrl ? (
+              <Image source={{ uri: provider.avatarUrl }} style={s.avatar} contentFit="cover" />
+            ) : (
+              <LinearGradient colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.15)']} style={s.avatarFallback}>
+                <Text style={s.avatarInitials}>{initials.toUpperCase()}</Text>
+              </LinearGradient>
+            )}
+
+            <View style={s.heroInfo}>
+              <View style={s.nameRow}>
+                <Text style={s.heroName}>{fullName}</Text>
+                {provider.isVerified && (
+                  <MaterialIcons name="verified" size={18} color="#60A5FA" />
+                )}
+              </View>
+
+              {provider.location ? (
+                <View style={s.locationRow}>
+                  <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.75)" />
+                  <Text style={s.locationText}>{provider.location}</Text>
+                </View>
+              ) : null}
+
+              <View style={s.statsRow}>
+                <Ionicons name="star" size={13} color={c.amber} />
+                <Text style={s.statText}>
+                  {provider.rating ? Number(provider.rating).toFixed(1) : 'Sin reseñas'}
+                </Text>
+                {provider.reviewsCount > 0 && (
+                  <Text style={s.statSub}>({provider.reviewsCount} reseñas)</Text>
+                )}
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* ── Verificación ── */}
+        <View style={[s.section, { backgroundColor: c.card }]}>
+          <Text style={[s.sectionTitle, { color: c.text }]}>Verificación</Text>
+          <View style={s.badgeRow}>
+            <View style={[s.badge, provider.kycApproved ? s.badgeOk : s.badgePending]}>
+              <Ionicons
+                name={provider.kycApproved ? 'shield-checkmark' : 'shield-outline'}
+                size={15}
+                color={provider.kycApproved ? '#16A34A' : c.sub}
               />
-              <Text style={styles.heroName}>{provider.name}</Text>
-              <Text style={styles.heroTitle}>{provider.title}</Text>
-              <Text style={styles.heroSummary}>{provider.summary}</Text>
-              <View style={styles.heroStats}>
-                <Text style={styles.heroRating}>
-                  ★ {provider.rating ? provider.rating : "N/D"}
-                </Text>
-                <View style={styles.dot} />
-                <Text style={styles.heroReviews}>
-                  {provider.reviews} reseñas
-                </Text>
-              </View>
-              <Text style={styles.heroLocation}>{provider.location}</Text>
-              <View style={styles.heroActions}>
-                <Text style={styles.heroRate}>
-                  Desde {formatRate(provider.rate)}
-                </Text>
-                <Pressable style={styles.quoteButton}>
-                  <Text style={styles.quoteButtonText}>Cotizar servicio</Text>
-                </Pressable>
-              </View>
+              <Text style={[s.badgeText, provider.kycApproved ? s.badgeTextOk : [s.badgeTextPending, { color: c.sub }]]}>
+                {provider.kycApproved ? 'Identidad verificada' : 'Sin verificar'}
+              </Text>
             </View>
-          </ImageBackground>
+
+            {provider.isVerified && (
+              <View style={[s.badge, s.badgeOk]}>
+                <Ionicons name="checkmark-circle" size={15} color="#16A34A" />
+                <Text style={[s.badgeText, s.badgeTextOk]}>Profesional aprobado</Text>
+              </View>
+            )}
+
+            <View style={[s.badge, s.badgeInfo]}>
+              <Ionicons name="star" size={15} color={c.amber} />
+              <Text style={[s.badgeText, s.badgeTextInfo]}>
+                {provider.reviewsCount > 0
+                  ? `${Number(provider.rating ?? 0).toFixed(1)} · ${provider.reviewsCount} reseñas`
+                  : 'Sin reseñas aún'}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {services.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Servicios disponibles</Text>
-            <View style={styles.servicesList}>
-              {services.map((service) => {
-                // Map Service to ServiceSummary fallback
-                // We create a temporary fallback object because ServiceCard expects ServiceSummary
-                // and Service interface might differ slightly.
-                const fallback: ServiceSummary = {
-                  id: service.id,
-                  title: service.title,
-                  name: provider.name || "", // Provider name
-                  thumbnail: service.image || "",
-                  providerId: provider.id || service.providerId || "",
-                  location: service.location || provider.location || "",
-                  categoryId: (service.categoryId as string) || (provider.categoryId as string) || "",
-                  summary: service.description || "",
-                  averageRating: service.rating ?? 0,
-                  reviewsCount: service.reviewCount ?? 0,
-                  rate: {
-                    amount: service.price || 0,
-                    currency: service.currency || 'USD',
-                    unit: 'fixed' // Defaulting to fixed as Service doesn't have unit
-                  }
-                };
+        {/* ── Bio ── */}
+        {provider.bio ? (
+          <View style={[s.section, { backgroundColor: c.card }]}>
+            <Text style={[s.sectionTitle, { color: c.text }]}>Sobre el profesional</Text>
+            <Text style={[s.bioText, { color: c.sub }]}>{provider.bio}</Text>
+          </View>
+        ) : null}
 
-                return (
-                  <ServiceCard
-                    key={service.id}
-                    serviceId={service.id}
-                    fallback={fallback}
-                    onPress={() => {
-                      setSelectedService(fallback);
-                      setModalVisible(true);
-                    }}
-                  />
-                );
-              })}
-            </View>
+        {/* ── Servicios ── */}
+        {services.length > 0 && (
+          <View style={[s.section, { backgroundColor: c.card }]}>
+            <Text style={[s.sectionTitle, { color: c.text }]}>
+              Servicios
+              <Text style={[s.sectionCount, { color: c.sub }]}> ({services.length})</Text>
+            </Text>
+            {services.map(item => (
+              <ServiceRow
+                key={item.id}
+                item={item}
+                onPress={() => {
+                  setSelectedService(item);
+                  setModalVisible(true);
+                }}
+              />
+            ))}
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sobre el servicio</Text>
-          <Text style={styles.sectionBody}>{provider.bio}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Especialidades</Text>
-          <View style={styles.tagsRow}>
-            {provider.tags?.map((tag) => (
-              <View
-                key={tag}
-                style={[styles.tag, { backgroundColor: accentColor }]}
-              >
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
+        {services.length === 0 && (
+          <View style={[s.section, s.emptyServices, { backgroundColor: c.card }]}>
+            <Ionicons name="construct-outline" size={36} color={c.border} />
+            <Text style={[s.emptySub, { color: c.sub }]}>Este profesional aún no publicó servicios.</Text>
           </View>
-        </View>
+        )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Trabajos recientes</Text>
-          <View style={styles.worksList}>
-            {provider.recentWorks?.map((work, index) => (
-              <MotiView
-                key={work.id as string}
-                from={{ opacity: 0, translateY: 16 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{
-                  type: "timing",
-                  duration: 420,
-                  delay: index * 80,
-                }}
-                style={styles.workCard}
-              >
-                <Image source={{ uri: work.image }} style={styles.workImage} />
-                <View style={styles.workInfo}>
-                  <Text style={styles.workTitle}>{work.title}</Text>
-                  <Text style={styles.workTime}>{work.timeAgo}</Text>
+        {/* ── Reseñas ── */}
+        {reviews.length > 0 && (
+          <View style={[s.section, { backgroundColor: c.card }]}>
+            <Text style={[s.sectionTitle, { color: c.text }]}>
+              Reseñas
+              <Text style={[s.sectionCount, { color: c.sub }]}> ({provider?.reviewsCount ?? reviews.length})</Text>
+            </Text>
+            {reviews.map(r => {
+              const name = [r.reviewer.firstName, r.reviewer.lastName].filter(Boolean).join(' ') || 'Usuario';
+              const initial = (r.reviewer.firstName[0] ?? r.reviewer.lastName[0] ?? 'U').toUpperCase();
+              const date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+              return (
+                <View key={r.id} style={[s.reviewCard, { borderBottomColor: c.border }]}>
+                  <View style={s.reviewHeader}>
+                    <View style={[s.reviewAvatar, { backgroundColor: TOKENS.color.primary }]}>
+                      {r.reviewer.avatarUrl
+                        ? <Image source={{ uri: r.reviewer.avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} contentFit="cover" />
+                        : <Text style={s.reviewInitial}>{initial}</Text>
+                      }
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.reviewName, { color: c.text }]}>{name}</Text>
+                      <View style={s.starsRow}>
+                        {[1,2,3,4,5].map(i => (
+                          <Ionicons key={i} name="star" size={11} color={i <= r.rating ? c.amber : c.border} />
+                        ))}
+                        <Text style={[s.reviewDate, { color: c.sub }]}>{date}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  {r.comment ? <Text style={[s.reviewComment, { color: c.sub }]}>{r.comment}</Text> : null}
+                  {r.reply ? (
+                    <View style={[s.replyBox, { backgroundColor: c.surface2, borderLeftColor: TOKENS.color.primary }]}>
+                      <Text style={[s.replyLabel, { color: TOKENS.color.primary }]}>Respuesta del proveedor</Text>
+                      <Text style={[s.replyText, { color: c.sub }]}>{r.reply}</Text>
+                    </View>
+                  ) : null}
                 </View>
-              </MotiView>
-            ))}
+              );
+            })}
           </View>
+        )}
+      </Animated.ScrollView>
+
+      {/* ── Footer CTA ── */}
+      {services.length > 0 && (
+        <View style={[s.footer, { backgroundColor: c.card, borderTopColor: c.border, paddingBottom: insets.bottom + 12 }]}>
+          <Pressable style={s.ctaBtn} onPress={handleRequest}>
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+            <Text style={s.ctaBtnText}>Solicitar servicio</Text>
+          </Pressable>
         </View>
-      </ScrollView>
+      )}
 
       <ServiceDetailModal
         visible={modalVisible}
         service={selectedService}
         onClose={() => setModalVisible(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: TOKENS.color.bg,
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  scroll: { gap: 12, paddingTop: 0 },
+
+  backBtn: {
+    width: 40, height: 40, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
-  scrollContent: {
-    padding: 20,
-    gap: 20,
-    paddingBottom: 40,
+  backBtnFloat: {
+    position: 'absolute', top: 56, left: 16, zIndex: 10,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
+
+  // Hero
+  hero: {
+    paddingTop: 64, paddingBottom: 24, paddingHorizontal: 20,
+    gap: 20, overflow: 'hidden',
   },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: TOKENS.radius.lg,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    ...TOKENS.shadow.soft,
+  heroBubble1: {
+    position: 'absolute', width: 220, height: 220,
+    borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.07)',
+    top: -60, right: -60,
   },
-  backIcon: {
-    fontSize: 20,
-    color: TOKENS.color.text,
+  heroBubble2: {
+    position: 'absolute', width: 140, height: 140,
+    borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.05)',
+    bottom: -40, left: 20,
   },
-  heroCard: {
-    borderRadius: TOKENS.radius.xl,
-    overflow: "hidden",
-    ...TOKENS.shadow.soft,
+  heroBody: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  avatar: {
+    width: 80, height: 80, borderRadius: 24,
+    borderWidth: 3, borderColor: 'rgba(255,255,255,0.4)',
   },
-  heroBackground: {
-    padding: 24,
+  avatarFallback: {
+    width: 80, height: 80, borderRadius: 24,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
   },
-  heroBackgroundImage: {
-    borderRadius: TOKENS.radius.xl,
+  avatarInitials: { fontSize: 28, fontWeight: '700', color: '#FFFFFF' },
+  heroInfo: { flex: 1, gap: 6 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  heroName: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locationText: { fontSize: 12, color: 'rgba(255,255,255,0.75)' },
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  statText: { fontSize: 13, fontWeight: '700', color: '#FFE082' },
+  statSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)' },
+  // Footer CTA
+  footer: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 16, paddingTop: 12,
+    borderTopWidth: 1,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 8,
   },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: TOKENS.color.primary, borderRadius: 16,
+    paddingVertical: 15,
   },
-  heroContent: {
-    alignItems: "center",
-    gap: 10,
-  },
-  heroAvatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
-    backgroundColor: "#FFFFFF",
-  },
-  heroName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  heroTitle: {
-    fontSize: 16,
-    color: "#F5F7FA",
-  },
-  heroSummary: {
-    fontSize: 14,
-    color: "#E1E6EC",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  heroStats: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  heroRating: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFE082",
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.6)",
-  },
-  heroReviews: {
-    fontSize: 13,
-    color: "#F1F5F9",
-  },
-  heroLocation: {
-    fontSize: 13,
-    color: "#F1F5F9",
-  },
-  heroActions: {
-    marginTop: 4,
-    alignItems: "center",
-    gap: 8,
-  },
-  heroRate: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  quoteButton: {
-    marginTop: 4,
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 10,
-    paddingHorizontal: 26,
-    borderRadius: TOKENS.radius.pill,
-  },
-  quoteButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+
+  // Sections
   section: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: TOKENS.radius.lg,
-    padding: 18,
-    gap: 12,
-    ...TOKENS.shadow.soft,
+    marginHorizontal: 16, borderRadius: 20,
+    padding: 18, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06, shadowRadius: 10, elevation: 3,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TOKENS.color.text,
+  sectionTitle: { fontSize: 16, fontWeight: '700' },
+  sectionCount: { fontWeight: '400' },
+  bioText: { fontSize: 14, lineHeight: 21 },
+
+  // Verification badges
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  badge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
   },
-  sectionBody: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    lineHeight: 20,
+  badgeOk: { backgroundColor: '#DCFCE7' },
+  badgePending: { backgroundColor: '#F3F4F6' },
+  badgeInfo: { backgroundColor: '#FEF9C3' },
+  badgeText: { fontSize: 12, fontWeight: '600' },
+  badgeTextOk: { color: '#16A34A' },
+  badgeTextPending: { color: '#6B7280' },
+  badgeTextInfo: { color: '#A16207' },
+
+  // Service row
+  serviceRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
   },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
+  serviceThumb: {
+    width: 56, height: 56, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
   },
-  tag: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: TOKENS.radius.pill,
+  serviceTitle: { fontSize: 14, fontWeight: '600' },
+  serviceSummary: { fontSize: 12, lineHeight: 17, marginTop: 2 },
+  servicePrice: { fontSize: 13, fontWeight: '600', marginTop: 4 },
+
+  // Reviews
+  reviewCard: { gap: 8, paddingVertical: 10, borderBottomWidth: 1 },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  reviewAvatar: {
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
   },
-  tagText: {
-    fontSize: 12,
-    color: TOKENS.color.text,
-  },
-  servicesList: {
-    gap: 16,
-    paddingTop: 8,
-  },
-  worksList: {
-    gap: 12,
-  },
-  workCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  workImage: {
-    width: 72,
-    height: 72,
-    borderRadius: TOKENS.radius.lg,
-  },
-  workInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  workTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  workTime: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    padding: 32,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    textAlign: "center",
-  },
+  reviewInitial: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  reviewName: { fontSize: 13, fontWeight: '600' },
+  starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
+  reviewDate: { fontSize: 11, marginLeft: 4 },
+  reviewComment: { fontSize: 13, lineHeight: 19 },
+  replyBox: { marginTop: 6, padding: 10, borderRadius: 8, borderLeftWidth: 3 },
+  replyLabel: { fontSize: 11, fontWeight: '700', marginBottom: 2 },
+  replyText: { fontSize: 13, lineHeight: 18 },
+
+  // Empty
+  emptyServices: { alignItems: 'center', paddingVertical: 24 },
+  emptySub: { fontSize: 14, textAlign: 'center' },
+  errorTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
+  errorSub: { fontSize: 14, marginTop: 6 },
 });

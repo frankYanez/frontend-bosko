@@ -1,42 +1,20 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import {
-  fetchReviewsByService,
-  createReview,
-  Review,
-} from "../services/reviews";
-
-/**
- * ReviewsContext
- *
- * Provides state and functions for managing reviews associated with a
- * single service. This context can be scoped at the service detail
- * level; however, it can also live globally if multiple components
- * need access to the same set of reviews. For simplicity, the
- * provider accepts a `serviceId` prop to know which reviews to
- * load.
- */
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { fetchReviewsByProvider, Review } from "../services/reviews";
 
 interface ReviewsState {
   reviews: Review[];
   loading: boolean;
   loadReviews: () => Promise<void>;
-  addReview: (rating: number, comment: string) => Promise<Review>;
 }
 
 const ReviewsContext = createContext<ReviewsState | undefined>(undefined);
 
 export const ReviewsProvider = ({
   children,
-  serviceId,
+  providerId,
 }: {
   children: ReactNode;
-  serviceId: string;
+  providerId: string;
 }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -44,39 +22,22 @@ export const ReviewsProvider = ({
   const loadReviews = async () => {
     setLoading(true);
     try {
-      const data = await fetchReviewsByService(serviceId);
-      setReviews(data);
+      const result = await fetchReviewsByProvider(providerId);
+      setReviews(result.data);
     } finally {
       setLoading(false);
     }
   };
 
-  const addReview = async (rating: number, comment: string) => {
-    const newReview = await createReview(serviceId, { rating, comment });
-    setReviews((prev) => [...prev, newReview]);
-    return newReview;
-  };
-
-  // useEffect(() => {
-  //   loadReviews().catch((err) => console.error(err));
-  // }, [serviceId]);
-
-  const value: ReviewsState = {
-    reviews,
-    loading,
-    loadReviews,
-    addReview,
-  };
-
   return (
-    <ReviewsContext.Provider value={value}>{children}</ReviewsContext.Provider>
+    <ReviewsContext.Provider value={{ reviews, loading, loadReviews }}>
+      {children}
+    </ReviewsContext.Provider>
   );
 };
 
 export const useReviews = () => {
   const context = useContext(ReviewsContext);
-  if (context === undefined) {
-    throw new Error("useReviews must be used within a ReviewsProvider");
-  }
+  if (!context) throw new Error("useReviews must be used within a ReviewsProvider");
   return context;
 };

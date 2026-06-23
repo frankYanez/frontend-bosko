@@ -1,69 +1,134 @@
-import axios from "axios";
-import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
-import { API_URL } from "@/core/config/env";
-import { refreshTokenService } from "@/features/auth/services/auth";
+/**
+ * axiosinstance — Cliente HTTP centralizado de la aplicación.
+ *
+ * Interceptores:
+ *  1. Request: adjunta Bearer token (desde cache en memoria), headers anti-caché.
+ *  2. Response: unwrap { success, data }, refresh automático con cola para
+ *     requests concurrentes, logout forzado si el refresh falla.
+ */
 
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { API_URL } from '@/core/config/env';
+import { tokenStorage } from '@/core/auth/tokenStorage';
+import { ApiResponse, AuthResponse } from '@/features/auth/types';
+
+const REQUEST_TIMEOUT_MS = 30_000;
+
+// ── Cola de refresh (evita múltiples refreshes concurrentes) ──────────────────
+let isRefreshing = false;
+let refreshQueue: {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}[] = [];
+
+const resolveRefreshQueue = (token: string) => {
+  refreshQueue.forEach(({ resolve }) => resolve(token));
+  refreshQueue = [];
+};
+
+const rejectRefreshQueue = (error: unknown) => {
+  refreshQueue.forEach(({ reject }) => reject(error));
+  refreshQueue = [];
+};
+
+// ── Instancia base ────────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: API_URL,
+  timeout: REQUEST_TIMEOUT_MS,
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
 });
 
+// ── Tipos ─────────────────────────────────────────────────────────────────────
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/refresh-token'];
+
+// ── Interceptor de solicitudes ─────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
+  const token = tokenStorage.getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+  config.headers['Pragma'] = 'no-cache';
   return config;
 });
 
-api.interceptors.request.use(
-  async (request) => {
-    const token = await getItemAsync("token");
-    if (token) {
-      request.headers.Authorization = `Bearer ${token}`;
-    }
-    return request;
-  },
-  (error) => Promise.reject(error)
-);
+// ── Interceptor de respuestas ─────────────────────────────────────────────────
+// Desempaqueta el wrapper del servidor { success, timestamp, data: T }
+const unwrapResponse = (response: any) => {
+  if (
+    response?.data &&
+    typeof response.data === 'object' &&
+    'success' in response.data &&
+    'data' in response.data
+  ) {
+    return { ...response, data: response.data.data };
+  }
+  return response;
+};
 
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  (response) => unwrapResponse(response),
 
-    if (!originalRequest) {
+  async (error: AxiosError) => {
+    const original = error.config as RetryableConfig | undefined;
+    if (!original) return Promise.reject(error);
+
+    const isAuthRoute = AUTH_ROUTES.some((url) => original.url?.includes(url));
+    if (isAuthRoute) return Promise.reject(error);
+
+    if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }
 
-    // No intentar refresh si el error viene del login o register
-    if (
-      originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/register")
-    ) {
-      return Promise.reject(error);
+    // Si ya hay un refresh en curso, encolar esta request
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({
+          resolve: (token: string) => {
+            original.headers.Authorization = `Bearer ${token}`;
+            original._retry = true;
+            resolve(api(original));
+          },
+          reject,
+        });
+      });
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    original._retry = true;
+    isRefreshing = true;
 
-      try {
-        const refreshToken = await getItemAsync("refreshToken");
-        const newAccessToken = await refreshTokenService(refreshToken);
+    try {
+      const refreshToken = tokenStorage.getRefreshToken();
+      if (!refreshToken) throw new Error('No refresh token');
 
-        if (newAccessToken) {
-          await setItemAsync("token", newAccessToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(originalRequest);
-        } else {
-          await deleteItemAsync("token");
-          await deleteItemAsync("refreshToken");
-          await deleteItemAsync("userEmail");
-          // router.replace('/login'); // opcional
-        }
-      } catch (refreshError) {
-        // Falló el refresh, rechazamos con el error original o el de refresh
-        return Promise.reject(refreshError);
+      const { data: refreshRaw } = await axios.post<ApiResponse<AuthResponse>>(
+        `${API_URL}/auth/refresh-token`,
+        { refreshToken },
+      );
+      const refreshed = refreshRaw.data;
+
+      await tokenStorage.save(refreshed.accessToken, refreshed.refreshToken);
+
+      resolveRefreshQueue(refreshed.accessToken);
+
+      original.headers.Authorization = `Bearer ${refreshed.accessToken}`;
+      return api(original);
+    } catch (refreshError) {
+      rejectRefreshQueue(refreshError);
+
+      const status = (refreshError as any)?.response?.status;
+      if (status === 401 || status === 403) {
+        await tokenStorage.clear();
+        tokenStorage.triggerForceLogout();
       }
-    }
 
-    return Promise.reject(error);
-  }
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  },
 );
 
 export default api;

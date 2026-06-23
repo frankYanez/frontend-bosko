@@ -26,7 +26,6 @@ export const ProfilePage = () => {
           <Text style={styles.title}>{t("profileHeaderTitle")}</Text>
           <Text style={styles.subtitle}>
             {[profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
-              profile.username ||
               ""}
           </Text>
         </View>

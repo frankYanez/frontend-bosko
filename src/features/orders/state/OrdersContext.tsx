@@ -1,0 +1,56 @@
+import React from 'react';
+import { fetchOrderById } from '../services/orders.service';
+import type { CreateOrderPayload, RejectOrderPayload, DisputeOrderPayload, Order } from '../types/orders.types';
+import {
+  useClientOrders as useClientOrdersQuery,
+  useProviderOrders as useProviderOrdersQuery,
+  useCreateOrder,
+  useAcceptOrder,
+  useRejectOrder,
+  useStartOrder,
+  useCompleteOrder,
+  useCancelOrder,
+  useDisputeOrder,
+} from '@/hooks/queries/useOrdersQuery';
+
+export const OrdersProvider = ({ children }: { children: React.ReactNode }) => (
+  <>{children}</>
+);
+
+export const useOrders = () => {
+  const clientQ = useClientOrdersQuery();
+  const providerQ = useProviderOrdersQuery();
+  const createM = useCreateOrder();
+  const acceptM = useAcceptOrder();
+  const rejectM = useRejectOrder();
+  const startM = useStartOrder();
+  const completeM = useCompleteOrder();
+  const cancelM = useCancelOrder();
+  const disputeM = useDisputeOrder();
+
+  return {
+    clientOrders: clientQ.data ?? [],
+    providerOrders: providerQ.data ?? [],
+    loading: clientQ.isLoading || providerQ.isLoading,
+    error: clientQ.error?.message ?? providerQ.error?.message ?? null,
+
+    loadClientOrders: async () => { await clientQ.refetch(); },
+    loadProviderOrders: async () => { await providerQ.refetch(); },
+    getOrder: (id: string): Promise<Order | undefined> =>
+      fetchOrderById(id).catch(() => undefined),
+    addOrder: (payload: CreateOrderPayload): Promise<Order> =>
+      createM.mutateAsync(payload),
+
+    acceptOrder: (id: string) => acceptM.mutateAsync(id).then(() => {}),
+    rejectOrder: (id: string, payload: RejectOrderPayload) =>
+      rejectM.mutateAsync({ id, payload }).then(() => {}),
+    startOrder: (id: string) => startM.mutateAsync(id).then(() => {}),
+    completeOrder: (id: string) => completeM.mutateAsync(id).then(() => {}),
+    cancelOrder: (id: string, payload: RejectOrderPayload) =>
+      cancelM.mutateAsync({ id, payload }).then(() => {}),
+    disputeOrder: (id: string, payload: DisputeOrderPayload) =>
+      disputeM.mutateAsync({ id, payload }).then(() => {}),
+
+    clearError: () => {},
+  };
+};

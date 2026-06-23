@@ -1,110 +1,41 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { useState } from 'react';
+import type { Payment, PaymentHistoryItem, EarningsItem } from '../services/payments';
 import {
-  fetchPaymentMethods,
-  addPaymentMethod,
-  removePaymentMethod,
-  subscribeToPro,
-  fetchInvoices,
-  PaymentMethod,
-} from "../services/payments";
+  usePaymentHistory,
+  useEarnings,
+  useInitiatePayment,
+  useOrderPayment,
+} from '@/hooks/queries/usePaymentsQuery';
 
-/**
- * PaymentsContext
- *
- * Manages payment-related state and actions, such as the list of
- * payment methods, subscription status, and invoices. Components
- * that need to read or update payment details can consume this
- * context. Note that subscription flows often involve third-party
- * redirects; those actions can still be initiated from within
- * functions exposed here.
- */
-
-interface PaymentsState {
-  methods: PaymentMethod[];
-  invoices: any[];
-  loading: boolean;
-  loadMethods: () => Promise<void>;
-  loadInvoices: () => Promise<void>;
-  addMethod: (payload: any) => Promise<PaymentMethod>;
-  removeMethod: (id: string) => Promise<void>;
-  subscribe: () => Promise<{ status: string; clientSecret?: string }>;
+export function PaymentsProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }
 
-const PaymentsContext = createContext<PaymentsState | undefined>(undefined);
+export function usePayments() {
+  const historyQ = usePaymentHistory(1);
+  const earningsQ = useEarnings(1);
+  const initiateM = useInitiatePayment();
+  const [orderPaymentId, setOrderPaymentId] = useState<string | undefined>();
+  const orderPaymentQ = useOrderPayment(orderPaymentId);
 
-export const PaymentsProvider = ({ children }: { children: ReactNode }) => {
-  const [methods, setMethods] = useState<PaymentMethod[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const loadMethods = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchPaymentMethods();
-      setMethods(data);
-    } finally {
-      setLoading(false);
-    }
+  const loadOrderPayment = (orderId: string) => {
+    setOrderPaymentId(orderId);
   };
 
-  const loadInvoices = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchInvoices();
-      setInvoices(data);
-    } finally {
-      setLoading(false);
-    }
+  return {
+    orderPayment: orderPaymentQ.data ?? null,
+    history: (historyQ.data?.data ?? []) as PaymentHistoryItem[],
+    earnings: (earningsQ.data?.data ?? []) as EarningsItem[],
+    loading: historyQ.isLoading || earningsQ.isLoading || initiateM.isPending,
+    error: historyQ.error?.message ?? earningsQ.error?.message ?? '',
+
+    initiate: (orderId: string): Promise<Payment> => {
+      setOrderPaymentId(orderId);
+      return initiateM.mutateAsync(orderId);
+    },
+    loadOrderPayment,
+    loadHistory: async () => { await historyQ.refetch(); },
+    loadEarnings: async () => { await earningsQ.refetch(); },
+    clearError: () => {},
   };
-
-  const addMethod = async (payload: any) => {
-    const method = await addPaymentMethod(payload);
-    setMethods((prev) => [...prev, method]);
-    return method;
-  };
-
-  const removeMethodById = async (id: string) => {
-    await removePaymentMethod(id);
-    setMethods((prev) => prev.filter((m) => m.id !== id));
-  };
-
-  const subscribe = async () => {
-    const result = await subscribeToPro();
-    return result;
-  };
-
-  // useEffect(() => {
-  //   loadMethods().catch((err) => console.error(err));
-  // }, []);
-
-  const value: PaymentsState = {
-    methods,
-    invoices,
-    loading,
-    loadMethods,
-    loadInvoices,
-    addMethod,
-    removeMethod: removeMethodById,
-    subscribe,
-  };
-
-  return (
-    <PaymentsContext.Provider value={value}>
-      {children}
-    </PaymentsContext.Provider>
-  );
-};
-
-export const usePayments = () => {
-  const context = useContext(PaymentsContext);
-  if (context === undefined) {
-    throw new Error("usePayments must be used within a PaymentsProvider");
-  }
-  return context;
-};
+}

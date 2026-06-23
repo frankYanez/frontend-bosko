@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
     View,
     Text,
@@ -8,10 +8,11 @@ import {
     ScrollView,
     Image,
     Dimensions,
+    Animated,
 } from "react-native";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import Animated, { SlideInDown } from "react-native-reanimated";
+import { router } from "expo-router";
 import { ServiceSummary } from "@/types/services";
 import Colors from "@/core/design-system/Colors";
 import { TOKENS } from "@/core/design-system/tokens";
@@ -30,6 +31,16 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
     onClose,
     service,
 }) => {
+    const slideAnim = useRef(new Animated.Value(600)).current;
+
+    useEffect(() => {
+        if (visible) {
+            Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+        } else {
+            slideAnim.setValue(600);
+        }
+    }, [visible]);
+
     if (!service) return null;
 
     const formatRate = (rate: ServiceSummary["rate"]) => {
@@ -40,8 +51,8 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                 : rate.currency === "USD"
                     ? "US$"
                     : `${rate.currency} `;
-        return `${symbol}${rate.amount} ${rate.unit !== "fixed" ? "/ " + rate.unit : ""
-            }`;
+        const price = `${symbol}${Number(rate.amount).toLocaleString('es-AR')}`;
+        return rate.unit ? `${price} / ${rate.unit}` : price;
     };
 
     return (
@@ -55,8 +66,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
             <View style={styles.overlay}>
                 <Pressable style={styles.backdrop} onPress={onClose} />
                 <Animated.View
-                    entering={SlideInDown.springify()}
-                    style={styles.modalContainer}
+                    style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
                 >
                     <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
                         <View style={styles.header}>
@@ -108,7 +118,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                         )}
                                         <View style={styles.ratingChip}>
                                             <Ionicons name="star" size={12} color="#FFD700" />
-                                            <Text style={styles.ratingText}>{service.averageRating?.toFixed(1) || "New"}</Text>
+                                            <Text style={styles.ratingText}>{service.averageRating ? Number(service.averageRating).toFixed(1) : 'New'}</Text>
                                         </View>
                                     </View>
                                     <Text style={styles.title}>{service.title}</Text>
@@ -117,11 +127,6 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
                             {/* Content Body */}
                             <View style={styles.body}>
-                                <View style={styles.priceRow}>
-                                    <Text style={styles.priceLabel}>Precio estimado</Text>
-                                    <Text style={styles.priceValue}>{formatRate(service.rate)}</Text>
-                                </View>
-
                                 <View style={styles.divider} />
 
                                 <Text style={styles.sectionTitle}>Descripción</Text>
@@ -147,7 +152,20 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
                         {/* Footer Action */}
                         <View style={styles.footer}>
-                            <Pressable style={styles.hireButton} onPress={() => console.log("Hire service", service.id)}>
+                            <Pressable
+                                style={styles.hireButton}
+                                onPress={() => {
+                                    onClose();
+                                    router.push({
+                                        pathname: '/(tabs)/orders/quote',
+                                        params: {
+                                            serviceId: service.id,
+                                            serviceTitle: service.title,
+                                            providerName: service.name,
+                                        },
+                                    });
+                                }}
+                            >
                                 <Text style={styles.hireButtonText}>Solicitar Servicio</Text>
                                 <Ionicons name="arrow-forward" size={20} color={Colors.premium.textPrimary} />
                             </Pressable>

@@ -1,10 +1,1113 @@
-import { View, Text } from "react-native";
-import React from "react";
+/**
+ * ChatScreen — Chat individual ligado a una orden.
+ * WebSocket en tiempo real con fallback a polling REST cada 5s.
+ * Soporta texto, imágenes y mensajes de audio (estilo WhatsApp).
+ */
 
-export default function ChatScreen() {
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Image,
+  Alert,
+  Animated,
+  Keyboard,
+  Linking,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import {
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  useAudioRecorder,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from 'expo-audio';
+import { BlurView } from '@/core/components/BlurView';
+import { MaterialIcons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import {
+  fetchConversationByOrder,
+  fetchMessages,
+  sendMessage as sendMsgRest,
+  sendMedia,
+  sendAudio,
+  markAsRead,
+  Message,
+  Conversation,
+} from '../services/chat.service';
+import { socketService } from '../services/socket.service';
+import { useChatStore } from '@/stores/chat.store';
+import { useThemeColors } from '@/stores/theme.store';
+import { useAuth } from '@/features/auth/state/AuthContext';
+import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { TOKENS } from '@/core/design-system/tokens';
+import { toast } from '@/core/components/Toast';
+
+const POLL_INTERVAL = 10000;
+const TYPING_THROTTLE = 2000;
+
+
+function formatDuration(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+const WAVE_BARS = [6, 10, 16, 8, 20, 12, 22, 10, 18, 8, 14, 10, 12, 20, 8, 10, 18, 12, 8, 16];
+
+// ── Burbuja de audio ──────────────────────────────────────────────────────────
+function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
+  const player = useAudioPlayer(msg.mediaUrl ?? null);
+  const status = useAudioPlayerStatus(player);
+
+  const positionMs = status.currentTime * 1000;
+  const durationMs = status.duration * 1000;
+  const progress = durationMs > 0 ? positionMs / durationMs : 0;
+
+  const togglePlay = () => {
+    if (status.playing) {
+      player.pause();
+    } else {
+      if (status.didJustFinish) player.seekTo(0);
+      player.play();
+    }
+  };
+
+  const timeLabel = !status.isLoaded || durationMs === 0
+    ? '--:--'
+    : formatDuration(status.playing || positionMs > 0 ? positionMs : durationMs);
+  const accent = isMine ? '#fff' : TOKENS.color.primary;
+  const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(133,0,33,0.25)';
+
   return (
-    <View>
-      <Text>chat</Text>
+    <View style={[styles.audioBubble]}>
+      <Pressable onPress={togglePlay} style={[styles.audioPlayBtn, { borderColor: accentDim }]}>
+        <MaterialIcons name={status.playing ? 'pause' : 'play-arrow'} size={22} color={accent} />
+      </Pressable>
+      <View style={styles.waveform}>
+        {WAVE_BARS.map((h, i) => (
+          <View
+            key={i}
+            style={[
+              styles.waveBar,
+              { height: h, backgroundColor: progress > 0 && i / WAVE_BARS.length <= progress ? accent : accentDim },
+            ]}
+          />
+        ))}
+      </View>
+      <Text style={[styles.audioTime, { color: accent }]}>{timeLabel}</Text>
     </View>
   );
 }
+
+// ── Burbuja de video ──────────────────────────────────────────────────────────
+function VideoBubble({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, p => { p.loop = false; });
+  return (
+    <VideoView
+      player={player}
+      style={styles.bubbleVideo}
+      nativeControls
+      contentFit="contain"
+    />
+  );
+}
+
+// ── Burbuja de documento ─────────────────────────────────────────────────────
+function DocumentBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
+  const filename = msg.mediaUrl?.split('/').pop()?.split('?')[0] ?? 'documento';
+  const accent = isMine ? 'rgba(255,255,255,0.9)' : TOKENS.color.primary;
+  return (
+    <Pressable
+      onPress={() => msg.mediaUrl && Linking.openURL(msg.mediaUrl)}
+      style={styles.docBubble}
+    >
+      <MaterialIcons name="insert-drive-file" size={28} color={accent} />
+      <Text style={[styles.docName, { color: accent }]} numberOfLines={2}>{decodeURIComponent(filename)}</Text>
+      <MaterialIcons name="open-in-new" size={16} color={accent} style={{ marginLeft: 4 }} />
+    </Pressable>
+  );
+}
+
+const SCREEN_W = Dimensions.get('window').width;
+const SCREEN_H = Dimensions.get('window').height;
+
+// ── Lightbox pantalla completa ────────────────────────────────────────────────
+function MediaLightbox({ uri, isVideo, visible, onClose }: { uri: string; isVideo: boolean; visible: boolean; onClose: () => void }) {
+  const player = useVideoPlayer(isVideo ? uri : null, p => { if (p) { p.loop = false; } });
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.lightboxBackdrop}>
+        <TouchableOpacity style={styles.lightboxClose} onPress={onClose} activeOpacity={0.8}>
+          <MaterialIcons name="close" size={28} color="#fff" />
+        </TouchableOpacity>
+        {isVideo ? (
+          <VideoView player={player} style={styles.lightboxVideo} nativeControls contentFit="contain" />
+        ) : (
+          <Image source={{ uri }} style={styles.lightboxImage} resizeMode="contain" />
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+// ── Burbuja de mensaje ────────────────────────────────────────────────────────
+const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg: Message; myUserId?: string }) {
+  const tc = useThemeColors();
+  const isMine = msg.senderId === myUserId;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  if (msg.messageType === 'system_event') {
+    return (
+      <View style={styles.systemMessage}>
+        <Text style={[styles.systemText, { color: tc.textSub }]}>{msg.content}</Text>
+      </View>
+    );
+  }
+
+  const timestamp = new Date(msg.createdAt).toLocaleTimeString('es-AR', {
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  const isVideo = (msg.messageType === 'file' || msg.messageType === 'image') && !!msg.mediaUrl && /\.(mp4|mov|avi|webm)$/i.test(msg.mediaUrl);
+  const isImage = msg.messageType === 'image' && !!msg.mediaUrl && !isVideo;
+  const isMediaBubble = isVideo || isImage;
+  const statusText = msg.isRead || msg.isDelivered ? ' ✓✓' : ' ✓';
+
+  if (isMediaBubble) {
+    const mediaBorderStyle = isMine
+      ? { borderRadius: 18, borderBottomRightRadius: 4 }
+      : { borderRadius: 18, borderBottomLeftRadius: 4 };
+    return (
+      <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
+        {!isMine && (
+          <View style={[styles.bubbleAvatar, { backgroundColor: tc.textSub }]}>
+            <Text style={styles.bubbleAvatarText}>
+              {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
+        <Pressable
+          style={[styles.mediaThumbnail, mediaBorderStyle]}
+          onPress={() => setLightboxOpen(true)}
+        >
+          {isVideo ? (
+            <VideoBubble uri={msg.mediaUrl!} />
+          ) : (
+            <Image source={{ uri: msg.mediaUrl! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          )}
+          <View style={styles.mediaTimestampOverlay}>
+            <Text style={styles.mediaTimestampText}>
+              {timestamp}{isMine ? statusText : ''}
+            </Text>
+          </View>
+        </Pressable>
+        <MediaLightbox uri={msg.mediaUrl!} isVideo={isVideo} visible={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
+      {!isMine && (
+        <View style={[styles.bubbleAvatar, { backgroundColor: tc.textSub }]}>
+          <Text style={styles.bubbleAvatarText}>
+            {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
+      <View style={[styles.bubble, isMine ? styles.bubbleMine : [styles.bubbleOther, { backgroundColor: tc.surface }]]}>
+        {msg.messageType === 'audio' ? (
+          <AudioBubble msg={msg} isMine={isMine} />
+        ) : msg.messageType === 'file' && msg.mediaUrl ? (
+          <DocumentBubble msg={msg} isMine={isMine} />
+        ) : (
+          <Text style={[styles.bubbleText, { color: isMine ? '#fff' : tc.text }, isMine && styles.bubbleTextMine]}>
+            {msg.content}
+          </Text>
+        )}
+        <Text style={[styles.bubbleTime, { color: isMine ? 'rgba(255,255,255,0.7)' : tc.textSub }, isMine && styles.bubbleTimeMine]}>
+          {timestamp}
+          {isMine && (
+            <Text style={msg.isRead
+              ? styles.statusRead
+              : msg.isDelivered
+                ? styles.statusDelivered
+                : styles.statusSent
+            }>
+              {statusText}
+            </Text>
+          )}
+        </Text>
+      </View>
+    </View>
+  );
+});
+
+// ── Indicador de grabación (reemplaza el TextInput) ───────────────────────────
+function RecordingIndicator({ duration, locked, lockProgress }: { duration: number; locked?: boolean; lockProgress?: number }) {
+  const tc = useThemeColors();
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.4, duration: 500, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  const progress = lockProgress ?? 0;
+
+  return (
+    <View style={styles.recordingBar}>
+      <Animated.View style={[styles.recordingDot, { transform: [{ scale: pulse }] }]} />
+      <Text style={styles.recordingTimer}>{formatDuration(duration * 1000)}</Text>
+      {locked ? null : progress > 0.1 ? (
+        <MaterialIcons name="lock" size={16} color={TOKENS.color.primary} style={{ opacity: progress }} />
+      ) : (
+        <Text style={[styles.recordingHint, { color: tc.textSub }]}>← cancelar  ↑ bloquear</Text>
+      )}
+    </View>
+  );
+}
+
+// ── Typing bubble ─────────────────────────────────────────────────────────────
+function TypingBubble() {
+  const tc = useThemeColors();
+  const dots = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
+
+  useEffect(() => {
+    const anims = dots.map((dot, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 160),
+          Animated.timing(dot, { toValue: -5, duration: 280, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 280, useNativeDriver: true }),
+          Animated.delay(480),
+        ]),
+      ),
+    );
+    anims.forEach(a => a.start());
+    return () => anims.forEach(a => a.stop());
+  }, []);
+
+  return (
+    <View style={styles.typingBubbleRow}>
+      <View style={[styles.typingBubble, { backgroundColor: tc.surface }]}>
+        {dots.map((dot, i) => (
+          <Animated.View key={i} style={[styles.typingDot, { backgroundColor: tc.textSub }, { transform: [{ translateY: dot }] }]} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+async function compressImage(uri: string, mimeType: string): Promise<{ uri: string; mimeType: string }> {
+  if (mimeType.startsWith('video/')) return { uri, mimeType };
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 1200 } }],
+      { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    return { uri: result.uri, mimeType: 'image/jpeg' };
+  } catch {
+    return { uri, mimeType };
+  }
+}
+
+// ── Pantalla principal ────────────────────────────────────────────────────────
+export default function ChatScreen() {
+  const tc = useThemeColors();
+  const params = useLocalSearchParams<{ id: string }>();
+  const { data: profile } = useProfile();
+  const { authState } = useAuth();
+  const updateLastMessage = useChatStore((s) => s.updateLastMessage);
+  const insets = useSafeAreaInsets();
+
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [socketReady, setSocketReady] = useState(socketService.isConnected);
+  const [convId, setConvId] = useState('');
+
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const hasMoreRef = useRef(false);
+  const nextPageRef = useRef(2);
+
+  // Audio — usamos ref para el estado real (evita problemas de closure en onPressOut)
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingLocked, setRecordingLocked] = useState(false);
+  const [lockProgress, setLockProgress] = useState(0);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [sendingAudio, setSendingAudio] = useState(false);
+  const isRecordingRef = useRef(false);
+  const recordingLockedRef = useRef(false);
+  const recordingDurationRef = useRef(0);
+  const micStartYRef = useRef(0);
+  const micStartXRef = useRef(0);
+  const durationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const listRef = useRef<FlatList>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingEmitRef = useRef(0);
+  const convIdRef = useRef<string>('');
+  // Ref para acceder a conversation en stopRecording sin dependencia
+  const conversationRef = useRef<Conversation | null>(null);
+  useEffect(() => { conversationRef.current = conversation; }, [conversation]);
+
+  const loadConversation = useCallback(async () => {
+    if (!params.id) return;
+    try {
+      const conv = await fetchConversationByOrder(params.id);
+      setConversation(conv);
+      return conv.id;
+    } catch {
+      return params.id;
+    }
+  }, [params.id]);
+
+  const pollBackoffRef = useRef(0);
+
+  const loadMessages = useCallback(async (convId: string) => {
+    if (pollBackoffRef.current > Date.now()) return;
+    try {
+      const { messages: latest, hasMore } = await fetchMessages(convId, { page: 1, limit: 50 });
+      hasMoreRef.current = hasMore;
+      nextPageRef.current = 2;
+      setMessages(latest);
+      await markAsRead(convId).catch(() => {});
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        pollBackoffRef.current = Date.now() + 60_000;
+      }
+      console.error('Error loading messages:', err);
+    }
+  }, []);
+
+  const loadOlderMessages = useCallback(async (convId: string) => {
+    if (!hasMoreRef.current || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const { messages: older, hasMore } = await fetchMessages(convId, { page: nextPageRef.current, limit: 50 });
+      hasMoreRef.current = hasMore;
+      nextPageRef.current += 1;
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id));
+        const newOnes = older.filter(m => !existingIds.has(m.id));
+        return [...prev, ...newOnes];
+      });
+    } catch (err) {
+      console.error('Error loading older messages:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore]);
+
+  useEffect(() => {
+    const token = authState.token;
+    if (!token) return;
+    socketService.connect(token);
+    const unsub = socketService.onConnectionChange(setSocketReady);
+    return () => unsub();
+  }, [authState.token]);
+
+  useEffect(() => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!convId || !socketReady) return;
+    socketService.joinConversation(convId);
+    return () => { socketService.leaveConversation(convId); };
+  }, [socketReady, convId]);
+
+  useEffect(() => {
+    const unsub = socketService.onMessageReceived((msg) => {
+      if (msg.conversationId !== convIdRef.current) return;
+      setMessages(prev => {
+        if (prev.some(m => m.id === msg.id)) return prev;
+        return [msg, ...prev];
+      });
+      const preview =
+        msg.messageType === 'audio' ? '🎤 Audio' :
+        msg.messageType === 'image' ? '📷 Imagen' :
+        msg.messageType === 'file'  ? '📎 Archivo' :
+        msg.content ?? '';
+      updateLastMessage(msg.conversationId, preview, msg.senderId);
+      markAsRead(msg.conversationId).catch(() => {});
+    });
+    return () => unsub();
+  }, [updateLastMessage]);
+
+  useEffect(() => {
+    let active = true;
+    const init = async () => {
+      setLoading(true);
+      hasMoreRef.current = false;
+      nextPageRef.current = 2;
+      const id = await loadConversation();
+      if (!id || !active) { setLoading(false); return; }
+      convIdRef.current = id;
+      setConvId(id);
+      await loadMessages(id);
+      if (!active) return;
+      setLoading(false);
+    };
+    init();
+    return () => { active = false; };
+  }, [loadConversation, loadMessages]);
+
+  // Polling como fallback — solo activo cuando socket no está conectado
+  useEffect(() => {
+    if (!convId) return;
+    if (socketReady) {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      return;
+    }
+    pollRef.current = setInterval(() => loadMessages(convId), POLL_INTERVAL);
+    return () => {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    };
+  }, [socketReady, convId, loadMessages]);
+
+
+  // ── Audio recording ──────────────────────────────────────────────────────
+  const startRecording = useCallback(async () => {
+    setShowAttachMenu(false);
+    setRecordingLocked(false);
+    recordingLockedRef.current = false;
+    setLockProgress(0);
+    try {
+      const { granted } = await requestRecordingPermissionsAsync();
+      if (!granted) {
+        Alert.alert('Permiso requerido', 'Necesitamos acceso al micrófono.');
+        return;
+      }
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      isRecordingRef.current = true;
+      setIsRecording(true);
+      recordingDurationRef.current = 0;
+      setRecordingDuration(0);
+      durationTimerRef.current = setInterval(() => {
+        recordingDurationRef.current += 1;
+        setRecordingDuration(d => d + 1);
+      }, 1000);
+    } catch (err) {
+      console.error('Error starting recording:', err);
+    }
+  }, [recorder]);
+
+  const stopRecording = useCallback(async () => {
+    if (!isRecordingRef.current) return;
+    if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
+    isRecordingRef.current = false;
+    recordingLockedRef.current = false;
+    setIsRecording(false);
+    setRecordingLocked(false);
+    setLockProgress(0);
+    const duration = recordingDurationRef.current;
+    try {
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
+      const uri = recorder.uri;
+      if (!uri) return;
+      const convId = conversationRef.current?.id ?? convIdRef.current;
+      if (!convId) return;
+      setSendingAudio(true);
+      const newMsg = await sendAudio(convId, uri);
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(convId, `🎤 Mensaje de voz (${formatDuration(duration * 1000)})`, profile?.id ?? '');
+    } catch (err) {
+      console.error('Error sending audio:', err);
+      Alert.alert('Error', 'No se pudo enviar el audio. Intentá de nuevo.');
+    } finally {
+      setSendingAudio(false);
+      recordingDurationRef.current = 0;
+      setRecordingDuration(0);
+    }
+  }, [recorder]);
+
+  const cancelRecording = useCallback(async () => {
+    if (!isRecordingRef.current) return;
+    if (durationTimerRef.current) { clearInterval(durationTimerRef.current); durationTimerRef.current = null; }
+    isRecordingRef.current = false;
+    recordingLockedRef.current = false;
+    setIsRecording(false);
+    setRecordingLocked(false);
+    setLockProgress(0);
+    try {
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
+    } catch {}
+    recordingDurationRef.current = 0;
+    setRecordingDuration(0);
+  }, [recorder]);
+
+  useEffect(() => {
+    return () => {
+      if (durationTimerRef.current) clearInterval(durationTimerRef.current);
+    };
+  }, []);
+
+  // ── Media (galería) ──────────────────────────────────────────────────────
+  const handlePickMedia = useCallback(async () => {
+    setShowAttachMenu(false);
+    if (!conversation) return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images', 'videos'],
+      quality: 0.4,
+      allowsEditing: false,
+      videoMaxDuration: 60,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const isVideo = asset.type === 'video';
+    const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
+    setSending(true);
+    try {
+      const { uri, mimeType } = await compressImage(asset.uri, rawMime);
+      const newMsg = await sendMedia(conversation.id, uri, mimeType);
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Imagen', profile?.id ?? '');
+    } catch (err) {
+      console.error('Error sending media:', err);
+      Alert.alert('Error', 'No se pudo enviar el archivo.');
+    } finally {
+      setSending(false);
+    }
+  }, [conversation]);
+
+  // ── Cámara (helper compartido) ───────────────────────────────────────────
+  const launchCamera = useCallback(async (mediaTypes: ('images' | 'videos')[], isVideo: boolean) => {
+    setShowAttachMenu(false);
+    if (!conversation) return;
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu cámara.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes,
+      quality: 0.4,
+      videoMaxDuration: 60,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
+    setSending(true);
+    try {
+      const { uri, mimeType } = await compressImage(asset.uri, rawMime);
+      const newMsg = await sendMedia(conversation.id, uri, mimeType);
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Foto', profile?.id ?? '');
+    } catch (err) {
+      console.error('Error sending camera media:', err);
+      Alert.alert('Error', 'No se pudo enviar el archivo.');
+    } finally {
+      setSending(false);
+    }
+  }, [conversation]);
+
+  const handleCameraPhoto = useCallback(() => launchCamera(['images'], false), [launchCamera]);
+  const handleCameraVideo = useCallback(() => launchCamera(['videos'], true), [launchCamera]);
+
+  // ── Documento ────────────────────────────────────────────────────────────
+  const handlePickDocument = useCallback(async () => {
+    setShowAttachMenu(false);
+    if (!conversation) return;
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setSending(true);
+    try {
+      const newMsg = await sendMedia(conversation.id, asset.uri, asset.mimeType ?? 'application/pdf');
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(conversation.id, '📎 Documento', profile?.id ?? '');
+    } catch (err) {
+      console.error('Error sending document:', err);
+      Alert.alert('Error', 'No se pudo enviar el documento.');
+    } finally {
+      setSending(false);
+    }
+  }, [conversation]);
+
+  // ── Texto ────────────────────────────────────────────────────────────────
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || !conversation) return;
+    setInput('');
+    setSending(true);
+    cancelTyping();
+    try {
+      const newMsg = await sendMsgRest(conversation.id, text);
+      setMessages(prev => [newMsg, ...prev]);
+      updateLastMessage(conversation.id, text, profile?.id ?? '');
+    } catch (err) {
+      setInput(text);
+      toast.error('No se pudo enviar', 'Revisá tu conexión e intentá de nuevo');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const cancelTyping = useCallback(() => {
+    socketService.emitTyping(convIdRef.current, false);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = null;
+    lastTypingEmitRef.current = 0;
+  }, []);
+
+  const handleInputChange = useCallback((text: string) => {
+    setInput(text);
+    if (!socketService.isConnected || !convIdRef.current) return;
+    const now = Date.now();
+    if (text.trim() && now - lastTypingEmitRef.current > TYPING_THROTTLE) {
+      socketService.emitTyping(convIdRef.current, true);
+      lastTypingEmitRef.current = now;
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => socketService.emitTyping(convIdRef.current, false), TYPING_THROTTLE);
+    }
+    if (!text.trim()) cancelTyping();
+  }, [cancelTyping]);
+
+  useEffect(() => {
+    const unsub = socketService.onTypingIndicator((data) => {
+      if (data.userId === profile?.id) return;
+      setIsTyping(data.isTyping);
+    });
+    return () => unsub();
+  }, [profile?.id]);
+
+  // Read receipts en tiempo real — el otro leyó nuestros mensajes
+  useEffect(() => {
+    const myId = profile?.id;
+    if (!myId) return;
+    const unsub = socketService.onMessagesRead((data) => {
+      if (data.conversationId !== convIdRef.current) return;
+      setMessages(prev =>
+        prev.map(m => m.senderId === myId ? { ...m, isRead: true, isDelivered: true } : m),
+      );
+    });
+    return () => unsub();
+  }, [profile?.id]);
+
+  useEffect(() => {
+    return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
+  }, []);
+
+  const myId = profile?.id;
+  const other = conversation?.otherParty;
+  const otherName = other
+    ? `${other.firstName} ${other.lastName || ''}`.trim() || 'Chat'
+    : 'Chat';
+  const showMicButton = !input.trim() && !sending && !sendingAudio && !isRecording && !recordingLocked;
+  const LOCK_THRESHOLD = 80;
+
+  if (loading) {
+    return (
+      <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
+        <ActivityIndicator color={TOKENS.color.primary} size="large" />
+      </View>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
+      style={[styles.background, { backgroundColor: tc.bg }]}
+    >
+      {/* Header */}
+      <BlurView intensity={25} tint="light" style={[styles.header, { borderBottomColor: tc.divider }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
+        </Pressable>
+        <View style={styles.headerInfo}>
+          {other?.avatarUrl ? (
+            <Image source={{ uri: other.avatarUrl }} style={styles.headerAvatar} />
+          ) : (
+            <View style={styles.headerAvatarPlaceholder}>
+              <Text style={styles.headerAvatarText}>
+                {(other?.firstName || '?').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View>
+            <Text style={[styles.headerName, { color: tc.text }]} numberOfLines={1}>{otherName}</Text>
+          </View>
+        </View>
+        {conversation?.orderId && (
+          <Pressable
+            hitSlop={12}
+            onPress={() => router.push({ pathname: '/(tabs)/orders/[id]', params: { id: conversation.orderId } })}
+          >
+            <MaterialIcons name="assignment" size={24} color={TOKENS.color.primary} />
+          </Pressable>
+        )}
+      </BlurView>
+
+      {/* Mensajes */}
+      <FlatList
+        ref={listRef}
+        data={messages}
+        inverted
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => <MessageBubble msg={item} myUserId={myId} />}
+        contentContainerStyle={styles.messagesContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        removeClippedSubviews
+        maxToRenderPerBatch={15}
+        windowSize={10}
+        onEndReached={() => { if (convId) loadOlderMessages(convId); }}
+        onEndReachedThreshold={0.2}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.primary} style={{ padding: 12 }} /> : null}
+        ListEmptyComponent={
+          <View style={styles.emptyChat}>
+            <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
+            <Text style={[styles.emptyChatText, { color: tc.text }]}>Todavía no hay mensajes</Text>
+            <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Enviá el primer mensaje para empezar</Text>
+          </View>
+        }
+        style={styles.messagesList}
+      />
+
+      {isTyping && <View style={{ transform: [{ scaleY: -1 }] }}><TypingBubble /></View>}
+
+      {/* Menú de adjuntar */}
+      {showAttachMenu && (
+        <View style={styles.attachMenu}>
+          <Pressable onPress={handleCameraPhoto} style={styles.attachOption}>
+            <MaterialIcons name="camera-alt" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Foto</Text>
+          </Pressable>
+          <Pressable onPress={handleCameraVideo} style={styles.attachOption}>
+            <MaterialIcons name="videocam" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Video</Text>
+          </Pressable>
+          <Pressable onPress={handlePickMedia} style={styles.attachOption}>
+            <MaterialIcons name="photo-library" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Galería</Text>
+          </Pressable>
+          <Pressable onPress={handlePickDocument} style={styles.attachOption}>
+            <MaterialIcons name="insert-drive-file" size={20} color="#fff" />
+            <Text style={styles.attachOptionText}>Documento</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Input bar */}
+      <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
+        <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+          {/* Botón izquierdo */}
+          {isRecording || recordingLocked ? (
+            <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn}>
+              <MaterialIcons name="delete" size={22} color="#dc2626" />
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => setShowAttachMenu(v => !v)}
+              hitSlop={8}
+              style={({ pressed }) => [styles.leftBtn, pressed && { opacity: 0.6 }]}
+            >
+              <MaterialIcons name={showAttachMenu ? 'close' : 'attach-file'} size={22} color={tc.textSub} />
+            </Pressable>
+          )}
+
+          {/* Centro */}
+          {isRecording || recordingLocked ? (
+            <RecordingIndicator duration={recordingDuration} locked={recordingLocked} lockProgress={lockProgress} />
+          ) : sendingAudio ? (
+            <ActivityIndicator color={TOKENS.color.primary} size="small" style={{ flex: 1 }} />
+          ) : (
+            <TextInput
+              style={[styles.input, { color: tc.text }]}
+              value={input}
+              onChangeText={handleInputChange}
+              placeholder="Escribí un mensaje..."
+              placeholderTextColor={tc.textSub}
+              multiline
+              maxLength={1000}
+              returnKeyType="default"
+            />
+          )}
+
+          {/* Botón derecho */}
+          {recordingLocked ? (
+            // Modo bloqueado: checkmark verde para enviar
+            <Pressable onPress={stopRecording} style={[styles.rightBtn, styles.rightBtnSend]}>
+              <MaterialIcons name="check" size={22} color="#fff" />
+            </Pressable>
+          ) : !isRecording && !showMicButton ? (
+            // Tiene texto: enviar
+            <Pressable
+              onPress={handleSend}
+              disabled={!input.trim() || sending}
+              style={[styles.rightBtn, (!input.trim() || sending) && { backgroundColor: tc.surface2 }]}
+            >
+              {sending ? <ActivityIndicator color="#fff" size="small" /> : <MaterialIcons name="send" size={20} color="#fff" />}
+            </Pressable>
+          ) : (
+            // Micrófono: View con responder para gesture de slide
+            <View
+              style={[styles.rightBtn, isRecording && styles.rightBtnRecording]}
+              onStartShouldSetResponder={() => true}
+              onMoveShouldSetResponder={() => true}
+              onResponderGrant={(e) => {
+                micStartYRef.current = e.nativeEvent.pageY;
+                micStartXRef.current = e.nativeEvent.pageX;
+                startRecording();
+              }}
+              onResponderMove={(e) => {
+                if (recordingLockedRef.current) return;
+                const dy = micStartYRef.current - e.nativeEvent.pageY;
+                const dx = micStartXRef.current - e.nativeEvent.pageX;
+                // Slide left → cancel
+                if (dx >= 80 && isRecordingRef.current) {
+                  cancelRecording();
+                  return;
+                }
+                // Slide up → lock
+                const progress = Math.min(Math.max(dy / LOCK_THRESHOLD, 0), 1);
+                setLockProgress(progress);
+                if (dy >= LOCK_THRESHOLD) {
+                  recordingLockedRef.current = true;
+                  setRecordingLocked(true);
+                  setLockProgress(0);
+                }
+              }}
+              onResponderRelease={() => {
+                if (recordingLockedRef.current) return;
+                setLockProgress(0);
+                if (isRecordingRef.current) stopRecording();
+              }}
+              onResponderTerminate={() => {
+                if (!recordingLockedRef.current && isRecordingRef.current) cancelRecording();
+              }}
+            >
+              <MaterialIcons name="mic" size={20} color="#fff" />
+            </View>
+          )}
+        </View>
+      </BlurView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  background: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+  },
+  backButton: { padding: 6, borderRadius: 10 },
+  headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerAvatar: { width: 40, height: 40, borderRadius: 20 },
+  headerAvatarPlaceholder: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: TOKENS.color.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headerAvatarText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  headerName: { fontSize: 16, fontWeight: '700' },
+  headerOrder: { fontSize: 12, marginTop: 1 },
+  messagesList: { flex: 1 },
+  messagesContent: { paddingHorizontal: 16, paddingVertical: 16, gap: 8, flexGrow: 1 },
+  systemMessage: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 10, marginVertical: 4,
+  },
+  systemText: { fontSize: 12, textAlign: 'center' },
+  bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 4 },
+  bubbleRowMine: { flexDirection: 'row-reverse' },
+  bubbleAvatar: {
+    width: 28, height: 28, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bubbleAvatarText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
+  bubbleMine: { backgroundColor: TOKENS.color.primary, borderBottomRightRadius: 4 },
+  bubbleOther: {
+    borderBottomLeftRadius: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+  },
+  mediaThumbnail: {
+    width: 220, height: 165,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+    borderWidth: 2.5,
+    borderColor: TOKENS.color.primary,
+  },
+  mediaTimestampOverlay: {
+    position: 'absolute', bottom: 6, right: 8,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 5, paddingVertical: 2,
+    borderRadius: 8,
+  },
+  mediaTimestampText: { color: '#fff', fontSize: 10 },
+  bubbleImage: { width: 220, height: 165 },
+  bubbleVideo: { width: 220, height: 165, backgroundColor: '#000' },
+  bubbleText: { fontSize: 15, lineHeight: 20 },
+  bubbleTextMine: { color: '#fff' },
+  bubbleTime: { fontSize: 10, alignSelf: 'flex-end' },
+  bubbleTimeMine: { color: 'rgba(255,255,255,0.7)' },
+  lightboxBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  lightboxClose: {
+    position: 'absolute', top: 48, right: 20,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+    zIndex: 10,
+  },
+  lightboxImage: { width: SCREEN_W, height: SCREEN_H * 0.85 },
+  lightboxVideo: { width: SCREEN_W, height: SCREEN_H * 0.75 },
+  // Audio bubble
+  audioBubble: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2, minWidth: 180 },
+  audioPlayBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    borderWidth: 1.5, alignItems: 'center', justifyContent: 'center',
+  },
+  waveform: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 24 },
+  waveBar: { width: 3, borderRadius: 2 },
+  audioTime: { fontSize: 11, fontWeight: '600', minWidth: 32 },
+  // Document bubble
+  docBubble: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, minWidth: 160, maxWidth: 220 },
+  docName: { flex: 1, fontSize: 13, fontWeight: '500' },
+  // Attach menu
+  attachMenu: {
+    flexDirection: 'row',
+    backgroundColor: '#1a1a2e',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  attachOption: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  attachOptionText: { color: '#fff', fontSize: 11, fontWeight: '500' },
+  // Input bar
+  inputBar: {
+    padding: 12,
+    overflow: 'hidden',
+    borderTopWidth: 1,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  leftBtn: { padding: 4 },
+  input: { flex: 1, fontSize: 15, maxHeight: 100, paddingTop: 4 },
+  rightBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: TOKENS.color.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  rightBtnRecording: { backgroundColor: '#dc2626' },
+  rightBtnSend: { backgroundColor: '#22c55e' },
+  rightBtnDisabled: {},
+  rightBtnPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
+  // Recording
+  recordingBar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  recordingDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626' },
+  recordingTimer: { fontSize: 15, fontWeight: '700', color: '#dc2626', minWidth: 36 },
+  recordingHint: { flex: 1, fontSize: 12 },
+  // Empty + typing
+  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
+  emptyChatText: { fontSize: 16, fontWeight: '700' },
+  emptyChatSubtext: { fontSize: 14 },
+  typingBubbleRow: { paddingHorizontal: 16, paddingVertical: 4 },
+  typingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    borderRadius: 18,
+    borderBottomLeftRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  typingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  statusSent:      { color: 'rgba(255,255,255,0.5)' },
+  statusDelivered: { color: 'rgba(255,255,255,0.7)' },
+  statusRead:      { color: '#60c8ff' },
+});

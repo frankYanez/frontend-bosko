@@ -12,7 +12,8 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@/core/components/BlurView";
+import * as ImageManipulator from "expo-image-manipulator";
 import { TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import Animated, { SlideInDown } from "react-native-reanimated";
@@ -92,14 +93,20 @@ export const EditServiceModal: React.FC<EditServiceModalProps> = ({
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
     if (!result.canceled) {
-      setFormData((prev) => ({ ...prev, image: result.assets[0].uri }));
+      const raw = result.assets[0].uri;
+      const compressed = await ImageManipulator.manipulateAsync(
+        raw,
+        [{ resize: { width: 1024 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+      ).catch(() => ({ uri: raw }));
+      setFormData((prev) => ({ ...prev, image: compressed.uri }));
     }
   };
 

@@ -4,67 +4,74 @@ import api from "@/core/api/axiosinstance";
 export interface UserProfile {
     id: string;
     email: string;
-    username: string;
     firstName: string;
     lastName?: string;
+    phone?: string;
+    isPhoneVerified?: boolean;
     bio?: string;
     avatarUrl?: string;
     bannerUrl?: string;
     location?: string;
     isVerified: boolean;
+    backgroundCheckStatus?: string;
+    role?: 'user' | 'admin';
+    isProvider?: boolean;
+    isAvailable?: boolean;
     createdAt: string;
     updatedAt: string;
 }
 
+// Solo los campos que acepta PATCH /users/me
 export interface UpdateProfilePayload {
     firstName?: string;
     lastName?: string;
+    phone?: string;
     bio?: string;
-    avatarUrl?: string;
-    bannerUrl?: string;
-    location?: string;
+    isAvailable?: boolean;
 }
 
-/**
- * Get current user profile
- * GET /auth/me
- */
 export async function getCurrentUserProfile(): Promise<UserProfile> {
-    console.log("🌐 [ProfileService] Fetching current user profile from /auth/me");
-    try {
-        const { data } = await api.get<UserProfile>("/auth/me");
-        console.log("✅ [ProfileService] Profile fetched successfully:", data);
-        return data;
-    } catch (error: any) {
-        console.error("❌ [ProfileService] Error fetching profile:", {
-            message: error.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        throw error;
-    }
+    const { data } = await api.get<UserProfile>("/users/me");
+    return data;
 }
 
-/**
- * Update current user profile
- * PUT /user
- */
 export async function updateUserProfile(
     payload: UpdateProfilePayload
 ): Promise<UserProfile> {
-    const { data } = await api.put<UserProfile>("/user", payload);
+    const { firstName, lastName, phone, bio, isAvailable } = payload;
+    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, phone, bio, isAvailable });
     return data;
 }
 
-/**
- * Upload user avatar
- * POST /user/avatar
- */
-export async function uploadAvatar(file: FormData): Promise<{ avatarUrl: string }> {
-    const { data } = await api.post<{ avatarUrl: string }>("/user/avatar", file, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
+export async function toggleAvailabilityService(isAvailable: boolean): Promise<UserProfile> {
+    const { data } = await api.patch<UserProfile>("/users/me", { isAvailable });
+    return data;
+}
+
+/** Subir avatar — POST /users/me/avatar */
+export async function uploadAvatar(fileUri: string): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append('avatar', { uri: fileUri, type: 'image/jpeg', name: 'avatar.jpg' } as any);
+
+    const { data } = await api.post<{ avatarUrl: string }>("/users/me/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
     });
     return data;
+}
+
+/** Obtener estadísticas del perfil — GET /users/me/stats */
+export interface UserStats {
+    servicesCount: number;
+    reviewsCount: number;
+    averageRating: number;
+    completedOrders: number;
+}
+
+export async function getUserStats(): Promise<UserStats> {
+    const { data } = await api.get<UserStats>("/users/me/stats");
+    return data;
+}
+
+export async function verifyPhoneWithFirebase(firebaseIdToken: string): Promise<void> {
+    await api.post('/users/me/verify-phone', { firebaseIdToken });
 }

@@ -1,26 +1,20 @@
-// animations/SlideLeft.tsx
-import React, { useEffect } from "react";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
+import React, { useEffect, useRef } from "react";
+import { Animated } from "react-native";
 
 export default function SlideLeft({ children }: { children: React.ReactNode }) {
-  const translateX = useSharedValue(80);
-  const opacity = useSharedValue(0);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  const translateX = useRef(new Animated.Value(80)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    translateX.value = withTiming(0, { duration: 500 });
-    opacity.value = withTiming(1, { duration: 500 });
+    Animated.parallel([
+      Animated.timing(translateX, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateX }] }}>
+      {children}
+    </Animated.View>
+  );
 }

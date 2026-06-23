@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /home/gonza/frontend-bosko/.claude/hooks/sync-dashboard.js"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,26 +1,20 @@
-// animations/SlideUp.tsx
-import React, { useEffect } from "react";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
+import React, { useEffect, useRef } from "react";
+import { Animated } from "react-native";
 
 export default function SlideUp({ children }: { children: React.ReactNode }) {
-  const translateY = useSharedValue(40);
-  const opacity = useSharedValue(0);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
-    };
-  });
+  const translateY = useRef(new Animated.Value(40)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    translateY.value = withTiming(0, { duration: 500 });
-    opacity.value = withTiming(1, { duration: 500 });
+    Animated.parallel([
+      Animated.timing(translateY, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
 }

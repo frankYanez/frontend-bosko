@@ -1,11 +1,11 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
-import { BlurView } from "expo-blur";
+import React, { useRef, useEffect } from "react";
+import { View, Text, StyleSheet, Pressable, Animated, Switch } from "react-native";
+import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import Animated, { FadeInUp } from "react-native-reanimated";
 import Colors from "@/core/design-system/Colors";
 import { useAuth } from "@/features/auth/state/AuthContext";
+import { useIsDark, useToggleTheme } from "@/stores/theme.store";
 
 interface MenuItemProps {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -48,6 +48,17 @@ const MenuItem: React.FC<MenuItemProps> = ({
 export const SettingsMenu: React.FC = () => {
   const router = useRouter();
   const { logout } = useAuth();
+  const isDark = useIsDark();
+  const toggleTheme = useToggleTheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: 300, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 400, delay: 300, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -55,16 +66,58 @@ export const SettingsMenu: React.FC = () => {
   };
 
   return (
-    <Animated.View entering={FadeInUp.delay(300)} style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY }] }]}>
       <BlurView intensity={20} tint="dark" style={styles.blur}>
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>Configuración</Text>
 
           <View style={styles.menuList}>
+            {/* ── Apariencia ── */}
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <MaterialIcons
+                  name={isDark ? "dark-mode" : "light-mode"}
+                  size={24}
+                  color={Colors.white}
+                />
+                <Text style={[styles.menuItemText, { color: Colors.white }]}>
+                  {isDark ? "Modo oscuro" : "Modo claro"}
+                </Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: "rgba(255,255,255,0.2)", true: "#850021" }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View style={styles.divider} />
+
             <MenuItem
               icon="work"
               label="Mis Servicios"
               onPress={() => router.push("/(tabs)/profile/Services")}
+            />
+            <MenuItem
+              icon="star"
+              label="Mis Reseñas"
+              onPress={() => router.push("/(tabs)/profile/my-reviews")}
+            />
+            <MenuItem
+              icon="receipt-long"
+              label="Mis Órdenes"
+              onPress={() => router.push("/(tabs)/orders")}
+            />
+            <MenuItem
+              icon="verified-user"
+              label="Verificación de Identidad"
+              onPress={() => router.push("/(tabs)/profile/kyc")}
+            />
+            <MenuItem
+              icon="workspace-premium"
+              label="Planes"
+              onPress={() => router.push("/(tabs)/profile/plans")}
             />
             <MenuItem
               icon="payment"
@@ -80,11 +133,6 @@ export const SettingsMenu: React.FC = () => {
               icon="lock"
               label="Cambiar Contraseña"
               onPress={() => router.push("/(tabs)/profile/ChangePassword")}
-            />
-            <MenuItem
-              icon="settings"
-              label="Configuración General"
-              onPress={() => router.push("/(tabs)/profile/GeneralSettings")}
             />
 
             <View style={styles.divider} />

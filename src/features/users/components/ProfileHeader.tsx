@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+﻿import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import { RelativePathString, router } from "expo-router";
+import { TOKENS } from '@/core/design-system/tokens';
 
 const user = {
   name: "Leo Gómez",
@@ -34,7 +35,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 8,
     padding: 6,
-    backgroundColor: "#850021",
+    backgroundColor: TOKENS.color.primary,
     borderRadius: 8,
   },
   buttonText: { color: "#fff" },
