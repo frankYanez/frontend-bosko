@@ -95,6 +95,12 @@
       ],
       "expo-asset"
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/481e79c0-a1dd-409f-a1d0-af9bd2881eb8"
+    },
     "experiments": {
       "typedRoutes": true
     },
