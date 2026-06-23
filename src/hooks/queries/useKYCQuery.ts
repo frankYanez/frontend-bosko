@@ -6,7 +6,6 @@ import {
   retryVerification,
   cancelVerification,
 } from '@/features/kyc/services/kyc.service';
-import { startVerification as diditStartVerification } from '@didit-protocol/sdk-react-native';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
 export function useKYCStatus() {
@@ -23,6 +22,7 @@ export function useKYCStatus() {
 }
 
 async function launchDidit(sessionToken: string): Promise<'completed' | 'cancelled'> {
+  const { startVerification: diditStartVerification } = await import('@didit-protocol/sdk-react-native');
   const result = await diditStartVerification(sessionToken, {
     languageCode: 'es',
     showCloseButton: true,
