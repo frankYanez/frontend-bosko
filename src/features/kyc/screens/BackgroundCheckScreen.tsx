@@ -18,6 +18,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 
 import { TOKENS } from '@/core/design-system/tokens';
+import { getUserErrorMessage } from '@/lib/errors';
 import {
   BackgroundCheckState,
   BackgroundCheckStatus,
@@ -119,8 +120,7 @@ export default function BackgroundCheckScreen() {
       await load();
       Alert.alert('¡Enviado!', 'Tu documento fue enviado y está bajo revisión del equipo de Bosko.');
     } catch (e: any) {
-      const msg = e?.response?.data?.message ?? 'No se pudo subir el documento.';
-      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+      Alert.alert('Error', getUserErrorMessage(e));
     } finally {
       setUploading(false);
     }

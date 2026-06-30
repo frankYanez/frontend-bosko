@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
-import { extractApiError } from '../lib/errors';
+import { getUserErrorMessage } from '../lib/errors';
 import type { Id } from '../interfaces/common';
 import type { Category } from '../interfaces/category';
 import {

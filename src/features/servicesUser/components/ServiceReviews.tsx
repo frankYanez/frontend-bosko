@@ -16,6 +16,7 @@ import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import { useAuth } from "@/features/auth/state/AuthContext";
 import type { Review } from "@/types/services";
 import { TOKENS } from "@/core/design-system/tokens";
+import { getUserErrorMessage } from "@/lib/errors";
 import { StarRating } from "./StarRating";
 
 interface ServiceReviewsProps {
@@ -90,8 +91,7 @@ const ServiceReviews: React.FC<ServiceReviewsProps> = ({ serviceId, orderId }) =
         "Gracias por tu reseña. Se publicó correctamente."
       );
     } catch (error: any) {
-      const message =
-        error?.message ?? "No pudimos enviar tu reseña. Intentá nuevamente.";
+      const message = getUserErrorMessage(error);
       setErrorMessage(message);
       Alert.alert("No pudimos guardar tu reseña", message);
     } finally {
