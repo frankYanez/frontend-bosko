@@ -1,5 +1,5 @@
 import React from 'react';
-import { extractApiError } from '../lib/errors';
+import { getUserErrorMessage } from '../lib/errors';
 import type { Id } from '../interfaces/common';
 import type { UpdateUserDto, User } from '../interfaces/user';
 import {

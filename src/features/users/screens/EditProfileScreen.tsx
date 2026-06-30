@@ -25,6 +25,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { uploadAvatar } from '@/features/servicesUser/services/profile';
 import { TOKENS } from '@/core/design-system/tokens';
+import { getUserErrorMessage } from '@/lib/errors';
 
 export default function EditProfileScreen() {
   const { profile, updateProfile, isLoading } = useProfile();
@@ -61,7 +62,7 @@ export default function EditProfileScreen() {
       try {
         await uploadAvatar(uri);
       } catch (err: any) {
-        Alert.alert('Error', err?.response?.data?.message || 'No se pudo subir el avatar');
+        Alert.alert('Error', getUserErrorMessage(err));
         setAvatarUri(null);
       } finally {
         setUploadingAvatar(false);
@@ -77,7 +78,7 @@ export default function EditProfileScreen() {
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'No se pudo guardar');
+      Alert.alert('Error', getUserErrorMessage(err));
     } finally {
       setSaving(false);
     }

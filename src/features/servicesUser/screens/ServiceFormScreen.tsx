@@ -22,6 +22,7 @@ import { useCategories } from "@/contexts/CategoriesContext";
 import { fetchServiceById } from "../services/services";
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { getUserErrorMessage } from '@/lib/errors';
 
 const BRAND = "#850021";
 const MIN_DESCRIPTION = 20;
@@ -201,12 +202,10 @@ export default function ServiceFormScreen() {
       }
       router.back();
     } catch (err: any) {
-      if (err?.message === "PLAN_LIMIT_REACHED") {
+      if ((err as any)?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
         Alert.alert("Plan Bosko", "Actualizá a plan Plus para publicar más servicios.");
       } else {
-        const msg = err?.response?.data?.message;
-        const message = Array.isArray(msg) ? msg.join(". ") : msg;
-        Alert.alert("Error", message || "No se pudo guardar el servicio.");
+        Alert.alert("Error", getUserErrorMessage(err));
       }
     } finally {
       setSubmitting(false);
@@ -376,7 +375,7 @@ export default function ServiceFormScreen() {
                   Alert.alert("Imágenes subidas", "Las fotos se agregaron al servicio.");
                   setGalleryImages([]);
                 } catch (err: any) {
-                  Alert.alert("Error", err?.response?.data?.message || "No se pudieron subir las imágenes.");
+                  Alert.alert("Error", getUserErrorMessage(err));
                 } finally {
                   setUploadingImages(false);
                 }

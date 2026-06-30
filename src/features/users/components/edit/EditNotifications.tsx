@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Switch, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { deletePushToken } from '@/features/notifications/services/notifications.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { getUserErrorMessage } from '@/lib/errors';
 
 export default function EditNotifications() {
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -16,8 +17,8 @@ export default function EditNotifications() {
       // Habilitar: el token se re-registra automáticamente en NotificationsContext
       // cuando el usuario vuelve a autenticarse.
       setPushEnabled(value);
-    } catch {
-      Alert.alert('Error', 'No se pudo actualizar la configuración de notificaciones.');
+    } catch (err) {
+      Alert.alert('Error', getUserErrorMessage(err));
     } finally {
       setSaving(false);
     }

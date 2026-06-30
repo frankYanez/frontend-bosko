@@ -26,6 +26,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { getUserErrorMessage } from '@/lib/errors';
 
 const { width } = Dimensions.get('window');
 
@@ -65,8 +66,7 @@ export default function QuoteRequestScreen() {
         [{ text: 'Ver mis órdenes', onPress: () => router.replace('/(tabs)/orders') }],
       );
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'No se pudo enviar la solicitud';
-      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+      Alert.alert('Error', getUserErrorMessage(err));
     } finally {
       setIsLoading(false);
     }

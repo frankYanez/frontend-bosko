@@ -31,6 +31,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { toggleLikeReel, commentOnReel, Reel } from '@/features/reels/services/reels.service';
 import { useAuth } from '@/features/auth/state/AuthContext';
+import { getUserErrorMessage } from '@/lib/errors';
 import {
   useReelsFeed,
   useDeleteReel,
@@ -171,8 +172,8 @@ function CommentsSheet({
       setText('');
       onCommentPosted();
       refetch();
-    } catch {
-      Alert.alert('Error', 'No se pudo enviar el comentario. Intentá de nuevo.');
+    } catch (err) {
+      Alert.alert('Error', getUserErrorMessage(err));
     } finally {
       setSending(false);
     }
