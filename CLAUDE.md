@@ -216,7 +216,12 @@ Real-time chat tied to orders (no free DMs).
 
 ### Design system
 
-- **Tokens**: `src/core/design-system/tokens.ts` → `TOKENS` (brand color `#850021`, radius, shadows)
+- **Tokens**: `src/core/design-system/tokens.ts` → `TOKENS` — **static** values only: brand color `#850021`, radius, shadows, glass. Never use `TOKENS.color.bg/text/sub` for dynamic UI — those are light-mode only remnants.
+- **Theme**: `src/stores/theme.store.ts` → `THEME_COLORS.dark / THEME_COLORS.light`. Hooks:
+  - `useThemeColors()` — returns current palette (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.)
+  - `useIsDark()` — boolean, use for `BlurView tint={isDark ? 'dark' : 'light'}` and gradient colors
+  - `useToggleTheme()` — toggle dark/light, persisted in AsyncStorage
+- **Convention**: every screen must call `const tc = useThemeColors()` and apply dynamic colors inline (`backgroundColor: tc.bg`, etc.). Never hardcode `#FAFAFC`, `rgba(255,255,255,0.75)`, etc. for backgrounds/text.
 - **Colors**: `src/core/design-system/Colors.ts` → extended palette including premium gold theme
 - **Fonts**: Inter and Outfit via `expo-font` plugin
 - **MotiView**: `src/core/components/MotiView.ios.tsx` / `.android.tsx` — thin re-export of `moti`. Requires dev build (TurboModule).

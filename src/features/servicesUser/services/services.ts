@@ -36,8 +36,13 @@ export async function fetchAllServices(
  * Retrieve detailed information about a single service by its ID.
  */
 export async function fetchServiceById(id: string): Promise<Service> {
-  const { data } = await api.get<Service>(`/services/${id}`);
-  return data;
+  const { data } = await api.get<any>(`/services/${id}`);
+  const s = data?.data ?? data;
+  return {
+    ...s,
+    price: s.price != null && typeof s.price === 'object' ? (s.price.amount ?? null) : s.price,
+    image: s.images?.[0] ?? s.image ?? null,
+  };
 }
 
 export async function fetchFeaturedServices(): Promise<Service[]> {

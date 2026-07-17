@@ -697,15 +697,16 @@ function CTABanner({ s }: { s: ReturnType<typeof makeStyles> }) {
 
 // ── Skeletons ─────────────────────────────────────────────────────────────────
 function SkeletonGrid({ s }: { s: ReturnType<typeof makeStyles> }) {
+  const tc = useThemeColors();
   return (
     <View style={s.servicesGrid}>
       {Array.from({ length: 4 }).map((_, i) => (
         <View key={i} style={[s.serviceCardShadow, { width: (W - 48) / 2 }]}>
-          <View style={s.serviceCard}>
-            <View style={[s.serviceThumb, { backgroundColor: '#EFEFEF' }]} />
+          <View style={[s.serviceCard, { backgroundColor: tc.card }]}>
+            <View style={[s.serviceThumb, { backgroundColor: tc.surface2 }]} />
             <View style={s.serviceInfo}>
-              <View style={{ height: 12, width: '80%', backgroundColor: '#EFEFEF', borderRadius: 6, marginBottom: 6 }} />
-              <View style={{ height: 10, width: '50%', backgroundColor: '#EFEFEF', borderRadius: 6 }} />
+              <View style={{ height: 12, width: '80%', backgroundColor: tc.surface2, borderRadius: 6, marginBottom: 6 }} />
+              <View style={{ height: 10, width: '50%', backgroundColor: tc.border, borderRadius: 6 }} />
             </View>
           </View>
         </View>
@@ -993,7 +994,7 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   pillSkeletonItem: {
     height: 38,
     borderRadius: 99,
-    backgroundColor: '#EDEDF0',
+    backgroundColor: C.surface2,
   },
   pill: {
     flexDirection: 'row',

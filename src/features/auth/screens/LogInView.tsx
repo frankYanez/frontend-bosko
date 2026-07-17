@@ -25,11 +25,14 @@ import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const { width } = Dimensions.get('window');
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const { login, isLoading, error, clearError } = useAuth();
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -72,7 +75,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       {/* Fondo con gradiente suave */}
       <LinearGradient
-        colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+        colors={isDark ? ['#0B0A0F', '#17050D', '#0B0A0F'] : ['#fdf2f4', '#fef7ff', '#f0f4ff']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.background}
@@ -92,20 +95,20 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
               contentFit="contain"
             />
             <Text style={styles.brand}>Bosko</Text>
-            <Text style={styles.subtitle}>Encontrá o publicá servicios fácilmente</Text>
+            <Text style={[styles.subtitle, { color: tc.textSub }]}>Encontrá o publicá servicios fácilmente</Text>
 
             {/* Tarjeta glass */}
             <View style={styles.cardShadow}>
-              <BlurView intensity={30} tint="light" style={styles.card}>
-                <Text style={styles.cardTitle}>Iniciar sesión</Text>
+              <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+                <Text style={[styles.cardTitle, { color: tc.text }]}>Iniciar sesión</Text>
 
                 {/* Email */}
-                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
-                  <MaterialIcons name="email" size={20} color={TOKENS.color.sub} />
+                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2 }, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name="email" size={20} color={tc.textSub} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: tc.text }]}
                     placeholder="Correo electrónico"
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={email}
                     onChangeText={text => { setEmail(text); setLocalError(''); clearError(); }}
                     keyboardType="email-address"
@@ -117,13 +120,13 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                 </View>
 
                 {/* Contraseña */}
-                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
-                  <MaterialIcons name="lock" size={20} color={TOKENS.color.sub} />
+                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2 }, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name="lock" size={20} color={tc.textSub} />
                   <TextInput
                     ref={passwordRef}
-                    style={styles.input}
+                    style={[styles.input, { color: tc.text }]}
                     placeholder="Contraseña"
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={password}
                     onChangeText={text => { setPassword(text); setLocalError(''); clearError(); }}
                     secureTextEntry={!showPassword}
@@ -136,7 +139,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                     <MaterialIcons
                       name={showPassword ? 'visibility' : 'visibility-off'}
                       size={20}
-                      color={TOKENS.color.sub}
+                      color={tc.textSub}
                     />
                   </Pressable>
                 </View>
@@ -177,7 +180,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
 
                 {/* Ir a registro */}
                 <View style={styles.registerRow}>
-                  <Text style={styles.registerPrompt}>¿No tenés cuenta? </Text>
+                  <Text style={[styles.registerPrompt, { color: tc.textSub }]}>¿No tenés cuenta? </Text>
                   <Pressable onPress={toRegister}>
                     <Text style={styles.registerLink}>Registrarse</Text>
                   </Pressable>
@@ -314,7 +317,7 @@ const styles = StyleSheet.create({
   },
   registerPrompt: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: TOKENS.color.sub, // overridden inline
   },
   registerLink: {
     fontSize: 14,

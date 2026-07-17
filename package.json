@@ -21,7 +21,7 @@
     }
   },
   "dependencies": {
-    "@didit-protocol/sdk-react-native": "^4.0.4",
+    "@didit-protocol/sdk-react-native": "^4.0.5",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@expo-google-fonts/space-grotesk": "^0.4.1",

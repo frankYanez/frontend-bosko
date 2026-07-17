@@ -25,12 +25,13 @@ import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '../state/OrdersContext';
 import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors } from '@/stores/theme.store';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const { width } = Dimensions.get('window');
 
 export default function QuoteRequestScreen() {
   const tc = useThemeColors();
+  const isDark = useIsDark();
   const params = useLocalSearchParams<{ serviceId: string; providerName?: string; serviceTitle?: string }>();
   const { addOrder } = useOrders();
 
@@ -73,12 +74,7 @@ export default function QuoteRequestScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.background}
-    >
+    <View style={[styles.background, { backgroundColor: tc.bg }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
@@ -104,7 +100,7 @@ export default function QuoteRequestScreen() {
               animate={{ opacity: 1, translateY: 0 }}
               transition={{ type: 'timing', duration: 400 }}
             >
-              <BlurView intensity={25} tint="light" style={[styles.serviceInfo, { borderColor: tc.cardBorder }]}>
+              <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.serviceInfo, { borderColor: tc.cardBorder }]}>
                 <MaterialIcons name="work" size={20} color={TOKENS.color.primary} />
                 <View style={styles.serviceInfoText}>
                   <Text style={[styles.serviceTitle, { color: tc.text }]}>{params.serviceTitle}</Text>
@@ -122,7 +118,7 @@ export default function QuoteRequestScreen() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 450, delay: 100 }}
           >
-            <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
+            <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: tc.cardBorder }]}>
               {/* Mensaje al proveedor (requerido) */}
               <View style={styles.fieldContainer}>
                 <Text style={[styles.fieldLabel, { color: tc.text }]}>
@@ -217,7 +213,7 @@ export default function QuoteRequestScreen() {
           </MotiView>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -226,7 +222,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
     paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 120,
     paddingHorizontal: 20,
     gap: 16,
   },

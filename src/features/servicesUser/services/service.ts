@@ -22,9 +22,25 @@ export interface ServicePayload {
   keywords?: string[];
 }
 
+function normalizePrice(price: any): number | null {
+  if (price == null) return null;
+  if (typeof price === 'object') return price.amount ?? null;
+  if (typeof price === 'string') return parseFloat(price) || null;
+  return price;
+}
+
+function normalizeService(s: any): Service {
+  return {
+    ...s,
+    price: normalizePrice(s.price),
+    image: s.images?.[0] ?? s.image ?? null,
+  };
+}
+
 export async function getMyServices(): Promise<Service[]> {
-  const { data } = await api.get<{ data: Service[] }>("/services/me");
-  return data.data;
+  const { data } = await api.get<any>("/services/me");
+  const raw: any[] = data?.data ?? (Array.isArray(data) ? data : []);
+  return raw.map(normalizeService);
 }
 
 export async function createService(payload: ServicePayload): Promise<Service> {

@@ -42,6 +42,12 @@ const EMPTY_FORM: FormState = {
   image: undefined,
 };
 
+function extractPrice(price: any): string {
+  if (price == null) return '';
+  if (typeof price === 'object') return price.amount != null ? String(price.amount) : '';
+  return price ? String(price) : '';
+}
+
 async function imageToBase64(uri: string): Promise<string> {
   const base64 = await FileSystem.readAsStringAsync(uri, {
     encoding: FileSystem.EncodingType.Base64,
@@ -56,7 +62,7 @@ export default function ServiceFormScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const params = useLocalSearchParams<{ serviceId?: string }>();
-  const { services, loading, loadServices, addService, editService } = useServices();
+  const { services, myServices, loading, loadMyServices, loadServices, addService, editService } = useServices();
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -76,6 +82,12 @@ export default function ServiceFormScreen() {
   }, [categories.length, loadCategories]);
 
   useEffect(() => {
+    if (params.serviceId && myServices.length === 0) {
+      loadMyServices().catch((err) => console.error(err));
+    }
+  }, [params.serviceId]);
+
+  useEffect(() => {
     if (!params.serviceId) {
       setSelectedService(null);
       setForm({ ...EMPTY_FORM, categoryId: categories[0]?.id });
@@ -83,7 +95,9 @@ export default function ServiceFormScreen() {
       return;
     }
 
-    const found = services.find((s) => s.id === params.serviceId);
+    const found =
+      myServices.find((s) => s.id === params.serviceId) ||
+      services.find((s) => s.id === params.serviceId);
     if (found) {
       const catId =
         typeof found.category === "object" ? found.category?.id : found.category;
@@ -91,7 +105,7 @@ export default function ServiceFormScreen() {
       setForm({
         title: found.title ?? "",
         description: found.description ?? "",
-        price: found.price ? String(found.price) : "",
+        price: extractPrice(found.price),
         categoryId: catId ?? categories[0]?.id,
         image: found.image,
       });
@@ -106,7 +120,7 @@ export default function ServiceFormScreen() {
           setForm({
             title: svc.title ?? "",
             description: svc.description ?? "",
-            price: svc.price ? String(svc.price) : "",
+            price: extractPrice(svc.price),
             categoryId: catId ?? categories[0]?.id,
             image: svc.image,
           });
@@ -114,7 +128,7 @@ export default function ServiceFormScreen() {
         })
         .catch((err) => console.error(err));
     }
-  }, [params.serviceId, services, categories]);
+  }, [params.serviceId, myServices, services, categories]);
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -172,7 +186,8 @@ export default function ServiceFormScreen() {
     try {
       const payload = await buildPayload();
       if (isEditing && selectedService?.id) {
-        await editService(selectedService.id, payload);
+        const { categoryId: _cat, ...editPayload } = payload;
+        await editService(selectedService.id, editPayload);
         if (imageUri?.startsWith("file")) {
           const b64 = await imageToBase64(imageUri);
           // TODO: send b64 as main image via upload endpoint
@@ -247,7 +262,7 @@ export default function ServiceFormScreen() {
 
           <Text style={[styles.label, { color: tc.textSub }]}>Descripción *</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { color: tc.text, borderColor: tc.border, backgroundColor: tc.surface2 }]}
             placeholder="Contá qué incluye tu servicio, cuánto tardás, qué materiales usás…"
             placeholderTextColor={tc.textMuted}
             value={form.description}

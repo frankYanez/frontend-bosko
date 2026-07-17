@@ -19,9 +19,10 @@ import { useThemeColors } from '@/stores/theme.store';
 
 const BRAND = '#850021';
 
-function formatPrice(price?: number | null): string {
-  if (!price) return 'A cotizar';
-  return `$${new Intl.NumberFormat('es-AR').format(price)}`;
+function formatPrice(price?: number | null | any): string {
+  const n = typeof price === 'object' && price !== null ? price?.amount : price;
+  if (!n) return 'A cotizar';
+  return `$${new Intl.NumberFormat('es-AR').format(Number(n))}`;
 }
 
 function getCategoryLabel(category: Service['category']): string {

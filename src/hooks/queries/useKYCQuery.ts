@@ -6,7 +6,6 @@ import {
   retryVerification,
   cancelVerification,
 } from '@/features/kyc/services/kyc.service';
-import { startVerification as diditStartVerification } from '@didit-protocol/sdk-react-native';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
 export function useKYCStatus() {
@@ -23,6 +22,11 @@ export function useKYCStatus() {
 }
 
 async function launchDidit(sessionToken: string): Promise<'completed' | 'cancelled'> {
+  // Dynamic require prevents TurboModule crash on Expo Go (native module not in binary).
+  // In a dev/production build the native module is available and this works normally.
+  const { startVerification: diditStartVerification } =
+    require('@didit-protocol/sdk-react-native') as typeof import('@didit-protocol/sdk-react-native');
+
   const result = await diditStartVerification(sessionToken, {
     languageCode: 'es',
     showCloseButton: true,

@@ -21,10 +21,13 @@ import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
 import { createReview } from '@/features/reviews/services/review.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const LABELS = ['Pésimo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
 
 export default function ReviewScreen() {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const { orderId, providerName, serviceName } = useLocalSearchParams<{
     orderId: string;
     providerName?: string;
@@ -58,12 +61,7 @@ export default function ReviewScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.bg}
-    >
+    <View style={[styles.bg, { backgroundColor: tc.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -76,8 +74,8 @@ export default function ReviewScreen() {
           transition={{ type: 'spring', damping: 16 }}
           style={styles.header}
         >
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
         </MotiView>
 
@@ -105,10 +103,10 @@ export default function ReviewScreen() {
           transition={{ type: 'timing', duration: 400, delay: 100 }}
           style={styles.titleSection}
         >
-          <Text style={styles.title}>Calificá el servicio</Text>
-          {serviceName && <Text style={styles.subtitle}>{serviceName}</Text>}
+          <Text style={[styles.title, { color: tc.text }]}>Calificá el servicio</Text>
+          {serviceName && <Text style={[styles.subtitle, { color: tc.textSub }]}>{serviceName}</Text>}
           {providerName && (
-            <Text style={styles.provider}>por {providerName}</Text>
+            <Text style={[styles.provider, { color: tc.textSub }]}>por {providerName}</Text>
           )}
         </MotiView>
 
@@ -131,7 +129,7 @@ export default function ReviewScreen() {
                 <MaterialIcons
                   name={star <= displayRating ? 'star' : 'star-outline'}
                   size={48}
-                  color={star <= displayRating ? '#FFD700' : 'rgba(0,0,0,0.15)'}
+                  color={star <= displayRating ? '#FFD700' : tc.border}
                   style={styles.star}
                 />
               </Pressable>
@@ -155,14 +153,14 @@ export default function ReviewScreen() {
           transition={{ type: 'timing', duration: 400, delay: 300 }}
           style={styles.commentCard}
         >
-          <BlurView intensity={25} tint="light" style={styles.commentBlur}>
-            <Text style={styles.commentLabel}>Contanos tu experiencia</Text>
+          <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={styles.commentBlur}>
+            <Text style={[styles.commentLabel, { color: tc.text }]}>Contanos tu experiencia</Text>
             <TextInput
-              style={styles.commentInput}
+              style={[styles.commentInput, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
               value={comment}
               onChangeText={setComment}
               placeholder="¿Qué te pareció el servicio? ¿Recomendarías al profesional?"
-              placeholderTextColor="rgba(107,107,107,0.4)"
+              placeholderTextColor={tc.textMuted}
               multiline
               maxLength={500}
               textAlignVertical="top"
@@ -206,7 +204,7 @@ export default function ReviewScreen() {
           </View>
         </MotiView>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
