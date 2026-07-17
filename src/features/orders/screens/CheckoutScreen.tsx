@@ -92,7 +92,7 @@ export function CheckoutScreen() {
     try {
       await initiate(order.id);
       router.replace({
-        pathname: '/(tabs)/orders/payment-success',
+        pathname: '/orders/payment-success',
         params: {
           orderId:     order.id,
           amount:      String(order.agreedPrice ?? 0),

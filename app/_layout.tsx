@@ -32,11 +32,11 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
 
   try {
     if (data.type === 'order' && data.orderId) {
-      router.push({ pathname: '/(tabs)/orders/[id]', params: { id: data.orderId } });
+      router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
     } else if (data.type === 'chat' && data.orderId) {
       router.push({ pathname: '/chat/[id]', params: { id: data.orderId } });
     } else if (data.type === 'review' && data.orderId) {
-      router.push({ pathname: '/(tabs)/orders/[id]', params: { id: data.orderId } });
+      router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
     } else {
       router.push('/(tabs)/profile/Notifications' as any);
     }
@@ -54,6 +54,7 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
+      <Stack.Screen name="orders" options={{ headerShown: false }} />
       <Stack.Screen name="service-form" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>
   );

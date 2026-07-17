@@ -267,7 +267,7 @@ export default function OrderStatusScreen() {
         >
           <Pressable
             style={({ pressed }) => [styles.actionBtn, pressed && styles.btnPressed]}
-            onPress={() => router.push({ pathname: '/(tabs)/orders/[id]', params: { id: order.id } })}
+            onPress={() => router.push({ pathname: '/orders/[id]', params: { id: order.id } })}
           >
             <MaterialIcons name="info-outline" size={20} color={TOKENS.color.primary} />
             <Text style={styles.actionBtnText}>Ver detalle completo</Text>

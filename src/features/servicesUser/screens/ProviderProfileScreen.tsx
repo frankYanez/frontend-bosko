@@ -205,7 +205,7 @@ export default function ProviderProfileScreen() {
   const handleRequest = () => {
     if (services.length === 0) return;
     router.push({
-      pathname: '/(tabs)/orders/quote',
+      pathname: '/orders/quote',
       params: {
         serviceId: services[0].id,
         providerName: fullName,

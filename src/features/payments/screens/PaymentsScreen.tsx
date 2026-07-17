@@ -77,7 +77,7 @@ export default function PaymentsScreen() {
       <View style={s.cardShadow}>
         <Pressable
           style={({ pressed }) => [s.card, pressed && s.cardPressed]}
-          onPress={() => item.orderId && router.push(`/(tabs)/orders/${item.orderId}`)}
+          onPress={() => item.orderId && router.push(`/orders/${item.orderId}`)}
         >
           <View style={s.cardInner}>
             <View style={s.cardRow}>

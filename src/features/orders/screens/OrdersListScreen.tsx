@@ -179,7 +179,7 @@ export default function OrdersListScreen() {
             <OrderCard
               order={item}
               onPress={() => router.push({
-                pathname: '/(tabs)/orders/[id]',
+                pathname: '/orders/[id]',
                 params: { id: item.id },
               })}
             />

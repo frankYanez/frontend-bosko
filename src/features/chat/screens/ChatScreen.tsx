@@ -784,7 +784,7 @@ export default function ChatScreen() {
         {conversation?.orderId && (
           <Pressable
             hitSlop={12}
-            onPress={() => router.push({ pathname: '/(tabs)/orders/[id]', params: { id: conversation.orderId } })}
+            onPress={() => router.push({ pathname: '/orders/[id]', params: { id: conversation.orderId } })}
           >
             <MaterialIcons name="assignment" size={24} color={TOKENS.color.primary} />
           </Pressable>

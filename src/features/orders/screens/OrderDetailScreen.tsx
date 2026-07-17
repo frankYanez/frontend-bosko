@@ -143,7 +143,7 @@ export default function OrderDetailScreen() {
   const handlePay = () => {
     if (!order?.id) return;
     router.push({
-      pathname: '/(tabs)/orders/checkout',
+      pathname: '/orders/checkout',
       params: { orderId: order.id },
     });
   };
@@ -364,7 +364,7 @@ export default function OrderDetailScreen() {
               color="#FFD700"
               loading={false}
               onPress={() => router.push({
-                pathname: '/(tabs)/orders/review',
+                pathname: '/orders/review',
                 params: {
                   orderId: order.id,
                   providerName: order.provider ? `${order.provider.firstName} ${order.provider.lastName || ''}`.trim() : undefined,

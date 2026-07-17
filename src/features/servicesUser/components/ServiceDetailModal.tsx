@@ -157,7 +157,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                 onPress={() => {
                                     onClose();
                                     router.push({
-                                        pathname: '/(tabs)/orders/quote',
+                                        pathname: '/orders/quote',
                                         params: {
                                             serviceId: service.id,
                                             serviceTitle: service.title,

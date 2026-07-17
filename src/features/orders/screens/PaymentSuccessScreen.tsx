@@ -77,7 +77,7 @@ export function PaymentSuccessScreen() {
 
   const goToOrder = () => {
     router.replace({
-      pathname: '/(tabs)/orders/[id]',
+      pathname: '/orders/[id]',
       params: { id: params.orderId },
     });
   };

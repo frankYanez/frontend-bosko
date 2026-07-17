@@ -136,7 +136,7 @@ export default function NotificationsScreen() {
 
     const type = item.type.toLowerCase();
     if (item.data?.orderId) {
-      router.push(`/(tabs)/orders/${item.data.orderId}`);
+      router.push(`/orders/${item.data.orderId}`);
     } else if (type === 'new_message' && item.data?.conversationId) {
       router.push(`/chat/${item.data.conversationId}`);
     } else if (type.startsWith('identity') || type === 'background_check') {
