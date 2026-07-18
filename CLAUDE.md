@@ -216,14 +216,18 @@ Real-time chat tied to orders (no free DMs).
 
 ### Design system
 
-- **Tokens**: `src/core/design-system/tokens.ts` → `TOKENS` — **static** values only: brand color `#850021`, radius, shadows, glass. Never use `TOKENS.color.bg/text/sub` for dynamic UI — those are light-mode only remnants.
-- **Theme**: `src/stores/theme.store.ts` → `THEME_COLORS.dark / THEME_COLORS.light`. Hooks:
-  - `useThemeColors()` — returns current palette (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.)
-  - `useIsDark()` — boolean, use for `BlurView tint={isDark ? 'dark' : 'light'}` and gradient colors
-  - `useToggleTheme()` — toggle dark/light, persisted in AsyncStorage
+All of it lives under `src/core/design-system/` — the one folder to check before touching colors, spacing, typography, gradients, or reaching for a Button/Text/Card. Import from the barrel: `import { TOKENS, SPACING, TYPE_SCALE, GRADIENTS, useThemeColors, Button, Text, Card } from '@/core/design-system'`.
+
+- **`tokens.ts`** → `TOKENS` — **static** values only: brand color `#850021`, radius, shadows, glass. Never use `TOKENS.color.bg/text/sub` for dynamic UI — those are light-mode only remnants.
+- **`palette.ts`** → `PALETTE.dark / PALETTE.light` — the real dark/light color data. `src/stores/theme.store.ts` imports this and only adds the toggle/persist (Zustand) on top; `THEME_COLORS` there is just `= PALETTE`.
+- **`spacing.ts`** → `SPACING` — base-4 scale (`xs`4 · `sm`8 · `md`12 · `lg`16 · `xl`20 · `xxl`24 · `xxxl`32 · `huge`40 · `giant`64).
+- **`typography.ts`** → `TYPE_SCALE` (h1/h2/h3/title/subtitle/body/bodySmall/caption/label/button presets) + `FONT_FAMILY` (Space Grotesk for headings, loaded in `app/_layout.tsx` via `useFonts`).
+- **`gradients.ts`** → `GRADIENTS.brand/brandDeep/brandActive/overlayFadeDown/overlayFadeUp` (named presets, replace hand-typed `LinearGradient colors={[...]}` arrays) + `wash(tc)`, the theme-aware replacement for the old hardcoded light-only wash gradient.
+- **`components/`** → `Button` (variant × size, loading, theme-aware), `Text` (Typography primitive, wraps `TYPE_SCALE`), `Card` (surface with `tc.card`/`cardBorder`/radius/shadow). Adopt incrementally — most existing screens still hand-roll `StyleSheet.create` and haven't been migrated to these yet.
+- **Theme hooks** (also re-exported from the barrel): `useThemeColors()` (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.), `useIsDark()` (for `BlurView tint`), `useToggleTheme()`.
 - **Convention**: every screen must call `const tc = useThemeColors()` and apply dynamic colors inline (`backgroundColor: tc.bg`, etc.). Never hardcode `#FAFAFC`, `rgba(255,255,255,0.75)`, etc. for backgrounds/text.
-- **Colors**: `src/core/design-system/Colors.ts` → extended palette including premium gold theme
-- **Fonts**: Inter and Outfit via `expo-font` plugin
+- **`Colors.ts`** (legacy, capital C) → premium gold theme + `colorPrimary`, still directly imported by ~20 files (`ProviderCTA`, `PremiumButton`, `EditProfileModal`, `ServiceCard`, etc). Not yet folded into the new tokens — leave as-is until those call sites migrate.
+- **Fonts**: Space Grotesk (`@expo-google-fonts/space-grotesk`) — loaded once in `app/_layout.tsx` (`useFonts` + `SplashScreen` hold). Body text uses the system font; only `TYPE_SCALE.h1/h2/h3` reference the custom family.
 - **MotiView**: `src/core/components/MotiView.ios.tsx` / `.android.tsx` — thin re-export of `moti`. Requires dev build (TurboModule).
 
 ### SVG support

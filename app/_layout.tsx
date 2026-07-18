@@ -2,6 +2,14 @@ import React, { useEffect, useRef } from "react";
 import { StyleSheet } from "react-native";
 import { Stack, router } from "expo-router";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
+import {
+  useFonts,
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from "@expo-google-fonts/space-grotesk";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/core/query/queryClient";
 import { AuthProvider } from "@/features/auth/state/AuthContext";
@@ -9,6 +17,8 @@ import { ServicesProvider } from "@/features/servicesUser/state/ServicesContext"
 import { ToastRoot } from "@/core/components/Toast";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function useNotificationNavigation() {
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
@@ -72,6 +82,21 @@ function ThemedRoot() {
 }
 
 export default function _layout() {
+  const [fontsLoaded, fontError] = useFonts({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +20,7 @@ import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
 import { createReview } from '@/features/reviews/services/review.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { Button } from '@/core/design-system';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const LABELS = ['Pésimo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
@@ -175,33 +175,14 @@ export default function ReviewScreen() {
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 400 }}
         >
-          <View style={styles.submitBtnShadow}>
-          <Pressable
+          <Button
+            label="Enviar Reseña"
+            icon={<MaterialIcons name="send" size={18} color="#fff" />}
             onPress={handleSubmit}
-            disabled={submitting || rating === 0}
-            style={({ pressed }) => [
-              styles.submitBtn,
-              (submitting || rating === 0) && styles.submitBtnDisabled,
-              pressed && styles.submitBtnPressed,
-            ]}
-          >
-            <LinearGradient
-              colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.submitGrad}
-            >
-              {submitting ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <MaterialIcons name="send" size={18} color="#fff" />
-                  <Text style={styles.submitText}>Enviar Reseña</Text>
-                </>
-              )}
-            </LinearGradient>
-          </Pressable>
-          </View>
+            disabled={rating === 0}
+            loading={submitting}
+            fullWidth
+          />
         </MotiView>
       </ScrollView>
     </View>
@@ -285,28 +266,4 @@ const styles = StyleSheet.create({
     color: 'rgba(107,107,107,0.5)',
     alignSelf: 'flex-end',
   },
-  submitBtnShadow: {
-    width: '100%',
-    borderRadius: 16,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  submitBtn: {
-    width: '100%',
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  submitBtnDisabled: { opacity: 0.5 },
-  submitBtnPressed: { transform: [{ scale: 0.97 }] },
-  submitGrad: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-  },
-  submitText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 });

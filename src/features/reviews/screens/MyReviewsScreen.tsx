@@ -26,6 +26,7 @@ import api from '@/core/api/axiosinstance';
 import { replyToReview } from '@/features/reviews/services/review.service';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { Button, Text as AppText } from '@/core/design-system';
 
 interface ReviewItem {
   id: string;
@@ -110,7 +111,7 @@ export default function MyReviewsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Mis Reseñas</Text>
+        <AppText variant="h3" color={TOKENS.color.text}>Mis Reseñas</AppText>
         <View style={{ width: 40 }} />
       </BlurView>
 
@@ -130,8 +131,10 @@ export default function MyReviewsScreen() {
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <MaterialIcons name="star-outline" size={64} color="rgba(133,0,33,0.15)" />
-              <Text style={styles.emptyTitle}>Sin reseñas todavía</Text>
-              <Text style={styles.emptySub}>Cuando los clientes te califiquen, aparecerán acá.</Text>
+              <AppText variant="title" color={TOKENS.color.text}>Sin reseñas todavía</AppText>
+              <AppText variant="body" color={TOKENS.color.sub} center style={{ paddingHorizontal: 40 }}>
+                Cuando los clientes te califiquen, aparecerán acá.
+              </AppText>
             </View>
           }
           renderItem={({ item, index }) => (
@@ -143,9 +146,9 @@ export default function MyReviewsScreen() {
               <BlurView intensity={25} tint="light" style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>
                   <View style={styles.reviewerAvatar}>
-                    <Text style={styles.reviewerInitial}>
+                    <AppText variant="subtitle" color="#fff">
                       {(item.reviewer?.firstName || '?').charAt(0).toUpperCase()}
-                    </Text>
+                    </AppText>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.reviewerName}>
@@ -158,16 +161,16 @@ export default function MyReviewsScreen() {
                   </Text>
                 </View>
 
-                <Text style={styles.reviewComment}>{item.comment}</Text>
+                <AppText variant="body" color={TOKENS.color.text}>{item.comment}</AppText>
 
                 {/* Provider reply */}
                 {item.reply ? (
                   <View style={styles.replyBox}>
                     <View style={styles.replyHeader}>
                       <MaterialIcons name="reply" size={14} color={TOKENS.color.primary} />
-                      <Text style={styles.replyLabel}>Tu respuesta</Text>
+                      <AppText variant="caption" weight="700" color={TOKENS.color.primary}>Tu respuesta</AppText>
                     </View>
-                    <Text style={styles.replyText}>{item.reply}</Text>
+                    <AppText variant="bodySmall" color={TOKENS.color.text}>{item.reply}</AppText>
                   </View>
                 ) : replyingTo === item.id ? (
                   <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -183,19 +186,22 @@ export default function MyReviewsScreen() {
                     />
                     <View style={styles.replyActions}>
                       <Pressable onPress={() => { setReplyingTo(null); setReplyText(''); }}>
-                        <Text style={styles.cancelReplyText}>Cancelar</Text>
+                        <AppText
+                          variant="body"
+                          weight="600"
+                          color={TOKENS.color.sub}
+                          style={{ paddingVertical: 8, paddingHorizontal: 4 }}
+                        >
+                          Cancelar
+                        </AppText>
                       </Pressable>
-                      <Pressable
-                        style={[styles.sendReplyBtn, (!replyText.trim() || sendingReply) && { opacity: 0.5 }]}
+                      <Button
+                        label="Responder"
+                        size="sm"
                         onPress={() => handleReply(item.id)}
-                        disabled={!replyText.trim() || sendingReply}
-                      >
-                        {sendingReply ? (
-                          <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                          <Text style={styles.sendReplyText}>Responder</Text>
-                        )}
-                      </Pressable>
+                        disabled={!replyText.trim()}
+                        loading={sendingReply}
+                      />
                     </View>
                   </KeyboardAvoidingView>
                 ) : (
@@ -204,7 +210,7 @@ export default function MyReviewsScreen() {
                     onPress={() => { setReplyingTo(item.id); setReplyText(''); }}
                   >
                     <MaterialIcons name="reply" size={16} color={TOKENS.color.primary} />
-                    <Text style={styles.replyBtnText}>Responder</Text>
+                    <AppText variant="label" color={TOKENS.color.primary}>Responder</AppText>
                   </Pressable>
                 )}
               </BlurView>
@@ -234,12 +240,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { padding: 24, paddingBottom: 40, gap: 14 },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
-  emptySub: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center', paddingHorizontal: 40 },
   // Review card
   reviewCard: {
     padding: 16,
@@ -262,10 +265,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  reviewerInitial: { fontSize: 16, fontWeight: '700', color: '#fff' },
   reviewerName: { fontSize: 15, fontWeight: '700', color: TOKENS.color.text },
   reviewDate: { fontSize: 11, color: 'rgba(107,107,107,0.5)' },
-  reviewComment: { fontSize: 14, color: TOKENS.color.text, lineHeight: 20 },
   // Reply
   replyBox: {
     backgroundColor: 'rgba(133,0,33,0.05)',
@@ -274,8 +275,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   replyHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  replyLabel: { fontSize: 12, fontWeight: '700', color: TOKENS.color.primary },
-  replyText: { fontSize: 13, color: TOKENS.color.text, lineHeight: 18 },
   replyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,7 +285,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(133,0,33,0.06)',
   },
-  replyBtnText: { fontSize: 13, fontWeight: '600', color: TOKENS.color.primary },
   replyInput: {
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: 12,
@@ -304,14 +302,4 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 8,
   },
-  cancelReplyText: { fontSize: 14, color: TOKENS.color.sub, fontWeight: '600', paddingVertical: 8, paddingHorizontal: 4 },
-  sendReplyBtn: {
-    backgroundColor: TOKENS.color.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  sendReplyText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 });
