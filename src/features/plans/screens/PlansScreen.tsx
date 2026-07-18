@@ -22,6 +22,7 @@ import {
   MyPlan,
 } from '@/features/plans/services/plan.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { getUserErrorMessage } from '@/lib/errors';
 
 function formatPrice(price: number, currency: string) {
   return new Intl.NumberFormat('es-AR', {
@@ -93,7 +94,7 @@ export default function PlansScreen() {
       Alert.alert('¡Suscripción activada!', 'Ahora disfrutás de los beneficios del plan.');
       load();
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'No se pudo procesar la suscripción');
+      Alert.alert('Error', getUserErrorMessage(err));
     } finally {
       setSubscribing(null);
     }
@@ -113,7 +114,7 @@ export default function PlansScreen() {
               Alert.alert('Suscripción cancelada', 'Al final del período se desactivarán los beneficios.');
               load();
             } catch (err: any) {
-              Alert.alert('Error', err?.response?.data?.message || 'No se pudo cancelar');
+              Alert.alert('Error', getUserErrorMessage(err));
             }
           },
         },

@@ -26,6 +26,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { getUserErrorMessage } from '@/lib/errors';
 
 const { width } = Dimensions.get('window');
 
@@ -64,8 +65,8 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
     try {
       await login({ email: email.trim().toLowerCase(), password });
       router.replace('/(tabs)');
-    } catch {
-      // El error lo maneja AuthContext
+    } catch (err) {
+      setLocalError(getUserErrorMessage(err));
     }
   };
 
@@ -106,6 +107,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                 <View style={[styles.inputWrapper, { backgroundColor: tc.surface2 }, displayError ? styles.inputError : null]}>
                   <MaterialIcons name="email" size={20} color={tc.textSub} />
                   <TextInput
+                    testID="login-email"
                     style={[styles.input, { color: tc.text }]}
                     placeholder="Correo electrónico"
                     placeholderTextColor={tc.textSub}
@@ -124,6 +126,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                   <MaterialIcons name="lock" size={20} color={tc.textSub} />
                   <TextInput
                     ref={passwordRef}
+                    testID="login-password"
                     style={[styles.input, { color: tc.text }]}
                     placeholder="Contraseña"
                     placeholderTextColor={tc.textSub}

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
-import { extractApiError } from "../src/lib/errors";
+import { getUserErrorMessage } from "../src/lib/errors";
 import { SearchResponse } from "../src/interfaces/search";
 import { search as searchApi } from "../src/services/search.service";
 
@@ -28,7 +28,7 @@ export const SearchProvider: React.FC<React.PropsWithChildren> = ({ children }) 
             setResults(data);
             return data;
         } catch (err) {
-            setError(extractApiError(err));
+            setError(getUserErrorMessage(err));
             return null;
         } finally {
             setLoading(false);

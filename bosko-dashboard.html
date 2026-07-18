@@ -296,7 +296,7 @@
     <div class="nav-item active">
       <span class="nav-dot" style="background:var(--brand)"></span>
       Overview
-      <span class="nav-count alert">82%</span>
+      <span class="nav-count alert">85%</span>
     </div>
     <div class="nav-item">
       <span class="nav-dot" style="background:var(--yellow)"></span>
@@ -344,7 +344,8 @@
     <div class="sidebar-sprint">
       <div class="sprint-label">Sprint Activo</div>
       <div class="sprint-title">MVP v1.0 Launch</div>
-      <div class="sprint-bar-bg"><div class="sprint-bar" style="width:82%"></div></div>`n      <div class="sprint-meta">82% completado · ~1.5 semanas</div>
+      <div class="sprint-bar-bg"><div class="sprint-bar" style="width:85%"></div></div>
+      <div class="sprint-meta">85% completado · ~1 semana</div>
     </div>
   </div>
 </aside>
@@ -372,19 +373,19 @@
     <div class="stats-grid">
       <div class="stat-card brand">
         <div class="stat-icon">🎯</div>
-        <div class="stat-num" style="color:var(--brand-light)">82%</div>
+        <div class="stat-num" style="color:var(--brand-light)">85%</div>
         <div class="stat-label">App Completada</div>
-        <div class="stat-sub">MVP a ~1.5 semanas</div>
+        <div class="stat-sub">MVP a ~1 semana</div>
       </div>
       <div class="stat-card green">
         <div class="stat-icon">✅</div>
-        <div class="stat-num" style="color:var(--green)">93</div>
+        <div class="stat-num" style="color:var(--green)">98</div>
         <div class="stat-label">Tasks Done</div>
-        <div class="stat-sub">Frontend completadas</div>
+        <div class="stat-sub">Frontend + Backend</div>
       </div>
       <div class="stat-card yellow">
         <div class="stat-icon">⏳</div>
-        <div class="stat-num" style="color:var(--yellow)">23</div>
+        <div class="stat-num" style="color:var(--yellow)">16</div>
         <div class="stat-label">Pendientes</div>
         <div class="stat-sub">Front + Back</div>
       </div>
@@ -650,9 +651,9 @@
           <div class="task-group-label">❌ Pendiente</div>
           <div class="task-item"><div class="task-check todo"></div><div class="task-text">"No me interesa" funcional — filtrar reel de lista localmente con Set de IDs ignoradas</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">frontend</span></div>
           <div class="task-item" data-task-id="reels-upload"><div class="task-check done">✓</div><div class="task-text done">Upload de reels para proveedores — pantalla nueva (grabar/seleccionar + formulario descripción/tags)</div><span class="badge badge-brand" style="font-size:10px;padding:1px 6px">mvp</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Tab "Siguiendo" funcional — espera GET /reels?feed=following del backend</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">back</span></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Tab "Siguiendo" funcional — GET /reels?feed=following implementado en backend (Follow model + findFollowingFeed)</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Lista de comentarios en CommentsSheet — useReelComments() llama GET /reels/:id/comments (front + back implementados)</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
-          <div class="task-item"><div class="task-check todo"></div><div class="task-text">Follow real — espera POST/DELETE /users/:id/follow del backend</div><span class="badge badge-yellow" style="font-size:10px;padding:1px 6px">back</span></div>
+          <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Follow real — POST/DELETE /users/:id/follow implementado (Follow model, use cases, controller). isFollowing en reel response.</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
           <div class="task-item"><div class="task-check done">✓</div><div class="task-text done">Reportar reel — useReportReel() + POST /reels/:id/report en backend (front + back implementados)</div><span class="badge badge-green" style="font-size:10px;padding:1px 6px">done</span></div>
         </div>
       </div>
@@ -886,10 +887,10 @@
         <div class="be-body">
           <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">Pasarela de pago real</div><div style="color:var(--text3);font-size:11px">Backend: MercadoPago adapter implementado (mercadopago.service.ts, PaymentModule). Frontend: CheckoutScreen sin integración nativa. Conectar SDK React Native de MercadoPago.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Socket.io rooms estables</div><div style="color:var(--text3);font-size:11px">Backend: ChatGateway completo con Redis adapter, WsJwtGuard, join/leave room, events: message_received, messages_delivered, messages_read, typing_indicator. Frontend: socket.service.ts + chat.store.ts conectados.</div></div></div>
-          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">GET /reels — videoUrl vacía en runtime</div><div style="color:var(--text3);font-size:11px">Campo <strong>videoUrl</strong> existe en el DTO pero llega vacío o como path relativo — S3/CDN no devuelve URL absoluta válida, causa pantalla negra. También verificar que <strong>user.isAvailable</strong>, <strong>user.isFollowing</strong>, <strong>type</strong>, <strong>beforeImageUrl</strong>, <strong>afterImageUrl</strong> se pueblen en el response.</div></div></div>
+          <div class="be-item"><div class="task-check bug">!</div><div><div style="font-weight:600;font-size:12px">GET /reels — videoUrl vacía en runtime</div><div style="color:var(--text3);font-size:11px">Campo <strong>videoUrl</strong> existe en el DTO pero llega vacío o como path relativo — S3/CDN no devuelve URL absoluta válida, causa pantalla negra. <strong>isAvailable</strong> e <strong>isFollowing</strong> ya se pueblan desde backend. Pendiente: <code>type</code>, <code>beforeImageUrl</code>, <code>afterImageUrl</code>.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">GET /reels/:id/comments</div><div style="color:var(--text3);font-size:11px">Implementado: GetReelCommentsUseCase en reels.controller.ts. Frontend useReelComments() conectado.</div></div></div>
-          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">POST + DELETE /users/:id/follow</div><div style="color:var(--text3);font-size:11px">Frontend tiene follow toggle visual listo. Falta endpoint para persistir follow/unfollow. También necesita isFollowing en GET /reels response.</div></div></div>
-          <div class="be-item"><div class="task-check todo"></div><div><div style="font-weight:600;font-size:12px">GET /reels?feed=following (o endpoint separado)</div><div style="color:var(--text3);font-size:11px">Frontend tiene tab "Siguiendo" en TopBar pero carga el mismo feed. Necesita endpoint para feed personalizado por follows.</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">POST + DELETE /users/:id/follow</div><div style="color:var(--text3);font-size:11px">Follow model (Prisma), FollowUserUseCase + UnfollowUserUseCase, endpoints en UsersController. isFollowing + isAvailable incluidos en GET /reels response.</div></div></div>
+          <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">GET /reels?feed=following</div><div style="color:var(--text3);font-size:11px">findFollowingFeed en PrismaReelRepository. GetReelsFeedUseCase soporta feed=for_you|following. Controller acepta query param ?feed=.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">POST /reels/:id/report</div><div style="color:var(--text3);font-size:11px">Implementado: ReportReelUseCase en reels.controller.ts. Frontend useReportReel() conectado.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">FCM / APNs push tokens</div><div style="color:var(--text3);font-size:11px">Backend: expo-push.adapter + firebase.service + NotificationModule + order-reminder cron job. Frontend: usePushNotificationSetup hook con canal Android y projectId EAS.</div></div></div>
           <div class="be-item"><div class="task-check done">✓</div><div><div style="font-weight:600;font-size:12px;color:var(--green)">Rate limiting</div><div style="color:var(--text3);font-size:11px">Backend: ThrottlerGuard global (100 req/min general, 10 req/min auth). Frontend: axios timeout 30s, retry 1 en TanStack Query.</div></div></div>
@@ -1172,242 +1173,242 @@
       <div id="changelog-entries">
         <!-- ENTRIES_START -->
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">17 de jun de 2026<br>08:14 a. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">22 de jun de 2026<br>10:29 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Navegación / Tabs</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">4 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">12 de jun de 2026<br>06:37 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">19 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">12 de jun de 2026<br>11:51 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">12 de jun de 2026<br>11:39 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">12 de jun de 2026<br>11:24 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">13 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">12 de jun de 2026<br>11:16 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">13 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">11 de jun de 2026<br>12:00 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">13 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:57 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth, Órdenes, Reels, Búsqueda</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">12 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:48 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md, Auth</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">8 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:43 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">7 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:40 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">7 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:35 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">6 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:33 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">6 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:32 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">6 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:30 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería, Dashboard HTML, Documentación CLAUDE.md</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">6 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:21 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">4 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:21 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil, Chat / Mensajería</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">4 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:17 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:14 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace, Perfil</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">3 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:12 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Servicios / Marketplace</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">1 archivo modificado</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">10 de jun de 2026<br>11:03 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">2 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">05 de jun de 2026<br>12:58 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels, Órdenes, Chat / Mensajería</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">20 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">05 de jun de 2026<br>12:45 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels, Órdenes, Chat / Mensajería</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">20 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">05 de jun de 2026<br>12:10 a. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML, App Config (app.json)</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">18 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">04 de jun de 2026<br>11:53 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">22 de jun de 2026<br>10:16 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">04 de jun de 2026<br>11:52 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
-          </div>
-          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">04 de jun de 2026<br>11:49 p. m.</span>
-          <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">04 de jun de 2026<br>11:45 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">22 de jun de 2026<br>10:15 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Design System / Tokens, Auth, Servicios / Marketplace, Componentes Core, Perfil, Planes, Reseñas, Reels</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
             <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">04 de jun de 2026<br>11:42 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">22 de jun de 2026<br>10:15 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Dashboard HTML, Componentes Core, Design System / Tokens, Auth, KYC / Antecedentes, Notificaciones Push, Órdenes, Pagos, Planes, Perfil, Reels, Reseñas, Servicios / Marketplace, Usuarios</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">36 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
-          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">04 de jun de 2026<br>11:40 p. m.</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">22 de jun de 2026<br>10:14 p. m.</span>
           <div style="flex:1;">
-            <div style="font-weight:600;color:var(--text);font-size:12.5px;">App Layout / Providers, Dashboard HTML, Componentes Core, Design System / Tokens, Auth, KYC / Antecedentes, Notificaciones Push, Órdenes, Pagos, Perfil, Servicios / Marketplace, Usuarios</div>
-            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">33 archivos modificados</div>
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">22 de jun de 2026<br>10:13 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Dashboard HTML</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>06:14 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>06:14 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>04:11 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:59 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:59 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:58 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:58 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:58 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:58 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:57 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:57 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:57 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:56 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:56 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:55 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:55 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:54 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:54 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:52 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes, App Config (app.json)</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">17 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:52 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">16 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:51 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">15 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:50 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">15 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:49 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">15 archivos modificados</div>
+          </div>
+          <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;font-weight:600;color:var(--text3);white-space:nowrap;margin-top:2px;min-width:72px;line-height:1.5;">06 de jun de 2026<br>02:45 p. m.</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--text);font-size:12.5px;">Auth, KYC / Antecedentes</div>
+            <div style="color:var(--text2);font-size:11.5px;margin-top:2px;">15 archivos modificados</div>
           </div>
           <span style="margin-left:auto;flex-shrink:0;margin-top:2px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;">✓ Done</span>
         </div>
