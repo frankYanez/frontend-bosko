@@ -18,6 +18,7 @@ import { useFavorites } from '../state/FavoritesContext';
 import { EmptyState } from '@/core/components/EmptyState';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const C = {
   primary: TOKENS.color.primary,
@@ -39,6 +40,7 @@ function formatRate(rate?: ServiceSummary['rate']) {
 }
 
 function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () => void }) {
+  const tc = useThemeColors();
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -68,7 +70,7 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
       <Pressable
         onPress={goToService}
-        style={({ pressed }) => [s.card, pressed && s.cardPressed]}
+        style={({ pressed }) => [s.card, { backgroundColor: tc.card }, pressed && s.cardPressed]}
       >
         {/* Thumbnail */}
         {item.thumbnail ? (
@@ -81,18 +83,18 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
 
         {/* Info */}
         <View style={s.info}>
-          <Text style={s.serviceTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={s.providerName} numberOfLines={1}>{item.name}</Text>
+          <Text style={[s.serviceTitle, { color: tc.text }]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[s.providerName, { color: tc.textSub }]} numberOfLines={1}>{item.name}</Text>
 
           <View style={s.metaRow}>
             {item.averageRating > 0 && (
               <View style={s.ratingChip}>
                 <Ionicons name="star" size={11} color={C.amber} />
-                <Text style={s.ratingText}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
+                <Text style={[s.ratingText, { color: tc.text }]}>{item.averageRating ? Number(item.averageRating).toFixed(1) : '—'}</Text>
               </View>
             )}
             {item.location ? (
-              <Text style={s.location} numberOfLines={1}>{item.location}</Text>
+              <Text style={[s.location, { color: tc.textSub }]} numberOfLines={1}>{item.location}</Text>
             ) : null}
           </View>
 
@@ -108,7 +110,7 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
               <Ionicons name="heart" size={20} color={C.red} />
             </Pressable>
           </Animated.View>
-          <Ionicons name="chevron-forward" size={16} color={C.border} />
+          <Ionicons name="chevron-forward" size={16} color={tc.border} />
         </View>
       </Pressable>
     </Animated.View>
@@ -116,6 +118,8 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
 }
 
 export function FavoritesScreen() {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const insets = useSafeAreaInsets();
   const { favorites, toggle, count } = useFavorites();
 
@@ -124,16 +128,16 @@ export function FavoritesScreen() {
   }, [toggle]);
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+    <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       {/* Header */}
-      <View style={s.header}>
+      <View style={[s.header, { backgroundColor: tc.bg }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={C.text} />
+          <Ionicons name="arrow-back" size={22} color={tc.text} />
         </Pressable>
         <View style={s.headerCenter}>
-          <Text style={s.headerTitle}>Favoritos</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Favoritos</Text>
           {count > 0 && (
             <View style={s.countBadge}>
               <Text style={s.countText}>{count}</Text>

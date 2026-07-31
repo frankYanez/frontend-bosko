@@ -1,15 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Modal,
   Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
-  Animated,
   Alert,
 } from "react-native";
 import { TextInput } from "react-native-paper";
@@ -18,6 +13,12 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+  BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { UpdateProfilePayload, uploadAvatar } from "@/features/servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
 import { useProfile } from "../state/ProfileContext";
@@ -41,21 +42,23 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   initialData,
 }) => {
   const { refreshProfile } = useProfile();
+  const sheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["95%"], []);
+
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | undefined>(initialData.avatarUrl);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const slideAnim = useRef(new Animated.Value(600)).current;
 
   useEffect(() => {
     if (visible) {
       setFormData(initialData);
       setAvatarUri(initialData.avatarUrl);
       setErrors({});
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
+      sheetRef.current?.present();
     } else {
-      slideAnim.setValue(600);
+      sheetRef.current?.dismiss();
     }
   }, [visible]);
 
@@ -115,7 +118,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setIsSaving(true);
     try {
       await onSave(formData);
-      onClose();
+      sheetRef.current?.dismiss();
     } catch {
       // toast shown by caller
     } finally {
@@ -123,181 +126,184 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   };
 
-  const handleClose = () => {
+  const handleRequestClose = () => {
+    sheetRef.current?.dismiss();
+  };
+
+  // Se dispara al cerrar por cualquier vía: swipe, tap en backdrop, botón X o dismiss() programático.
+  const handleDismiss = useCallback(() => {
     setFormData(initialData);
     setErrors({});
     onClose();
-  };
+  }, [initialData, onClose]);
 
   const handleChangePassword = () => {
-    handleClose();
+    handleRequestClose();
     router.push("/(tabs)/profile/ChangePassword");
   };
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.8}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
 
   const initial = (formData.firstName?.[0] ?? formData.lastName?.[0] ?? 'U').toUpperCase();
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
+    <BottomSheetModal
+      ref={sheetRef}
+      snapPoints={snapPoints}
+      index={0}
+      backdropComponent={renderBackdrop}
+      onDismiss={handleDismiss}
+      backgroundStyle={styles.sheetBackground}
+      handleIndicatorStyle={styles.handleIndicator}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
     >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} />
-        <Animated.View
-          style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
-        >
-          <View
-            style={styles.modalBlur}
-          >
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : undefined}
-              style={{ flex: 1 }}
-            >
-              {/* Header */}
-              <View style={styles.header}>
-                <Text style={styles.title}>Editar Perfil</Text>
-                <Pressable onPress={handleClose} style={styles.closeButton}>
-                  <MaterialIcons name="close" size={24} color={Colors.premium.textPrimary} />
-                </Pressable>
-              </View>
-
-              <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-
-                {/* ── Avatar picker ─────────────────────────────────────── */}
-                <View style={styles.avatarSection}>
-                  <Pressable onPress={handlePickAvatar} style={styles.avatarWrap} disabled={uploadingAvatar}>
-                    {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} contentFit="cover" />
-                    ) : (
-                      <View style={styles.avatarFallback}>
-                        <Text style={styles.avatarInitial}>{initial}</Text>
-                      </View>
-                    )}
-                    <View style={styles.avatarBadge}>
-                      {uploadingAvatar
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <Ionicons name="camera" size={14} color="#fff" />
-                      }
-                    </View>
-                  </Pressable>
-                  <Text style={styles.avatarHint}>Tocá para cambiar la foto</Text>
-                </View>
-
-                {/* ── Datos personales ──────────────────────────────────── */}
-                <View style={styles.formSection}>
-                  <Text style={styles.sectionTitle}>Información Personal</Text>
-
-                  <View style={styles.inputGroup}>
-                    <TextInput
-                      label="Nombre"
-                      mode="flat"
-                      value={formData.firstName}
-                      onChangeText={(v) => handleChange("firstName", v)}
-                      style={styles.input}
-                      textColor={Colors.premium.textPrimary}
-                      theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
-                      underlineColor={Colors.colorPrimary}
-                      activeUnderlineColor={Colors.colorPrimary}
-                      error={!!errors.firstName}
-                    />
-                    {errors.firstName && (
-                      <Text style={styles.errorText}>{errors.firstName}</Text>
-                    )}
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <TextInput
-                      label="Apellido"
-                      mode="flat"
-                      value={formData.lastName}
-                      onChangeText={(v) => handleChange("lastName", v)}
-                      style={styles.input}
-                      textColor={Colors.premium.textPrimary}
-                      theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
-                      underlineColor={Colors.colorPrimary}
-                      activeUnderlineColor={Colors.colorPrimary}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <TextInput
-                      label="Biografía"
-                      mode="flat"
-                      value={formData.bio}
-                      onChangeText={(v) => handleChange("bio", v)}
-                      style={[styles.input, styles.bioInput]}
-                      textColor={Colors.premium.textPrimary}
-                      theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
-                      underlineColor={Colors.colorPrimary}
-                      activeUnderlineColor={Colors.colorPrimary}
-                      multiline
-                      numberOfLines={4}
-                      maxLength={200}
-                      error={!!errors.bio}
-                    />
-                    <Text style={styles.charCount}>{formData.bio?.length ?? 0}/200</Text>
-                    {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
-                  </View>
-                </View>
-
-                {/* ── Seguridad ─────────────────────────────────────────── */}
-                <View style={styles.formSection}>
-                  <View style={styles.sectionHeader}>
-                    <MaterialIcons name="security" size={20} color={Colors.colorPrimary} />
-                    <Text style={styles.sectionTitle}>Seguridad</Text>
-                  </View>
-                  <Pressable onPress={handleChangePassword} style={styles.passwordBtn}>
-                    <View style={styles.passwordBtnLeft}>
-                      <Ionicons name="lock-closed-outline" size={20} color={Colors.colorPrimary} />
-                      <Text style={styles.passwordBtnText}>Cambiar contraseña</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color={Colors.premium.textSecondary} />
-                  </Pressable>
-                </View>
-
-              </ScrollView>
-
-              {/* Footer */}
-              <View style={styles.footer}>
-                <Pressable style={styles.cancelButton} onPress={handleClose}>
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-                  onPress={handleSave}
-                  disabled={isSaving}
-                >
-                  {isSaving
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={styles.saveButtonText}>Guardar Cambios</Text>
-                  }
-                </Pressable>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </Animated.View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Editar Perfil</Text>
+        <Pressable onPress={handleRequestClose} style={styles.closeButton}>
+          <MaterialIcons name="close" size={24} color={Colors.premium.textPrimary} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <BottomSheetScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* ── Avatar picker ─────────────────────────────────────── */}
+        <View style={styles.avatarSection}>
+          <Pressable onPress={handlePickAvatar} style={styles.avatarWrap} disabled={uploadingAvatar}>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatar} contentFit="cover" />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarInitial}>{initial}</Text>
+              </View>
+            )}
+            <View style={styles.avatarBadge}>
+              {uploadingAvatar
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Ionicons name="camera" size={14} color="#fff" />
+              }
+            </View>
+          </Pressable>
+          <Text style={styles.avatarHint}>Tocá para cambiar la foto</Text>
+        </View>
+
+        {/* ── Datos personales ──────────────────────────────────── */}
+        <View style={styles.formSection}>
+          <Text style={styles.sectionTitle}>Información Personal</Text>
+
+          <View style={styles.inputGroup}>
+            <TextInput
+              label="Nombre"
+              mode="flat"
+              value={formData.firstName}
+              onChangeText={(v) => handleChange("firstName", v)}
+              style={styles.input}
+              textColor={Colors.premium.textPrimary}
+              theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+              underlineColor={Colors.colorPrimary}
+              activeUnderlineColor={Colors.colorPrimary}
+              error={!!errors.firstName}
+            />
+            {errors.firstName && (
+              <Text style={styles.errorText}>{errors.firstName}</Text>
+            )}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <TextInput
+              label="Apellido"
+              mode="flat"
+              value={formData.lastName}
+              onChangeText={(v) => handleChange("lastName", v)}
+              style={styles.input}
+              textColor={Colors.premium.textPrimary}
+              theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+              underlineColor={Colors.colorPrimary}
+              activeUnderlineColor={Colors.colorPrimary}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <TextInput
+              label="Biografía"
+              mode="flat"
+              value={formData.bio}
+              onChangeText={(v) => handleChange("bio", v)}
+              style={[styles.input, styles.bioInput]}
+              textColor={Colors.premium.textPrimary}
+              theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+              underlineColor={Colors.colorPrimary}
+              activeUnderlineColor={Colors.colorPrimary}
+              multiline
+              numberOfLines={4}
+              maxLength={200}
+              error={!!errors.bio}
+            />
+            <Text style={styles.charCount}>{formData.bio?.length ?? 0}/200</Text>
+            {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
+          </View>
+        </View>
+
+        {/* ── Seguridad ─────────────────────────────────────────── */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="security" size={20} color={Colors.colorPrimary} />
+            <Text style={styles.sectionTitle}>Seguridad</Text>
+          </View>
+          <Pressable onPress={handleChangePassword} style={styles.passwordBtn}>
+            <View style={styles.passwordBtnLeft}>
+              <Ionicons name="lock-closed-outline" size={20} color={Colors.colorPrimary} />
+              <Text style={styles.passwordBtnText}>Cambiar contraseña</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.premium.textSecondary} />
+          </Pressable>
+        </View>
+
+      </BottomSheetScrollView>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Pressable style={styles.cancelButton} onPress={handleRequestClose}>
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.saveButtonText}>Guardar Cambios</Text>
+          }
+        </Pressable>
+      </View>
+    </BottomSheetModal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
-    justifyContent: "flex-end",
-  },
-  backdrop: { ...StyleSheet.absoluteFillObject },
-  modalContainer: {
-    height: "95%",
+  sheetBackground: {
     backgroundColor: Colors.premium.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    overflow: "hidden",
   },
-  modalBlur: { flex: 1, backgroundColor: Colors.premium.background },
+  handleIndicator: {
+    backgroundColor: Colors.premium.borderSubtle,
+    width: 40,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

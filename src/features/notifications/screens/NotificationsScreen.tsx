@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { useNotifications } from '../state/NotificationsContext';
 import { Notification } from '../services/notifications.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 
 const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
   order_accepted: { name: 'check-circle', color: '#065f46', bg: '#d1fae5' },
@@ -60,6 +61,7 @@ function AnimatedItem({ index, children }: { index: number; children: React.Reac
 }
 
 function NotificationItem({ item, onPress, onDelete }: { item: Notification; onPress: () => void; onDelete: () => void }) {
+  const tc = useThemeColors();
   const cfg = TYPE_ICON[item.type.toLowerCase()] ?? TYPE_ICON.default;
   const swipeX = useRef(new Animated.Value(0)).current;
   const deleteOpacity = swipeX.interpolate({ inputRange: [-80, -20], outputRange: [1, 0], extrapolate: 'clamp' });
@@ -81,20 +83,20 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
           pressed && s.itemPressed,
         ]}
       >
-        <View style={s.itemInner}>
+        <View style={[s.itemInner, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
           {!item.read && <View style={s.unreadDot} />}
           <View style={[s.itemIcon, { backgroundColor: cfg.bg }]}>
             <MaterialIcons name={cfg.name} size={22} color={cfg.color} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[s.itemTitle, !item.read && s.itemTitleUnread]} numberOfLines={1}>
+            <Text style={[s.itemTitle, { color: tc.text }, !item.read && s.itemTitleUnread]} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={s.itemBody} numberOfLines={2}>{item.body}</Text>
-            <Text style={s.itemTime}>{timeAgo(item.createdAt)}</Text>
+            <Text style={[s.itemBody, { color: tc.textSub }]} numberOfLines={2}>{item.body}</Text>
+            <Text style={[s.itemTime, { color: tc.textMuted }]}>{timeAgo(item.createdAt)}</Text>
           </View>
           <Pressable onPress={onDelete} hitSlop={8} style={s.deleteBtn}>
-            <MaterialIcons name="close" size={16} color={TOKENS.color.sub} />
+            <MaterialIcons name="close" size={16} color={tc.textSub} />
           </Pressable>
         </View>
       </Pressable>
@@ -103,6 +105,7 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
 }
 
 function EmptyState() {
+  const tc = useThemeColors();
   const scale = useRef(new Animated.Value(0.85)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -117,8 +120,8 @@ function EmptyState() {
     <View style={s.emptyWrap}>
       <Animated.View style={{ alignItems: 'center', gap: 12, opacity, transform: [{ scale }] }}>
         <MaterialIcons name="notifications-none" size={64} color="rgba(133,0,33,0.2)" />
-        <Text style={s.emptyTitle}>Sin notificaciones</Text>
-        <Text style={s.emptyText}>
+        <Text style={[s.emptyTitle, { color: tc.text }]}>Sin notificaciones</Text>
+        <Text style={[s.emptyText, { color: tc.textSub }]}>
           Aquí aparecerán tus notificaciones de órdenes, pagos y más.
         </Text>
       </Animated.View>
@@ -127,6 +130,7 @@ function EmptyState() {
 }
 
 export default function NotificationsScreen() {
+  const tc = useThemeColors();
   const { notifications, unreadCount, loading, load, markRead, markAllRead, remove, clearAll } = useNotifications();
 
   useEffect(() => { load(); }, []);
@@ -155,17 +159,17 @@ export default function NotificationsScreen() {
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
-          <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <View style={s.headerCenter}>
-          <Text style={s.headerTitle}>Notificaciones</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Notificaciones</Text>
           {unreadCount > 0 && (
             <View style={s.countBadge}>
               <Text style={s.countText}>{unreadCount}</Text>
@@ -174,13 +178,13 @@ export default function NotificationsScreen() {
         </View>
         <View style={s.headerActions}>
           {unreadCount > 0 && (
-            <Pressable onPress={markAllRead} hitSlop={8} style={s.actionBtn}>
+            <Pressable onPress={markAllRead} hitSlop={8} style={[s.actionBtn, { backgroundColor: tc.surface }]}>
               <MaterialIcons name="done-all" size={20} color={TOKENS.color.primary} />
             </Pressable>
           )}
           {notifications.length > 0 && (
-            <Pressable onPress={handleClearAll} hitSlop={8} style={s.actionBtn}>
-              <MaterialIcons name="delete-sweep" size={20} color={TOKENS.color.sub} />
+            <Pressable onPress={handleClearAll} hitSlop={8} style={[s.actionBtn, { backgroundColor: tc.surface }]}>
+              <MaterialIcons name="delete-sweep" size={20} color={tc.textSub} />
             </Pressable>
           )}
         </View>

@@ -24,10 +24,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 
 const { width } = Dimensions.get('window');
 
 export default function ForgotPasswordScreen() {
+  const tc = useThemeColors();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,7 +71,7 @@ export default function ForgotPasswordScreen() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <LinearGradient
-        colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+        colors={wash(tc)}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.background}
@@ -82,29 +84,29 @@ export default function ForgotPasswordScreen() {
             {/* Botón volver */}
             <Pressable
               onPress={() => router.back()}
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: tc.surface }]}
               hitSlop={12}
             >
-              <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
 
             {/* Ícono decorativo */}
-            <View style={styles.iconCircle}>
+            <View style={[styles.iconCircle, { backgroundColor: tc.accent }]}>
               <MaterialIcons name="lock-reset" size={36} color={TOKENS.color.primary} />
             </View>
 
-            <Text style={styles.title}>¿Olvidaste tu contraseña?</Text>
-            <Text style={styles.description}>
+            <Text style={[styles.title, { color: tc.text }]}>¿Olvidaste tu contraseña?</Text>
+            <Text style={[styles.description, { color: tc.textSub }]}>
               Ingresá tu email y te enviamos un enlace para restablecerla.
             </Text>
 
             <View style={styles.cardShadow}>
-              <BlurView intensity={30} tint="light" style={styles.card}>
+              <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
                 {success ? (
                   <View style={styles.successContainer}>
                     <MaterialIcons name="check-circle" size={48} color="#22c55e" />
-                    <Text style={styles.successTitle}>¡Email enviado!</Text>
-                    <Text style={styles.successText}>
+                    <Text style={[styles.successTitle, { color: tc.text }]}>¡Email enviado!</Text>
+                    <Text style={[styles.successText, { color: tc.textSub }]}>
                       Si ese email está registrado, recibirás las instrucciones en minutos.
                       Revisá también tu carpeta de spam.
                     </Text>
@@ -127,14 +129,14 @@ export default function ForgotPasswordScreen() {
                 ) : (
                   /* Formulario */
                   <>
-                    <Text style={styles.cardTitle}>Recuperar contraseña</Text>
+                    <Text style={[styles.cardTitle, { color: tc.text }]}>Recuperar contraseña</Text>
 
-                    <View style={[styles.inputWrapper, error ? styles.inputError : null]}>
-                      <MaterialIcons name="email" size={20} color={TOKENS.color.sub} />
+                    <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }, error ? styles.inputError : null]}>
+                      <MaterialIcons name="email" size={20} color={tc.textSub} />
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: tc.text }]}
                         placeholder="Correo electrónico"
-                        placeholderTextColor={TOKENS.color.sub}
+                        placeholderTextColor={tc.textSub}
                         value={email}
                         onChangeText={text => { setEmail(text); setError(''); }}
                         keyboardType="email-address"

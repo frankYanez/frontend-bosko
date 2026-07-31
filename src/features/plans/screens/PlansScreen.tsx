@@ -23,6 +23,7 @@ import {
 } from '@/features/plans/services/plan.service';
 import { TOKENS } from '@/core/design-system/tokens';
 import { getUserErrorMessage } from '@/lib/errors';
+import { useThemeColors, wash } from '@/core/design-system';
 
 function formatPrice(price: number, currency: string) {
   return new Intl.NumberFormat('es-AR', {
@@ -51,6 +52,7 @@ function AnimatedCard({ index, children }: { index: number; children: React.Reac
 }
 
 export default function PlansScreen() {
+  const tc = useThemeColors();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [myPlan, setMyPlan] = useState<MyPlan | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -127,17 +129,17 @@ export default function PlansScreen() {
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
       {/* Header */}
-      <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
-          <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+      <View style={[s.header, { backgroundColor: tc.surface, borderBottomColor: tc.cardBorder }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.card }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
-        <Text style={s.headerTitle}>Planes</Text>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Planes</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -183,9 +185,9 @@ export default function PlansScreen() {
 
           {/* Free plan note */}
           {!isSubscribed && (
-            <View style={s.freeNote}>
+            <View style={[s.freeNote, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
               <MaterialIcons name="info" size={18} color={TOKENS.color.primary} />
-              <Text style={s.freeNoteText}>
+              <Text style={[s.freeNoteText, { color: tc.text }]}>
                 Estás en el plan Free. Actualizá para acceder a más beneficios.
               </Text>
             </View>
@@ -204,7 +206,7 @@ export default function PlansScreen() {
                   onPress={() => { if (!isCurrent && !subscribing) handleSubscribe(plan.id); }}
                   disabled={isCurrent || !!subscribing}
                 >
-                  <View style={[s.planInner, isPopular && s.planInnerPopular]}>
+                  <View style={[s.planInner, { backgroundColor: tc.card, borderColor: tc.cardBorder }, isPopular && s.planInnerPopular]}>
                     {isPopular && (
                       <View style={s.popularBadge}>
                         <Text style={s.popularText}>Más popular</Text>
@@ -212,18 +214,18 @@ export default function PlansScreen() {
                     )}
 
                     <View style={s.planHeader}>
-                      <Text style={[s.planName, isPopular && s.planNamePopular]}>{plan.name}</Text>
+                      <Text style={[s.planName, { color: tc.text }, isPopular && s.planNamePopular]}>{plan.name}</Text>
                       <View style={s.planPrice}>
-                        <Text style={[s.planPriceAmount, isPopular && s.planPricePopular]}>
+                        <Text style={[s.planPriceAmount, { color: tc.text }, isPopular && s.planPricePopular]}>
                           {formatPrice(plan.price, plan.currency)}
                         </Text>
-                        <Text style={s.planPriceInterval}>
+                        <Text style={[s.planPriceInterval, { color: tc.textSub }]}>
                           /{plan.interval === 'month' ? 'mes' : 'año'}
                         </Text>
                       </View>
                     </View>
 
-                    <Text style={s.planDescription}>{plan.description}</Text>
+                    <Text style={[s.planDescription, { color: tc.textSub }]}>{plan.description}</Text>
 
                     <View style={s.featuresList}>
                       {plan.features.map((feature, i) => (
@@ -233,7 +235,7 @@ export default function PlansScreen() {
                             size={18}
                             color={isPopular ? '#FFD700' : '#16a34a'}
                           />
-                          <Text style={s.featureText}>{feature}</Text>
+                          <Text style={[s.featureText, { color: tc.text }]}>{feature}</Text>
                         </View>
                       ))}
                     </View>

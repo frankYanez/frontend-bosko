@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useKYC } from '../state/KYCContext';
 import { DocumentType } from '../types/kyc.types';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, wash, useThemeColors } from '@/core/design-system';
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'DNI', label: 'DNI (Argentina)' },
@@ -48,31 +48,32 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 }
 
 function PhotoSlot({
-  label, hint, icon, photo, onPress,
+  label, hint, icon, photo, onPress, tc,
 }: {
   label: string;
   hint: string;
   icon: any;
   photo: DocumentPhoto | null;
   onPress: () => void;
+  tc: ReturnType<typeof useThemeColors>;
 }) {
   return (
     <Pressable
-      style={({ pressed }) => [s.photoSlot, pressed && s.photoSlotPressed]}
+      style={({ pressed }) => [s.photoSlot, { borderColor: tc.border, backgroundColor: tc.surface2 }, pressed && s.photoSlotPressed]}
       onPress={onPress}
     >
       {photo ? (
         <>
           <Image source={{ uri: photo.uri }} style={s.photoPreview} />
-          <View style={s.photoCheck}>
+          <View style={[s.photoCheck, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="check-circle" size={28} color="#16a34a" />
           </View>
         </>
       ) : (
         <View style={s.photoEmpty}>
           <MaterialIcons name={icon} size={32} color="rgba(133,0,33,0.3)" />
-          <Text style={s.photoLabel}>{label}</Text>
-          <Text style={s.photoHint}>{hint}</Text>
+          <Text style={[s.photoLabel, { color: tc.text }]}>{label}</Text>
+          <Text style={[s.photoHint, { color: tc.textSub }]}>{hint}</Text>
         </View>
       )}
     </Pressable>
@@ -80,6 +81,7 @@ function PhotoSlot({
 }
 
 export default function KYCDocumentScreen() {
+  const tc = useThemeColors();
   const { submit, loading, error, clearError } = useKYC();
   const [docType, setDocType] = useState<DocumentType>('DNI');
   const [front, setFront] = useState<DocumentPhoto | null>(null);
@@ -126,7 +128,7 @@ export default function KYCDocumentScreen() {
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.background}
@@ -134,25 +136,29 @@ export default function KYCDocumentScreen() {
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={s.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={s.headerTitle}>Subir documentos</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Subir documentos</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Document type */}
         <FadeSlide delay={0}>
-          <View style={s.card}>
-            <Text style={s.cardTitle}>Tipo de documento</Text>
+          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>Tipo de documento</Text>
             <View style={s.docTypeGrid}>
               {DOCUMENT_TYPES.map(dt => (
                 <Pressable
                   key={dt.value}
-                  style={[s.docTypeButton, docType === dt.value && s.docTypeButtonActive]}
+                  style={[
+                    s.docTypeButton,
+                    { borderColor: tc.border, backgroundColor: tc.surface2 },
+                    docType === dt.value && s.docTypeButtonActive,
+                  ]}
                   onPress={() => setDocType(dt.value)}
                 >
-                  <Text style={[s.docTypeText, docType === dt.value && s.docTypeTextActive]}>
+                  <Text style={[s.docTypeText, { color: tc.textSub }, docType === dt.value && s.docTypeTextActive]}>
                     {dt.label}
                   </Text>
                 </Pressable>
@@ -163,8 +169,8 @@ export default function KYCDocumentScreen() {
 
         {/* Document photos */}
         <FadeSlide delay={100}>
-          <View style={s.card}>
-            <Text style={s.cardTitle}>Fotos del documento</Text>
+          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>Fotos del documento</Text>
             <View style={s.photosRow}>
               <PhotoSlot
                 label="Frente"
@@ -172,6 +178,7 @@ export default function KYCDocumentScreen() {
                 icon="credit-card"
                 photo={front}
                 onPress={() => pickImage('front')}
+                tc={tc}
               />
               <PhotoSlot
                 label="Dorso"
@@ -179,6 +186,7 @@ export default function KYCDocumentScreen() {
                 icon="flip"
                 photo={back}
                 onPress={() => pickImage('back')}
+                tc={tc}
               />
             </View>
           </View>
@@ -186,9 +194,9 @@ export default function KYCDocumentScreen() {
 
         {/* Selfie */}
         <FadeSlide delay={200}>
-          <View style={s.card}>
-            <Text style={s.cardTitle}>Selfie de verificación</Text>
-            <Text style={s.cardSubtitle}>
+          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>Selfie de verificación</Text>
+            <Text style={[s.cardSubtitle, { color: tc.textSub }]}>
               Sacate una foto sosteniendo el documento junto a tu rostro.
             </Text>
             <PhotoSlot
@@ -197,6 +205,7 @@ export default function KYCDocumentScreen() {
               icon="face"
               photo={selfie}
               onPress={() => pickImage('selfie')}
+              tc={tc}
             />
           </View>
         </FadeSlide>

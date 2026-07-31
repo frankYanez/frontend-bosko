@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
+import { AuthBackgroundVideo } from '@/core/components/AuthBackgroundVideo';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Animated } from 'react-native';
@@ -74,13 +75,9 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      {/* Fondo con gradiente suave */}
-      <LinearGradient
-        colors={isDark ? ['#0B0A0F', '#17050D', '#0B0A0F'] : ['#fdf2f4', '#fef7ff', '#f0f4ff']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.background}
-      >
+      <View style={styles.background}>
+        {/* Video de fondo, siempre reproduciendo, con wash oscuro sutil fijo */}
+        <AuthBackgroundVideo />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
@@ -98,8 +95,10 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
             <Text style={styles.brand}>Bosko</Text>
             <Text style={[styles.subtitle, { color: tc.textSub }]}>Encontrá o publicá servicios fácilmente</Text>
 
-            {/* Tarjeta glass */}
-            <View style={styles.cardShadow}>
+            {/* Tarjeta glass — Android: elevation dibuja rectángulo si la view es transparente,
+                necesita backgroundColor opaco en la misma view para respetar el borderRadius */}
+            <View style={[styles.cardGlow, { backgroundColor: tc.card }]}>
+            <View style={[styles.cardShadow, { backgroundColor: tc.card }]}>
               <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                 <Text style={[styles.cardTitle, { color: tc.text }]}>Iniciar sesión</Text>
 
@@ -190,9 +189,10 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                 </View>
               </BlurView>
             </View>
+            </View>
           </Animated.View>
         </KeyboardAvoidingView>
-      </LinearGradient>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
@@ -227,11 +227,20 @@ const styles = StyleSheet.create({
   },
   cardShadow: {
     borderRadius: 24,
+    // Sombra negra sola no se nota sobre el video oscuro de fondo — se suma un glow
+    // blanco tenue para separar la card visualmente (look glass sobre fondo oscuro).
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.45,
+    shadowRadius: 30,
+    elevation: 12,
+  },
+  cardGlow: {
+    borderRadius: 24,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
   },
   card: {
     width: width - 48,

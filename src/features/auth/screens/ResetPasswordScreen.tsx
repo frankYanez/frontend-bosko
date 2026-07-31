@@ -23,8 +23,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 
 export default function ResetPasswordScreen() {
+  const tc = useThemeColors();
   // email y token vienen como query params del deep link del email
   const { email = '', token = '' } = useLocalSearchParams<{ email: string; token: string }>();
 
@@ -72,14 +74,14 @@ export default function ResetPasswordScreen() {
 
   if (success) {
     return (
-      <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
+      <LinearGradient colors={wash(tc)} style={styles.bg}>
         <Animated.View style={[styles.successContainer, { opacity: fadeAnim }]}>
-          <BlurView intensity={30} tint="light" style={styles.successCard}>
-            <View style={styles.successIcon}>
+          <BlurView intensity={30} tint="light" style={[styles.successCard, { borderColor: tc.cardBorder }]}>
+            <View style={[styles.successIcon, { backgroundColor: tc.accent }]}>
               <MaterialIcons name="check-circle" size={56} color="#16a34a" />
             </View>
-            <Text style={styles.successTitle}>¡Contraseña actualizada!</Text>
-            <Text style={styles.successText}>
+            <Text style={[styles.successTitle, { color: tc.text }]}>¡Contraseña actualizada!</Text>
+            <Text style={[styles.successText, { color: tc.textSub }]}>
               Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
             </Text>
             <View style={styles.btnShadow}>
@@ -104,7 +106,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
+    <LinearGradient colors={wash(tc)} style={styles.bg}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -112,32 +114,32 @@ export default function ResetPasswordScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-              <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
           </View>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
             {/* Ícono + título */}
             <View style={styles.titleRow}>
-              <View style={styles.iconCircle}>
+              <View style={[styles.iconCircle, { backgroundColor: tc.accent }]}>
                 <MaterialIcons name="lock-reset" size={32} color={TOKENS.color.primary} />
               </View>
-              <Text style={styles.title}>Nueva contraseña</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: tc.text }]}>Nueva contraseña</Text>
+              <Text style={[styles.subtitle, { color: tc.textSub }]}>
                 Elegí una contraseña segura de al menos 8 caracteres.
               </Text>
             </View>
 
             {/* Formulario */}
-            <BlurView intensity={30} tint="light" style={styles.card}>
+            <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
               {/* Nueva contraseña */}
               <View style={styles.fieldWrap}>
-                <MaterialIcons name="lock" size={20} color="rgba(133,0,33,0.5)" style={styles.fieldIcon} />
+                <MaterialIcons name="lock" size={20} color={tc.textSub} style={styles.fieldIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: tc.text }]}
                   placeholder="Nueva contraseña"
-                  placeholderTextColor="rgba(30,30,30,0.35)"
+                  placeholderTextColor={tc.textMuted}
                   secureTextEntry={!showNew}
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -147,20 +149,20 @@ export default function ResetPasswordScreen() {
                   <MaterialIcons
                     name={showNew ? 'visibility-off' : 'visibility'}
                     size={20}
-                    color="rgba(30,30,30,0.4)"
+                    color={tc.textSub}
                   />
                 </Pressable>
               </View>
 
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: tc.border }]} />
 
               {/* Confirmar contraseña */}
               <View style={styles.fieldWrap}>
-                <MaterialIcons name="lock-outline" size={20} color="rgba(133,0,33,0.5)" style={styles.fieldIcon} />
+                <MaterialIcons name="lock-outline" size={20} color={tc.textSub} style={styles.fieldIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: tc.text }]}
                   placeholder="Confirmar contraseña"
-                  placeholderTextColor="rgba(30,30,30,0.35)"
+                  placeholderTextColor={tc.textMuted}
                   secureTextEntry={!showConfirm}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -170,7 +172,7 @@ export default function ResetPasswordScreen() {
                   <MaterialIcons
                     name={showConfirm ? 'visibility-off' : 'visibility'}
                     size={20}
-                    color="rgba(30,30,30,0.4)"
+                    color={tc.textSub}
                   />
                 </Pressable>
               </View>

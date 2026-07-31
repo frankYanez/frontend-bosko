@@ -21,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { uploadReelWithFile } from '../services/reels.service';
 import { toast } from '@/core/components/Toast';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
 const MAX_DURATION_S = 60;
 const MAX_TAGS = 8;
@@ -28,6 +29,7 @@ const MAX_TAGS = 8;
 export default function ReelUploadScreen() {
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
+  const tc = useThemeColors();
 
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [videoMime, setVideoMime] = useState('video/mp4');
@@ -126,15 +128,15 @@ export default function ReelUploadScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={s.root}
+      style={[s.root, { backgroundColor: tc.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Header */}
-      <View style={[s.header, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
+      <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: tc.divider }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface2 }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
-        <Text style={s.headerTitle}>Nuevo Reel</Text>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Nuevo Reel</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -146,16 +148,16 @@ export default function ReelUploadScreen() {
       >
         {/* ── Video picker ────────────────────────────────────────────── */}
         {!videoUri ? (
-          <View style={s.pickerArea}>
-            <View style={s.pickerIcon}>
-              <Ionicons name="videocam" size={44} color="rgba(255,255,255,0.5)" />
+          <View style={[s.pickerArea, { borderColor: tc.border, backgroundColor: tc.surface2 }]}>
+            <View style={[s.pickerIcon, { backgroundColor: tc.surface }]}>
+              <Ionicons name="videocam" size={44} color={tc.textSub} />
             </View>
-            <Text style={s.pickerTitle}>Seleccioná tu video</Text>
-            <Text style={s.pickerSub}>Máximo {MAX_DURATION_S} segundos</Text>
+            <Text style={[s.pickerTitle, { color: tc.text }]}>Seleccioná tu video</Text>
+            <Text style={[s.pickerSub, { color: tc.textSub }]}>Máximo {MAX_DURATION_S} segundos</Text>
             <View style={s.pickerBtns}>
-              <Pressable style={s.pickerBtn} onPress={() => pickVideo('gallery')}>
-                <Ionicons name="images-outline" size={20} color="#fff" />
-                <Text style={s.pickerBtnText}>Galería</Text>
+              <Pressable style={[s.pickerBtn, { backgroundColor: tc.surface }]} onPress={() => pickVideo('gallery')}>
+                <Ionicons name="images-outline" size={20} color={tc.text} />
+                <Text style={[s.pickerBtnText, { color: tc.text }]}>Galería</Text>
               </Pressable>
               <Pressable style={[s.pickerBtn, s.pickerBtnAccent]} onPress={() => pickVideo('camera')}>
                 <Ionicons name="camera-outline" size={20} color="#fff" />
@@ -189,29 +191,29 @@ export default function ReelUploadScreen() {
         <View style={s.form}>
           {/* Description */}
           <View style={s.field}>
-            <Text style={s.fieldLabel}>Descripción</Text>
+            <Text style={[s.fieldLabel, { color: tc.textSub }]}>Descripción</Text>
             <TextInput
-              style={s.textarea}
+              style={[s.textarea, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
               placeholder="Contá qué muestra este reel..."
-              placeholderTextColor="rgba(255,255,255,0.3)"
+              placeholderTextColor={tc.textMuted}
               multiline
               maxLength={300}
               value={description}
               onChangeText={setDescription}
               textAlignVertical="top"
             />
-            <Text style={s.charCount}>{description.length}/300</Text>
+            <Text style={[s.charCount, { color: tc.textMuted }]}>{description.length}/300</Text>
           </View>
 
           {/* Tags */}
           <View style={s.field}>
-            <Text style={s.fieldLabel}>Tags <Text style={s.fieldSub}>(máx. {MAX_TAGS})</Text></Text>
+            <Text style={[s.fieldLabel, { color: tc.textSub }]}>Tags <Text style={[s.fieldSub, { color: tc.textMuted }]}>(máx. {MAX_TAGS})</Text></Text>
             {tags.length > 0 && (
               <View style={s.tagsRow}>
                 {tags.map(tag => (
                   <Pressable key={tag} style={s.tagChip} onPress={() => removeTag(tag)}>
-                    <Text style={s.tagChipText}>#{tag}</Text>
-                    <MaterialIcons name="close" size={13} color="rgba(255,255,255,0.7)" />
+                    <Text style={[s.tagChipText, { color: tc.text }]}>#{tag}</Text>
+                    <MaterialIcons name="close" size={13} color={tc.textSub} />
                   </Pressable>
                 ))}
               </View>
@@ -220,9 +222,9 @@ export default function ReelUploadScreen() {
               <View style={s.tagInputRow}>
                 <TextInput
                   ref={tagInputRef}
-                  style={s.tagInput}
+                  style={[s.tagInput, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
                   placeholder="Agregá un tag y presioná espacio"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={tc.textMuted}
                   value={tagInput}
                   onChangeText={setTagInput}
                   onKeyPress={handleTagKeyPress}
@@ -232,8 +234,8 @@ export default function ReelUploadScreen() {
                   returnKeyType="done"
                 />
                 {tagInput.trim().length > 0 && (
-                  <Pressable style={s.tagAddBtn} onPress={() => addTag(tagInput)}>
-                    <MaterialIcons name="add" size={20} color="#fff" />
+                  <Pressable style={[s.tagAddBtn, { backgroundColor: tc.surface2 }]} onPress={() => addTag(tagInput)}>
+                    <MaterialIcons name="add" size={20} color={tc.text} />
                   </Pressable>
                 )}
               </View>

@@ -21,12 +21,14 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
+import { AuthBackgroundVideo } from '@/core/components/AuthBackgroundVideo';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/core/design-system';
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +56,7 @@ const STEPS: Step[] = [
 ];
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
+  const tc = useThemeColors();
   const { registerUser, isLoading, error, clearError } = useAuth();
 
   const [step, setStep] = useState(0);
@@ -147,7 +150,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     const lastName  = formData.lastName.trim();
     try {
       await registerUser({ firstName, lastName, email, password: formData.password });
-      router.replace(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Error al registrar la cuenta';
       Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
@@ -158,12 +161,9 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient
-        colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.background}
-      >
+      <View style={styles.background}>
+        {/* Video de fondo, siempre reproduciendo, con wash oscuro sutil fijo */}
+        <AuthBackgroundVideo />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
@@ -177,35 +177,37 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
               contentFit="contain"
             />
 
-            {/* Tarjeta glass */}
-            <View style={styles.cardShadow}>
-              <BlurView intensity={30} tint="light" style={styles.card}>
+            {/* Tarjeta glass — Android: elevation dibuja rectángulo si la view es transparente,
+                necesita backgroundColor opaco en la misma view para respetar el borderRadius */}
+            <View style={[styles.cardGlow, { backgroundColor: tc.card }]}>
+            <View style={[styles.cardShadow, { backgroundColor: tc.card }]}>
+              <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
                 {/* Header con barra de progreso */}
                 <View style={styles.cardHeader}>
                   <Pressable onPress={handleBack} hitSlop={8}>
-                    <MaterialIcons name="arrow-back" size={22} color={TOKENS.color.text} />
+                    <MaterialIcons name="arrow-back" size={22} color={tc.text} />
                   </Pressable>
-                  <Text style={styles.stepCounter}>
+                  <Text style={[styles.stepCounter, { color: tc.textSub }]}>
                     {step + 1} / {STEPS.length}
                   </Text>
                 </View>
 
                 {/* Barra de progreso */}
-                <View style={styles.progressTrack}>
+                <View style={[styles.progressTrack, { backgroundColor: tc.border }]}>
                   <Animated.View style={[styles.progressFill, progressStyle]} />
                 </View>
 
-                <Text style={styles.cardTitle}>Crear cuenta</Text>
-                <Text style={styles.stepLabel}>{currentStep.label}</Text>
+                <Text style={[styles.cardTitle, { color: tc.text }]}>Crear cuenta</Text>
+                <Text style={[styles.stepLabel, { color: tc.textSub }]}>{currentStep.label}</Text>
 
                 {/* Input del paso actual */}
-                <View style={[styles.inputWrapper, displayError ? styles.inputError : null]}>
-                  <MaterialIcons name={currentStep.icon} size={20} color={TOKENS.color.sub} />
+                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }, displayError ? styles.inputError : null]}>
+                  <MaterialIcons name={currentStep.icon} size={20} color={tc.textSub} />
                   <TextInput
                     ref={inputRef}
-                    style={styles.input}
+                    style={[styles.input, { color: tc.text }]}
                     placeholder={currentStep.placeholder}
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={formData[currentStep.field]}
                     onChangeText={text => {
                       setFormData(prev => ({ ...prev, [currentStep.field]: text }));
@@ -225,7 +227,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                       <MaterialIcons
                         name={showPassword ? 'visibility' : 'visibility-off'}
                         size={20}
-                        color={TOKENS.color.sub}
+                        color={tc.textSub}
                       />
                     </Pressable>
                   )}
@@ -259,7 +261,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                 {/* Link a login */}
                 {step === 0 && (
                   <View style={styles.loginRow}>
-                    <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
+                    <Text style={[styles.loginPrompt, { color: tc.textSub }]}>¿Ya tenés cuenta? </Text>
                     <Pressable onPress={toRegister}>
                       <Text style={styles.loginLink}>Ingresar</Text>
                     </Pressable>
@@ -267,9 +269,10 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                 )}
               </BlurView>
             </View>
+            </View>
           </View>
         </KeyboardAvoidingView>
-      </LinearGradient>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
@@ -291,11 +294,20 @@ const styles = StyleSheet.create({
   },
   cardShadow: {
     borderRadius: 24,
+    // Sombra negra sola no se nota sobre el video oscuro de fondo — se suma un glow
+    // blanco tenue para separar la card visualmente (look glass sobre fondo oscuro).
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.45,
+    shadowRadius: 30,
+    elevation: 12,
+  },
+  cardGlow: {
+    borderRadius: 24,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
   },
   card: {
     width: width - 48,

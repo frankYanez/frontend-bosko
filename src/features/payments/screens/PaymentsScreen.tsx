@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { usePayments } from '../state/PaymentContext';
 import { PaymentHistoryItem, EarningsItem, PaymentStatus } from '../services/payments';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 
 type Tab = 'history' | 'earnings';
 
@@ -64,6 +65,7 @@ function AnimatedItem({ index, children }: { index: number; children: React.Reac
 }
 
 export default function PaymentsScreen() {
+  const tc = useThemeColors();
   const { history, earnings, loading, loadHistory, loadEarnings } = usePayments();
   const [tab, setTab] = useState<Tab>('history');
 
@@ -79,19 +81,19 @@ export default function PaymentsScreen() {
           style={({ pressed }) => [s.card, pressed && s.cardPressed]}
           onPress={() => item.orderId && router.push(`/orders/${item.orderId}`)}
         >
-          <View style={s.cardInner}>
+          <View style={[s.cardInner, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
             <View style={s.cardRow}>
-              <View style={s.cardIcon}>
+              <View style={[s.cardIcon, { backgroundColor: tc.accent }]}>
                 <MaterialIcons name="payment" size={22} color={TOKENS.color.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.cardTitle} numberOfLines={1}>
+                <Text style={[s.cardTitle, { color: tc.text }]} numberOfLines={1}>
                   {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
                 </Text>
-                <Text style={s.cardDate}>{formatDate(item.createdAt)}</Text>
+                <Text style={[s.cardDate, { color: tc.textSub }]}>{formatDate(item.createdAt)}</Text>
               </View>
               <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                <Text style={s.cardAmount}>{formatCurrency(item.amount, item.currency)}</Text>
+                <Text style={[s.cardAmount, { color: tc.text }]}>{formatCurrency(item.amount, item.currency)}</Text>
                 <StatusBadge status={item.status} />
               </View>
             </View>
@@ -103,15 +105,15 @@ export default function PaymentsScreen() {
 
   const renderEarningsItem = ({ item, index }: { item: EarningsItem; index: number }) => (
     <AnimatedItem index={index}>
-      <View style={s.earningsCard}>
+      <View style={[s.earningsCard, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
         <View style={s.earningsIcon}>
           <MaterialIcons name="attach-money" size={22} color="#065f46" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.cardTitle} numberOfLines={1}>
+          <Text style={[s.cardTitle, { color: tc.text }]} numberOfLines={1}>
             {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
           </Text>
-          <Text style={s.cardDate}>{formatDate(item.createdAt)}</Text>
+          <Text style={[s.cardDate, { color: tc.textSub }]}>{formatDate(item.createdAt)}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
           <Text style={s.earningsAmount}>{formatCurrency(item.amount, item.currency)}</Text>
@@ -125,22 +127,22 @@ export default function PaymentsScreen() {
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
-          <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
-        <Text style={s.headerTitle}>Pagos</Text>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Pagos</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Tabs */}
-      <View style={s.tabBar}>
+      <View style={[s.tabBar, { backgroundColor: tc.surface, borderColor: tc.cardBorder }]}>
         {([
           { key: 'history', label: 'Historial', icon: 'history' },
           { key: 'earnings', label: 'Ganancias', icon: 'trending-up' },
@@ -153,9 +155,9 @@ export default function PaymentsScreen() {
             <MaterialIcons
               name={t.icon}
               size={18}
-              color={tab === t.key ? TOKENS.color.primary : TOKENS.color.sub}
+              color={tab === t.key ? TOKENS.color.primary : tc.textSub}
             />
-            <Text style={[s.tabText, tab === t.key && s.tabTextActive]}>{t.label}</Text>
+            <Text style={[s.tabText, { color: tc.textSub }, tab === t.key && s.tabTextActive]}>{t.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -173,8 +175,8 @@ export default function PaymentsScreen() {
             size={56}
             color="rgba(133,0,33,0.2)"
           />
-          <Text style={s.emptyTitle}>{tab === 'history' ? 'Sin pagos' : 'Sin ganancias'}</Text>
-          <Text style={s.emptyText}>
+          <Text style={[s.emptyTitle, { color: tc.text }]}>{tab === 'history' ? 'Sin pagos' : 'Sin ganancias'}</Text>
+          <Text style={[s.emptyText, { color: tc.textSub }]}>
             {tab === 'history'
               ? 'Tus pagos aparecerán aquí cuando completes una orden.'
               : 'Tus ganancias aparecerán aquí cuando recibas pagos por servicios.'}

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, router } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
@@ -98,12 +100,18 @@ export default function _layout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemedRoot />
-      </AuthProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={styles.flex}>
+      <BottomSheetModalProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemedRoot />
+          </AuthProvider>
+        </QueryClientProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+});

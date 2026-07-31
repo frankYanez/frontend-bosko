@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, wash, useThemeColors } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
 
 const STEPS = [
@@ -53,10 +53,11 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 
 export default function KYCIntroScreen() {
   const { start, loading, error } = useKYC();
+  const tc = useThemeColors();
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.background}
@@ -64,39 +65,39 @@ export default function KYCIntroScreen() {
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={s.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={s.headerTitle}>Verificación</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Verificación</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Hero */}
         <FadeSlide delay={100}>
-          <View style={s.heroIcon}>
+          <View style={[s.heroIcon, { backgroundColor: tc.accent }]}>
             <MaterialIcons name="verified-user" size={56} color={TOKENS.color.primary} />
           </View>
-          <Text style={s.heroTitle}>Verificá tu identidad</Text>
-          <Text style={s.heroSubtitle}>
+          <Text style={[s.heroTitle, { color: tc.text }]}>Verificá tu identidad</Text>
+          <Text style={[s.heroSubtitle, { color: tc.textSub }]}>
             El proceso toma menos de 5 minutos y solo se realiza una vez.
           </Text>
         </FadeSlide>
 
         {/* Steps card */}
         <FadeSlide delay={200}>
-          <View style={s.card}>
-            <Text style={s.cardTitle}>¿Qué vas a necesitar?</Text>
+          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>¿Qué vas a necesitar?</Text>
             {STEPS.map((step, idx) => (
               <View key={idx} style={s.stepRow}>
                 <View style={s.stepNumber}>
                   <Text style={s.stepNumberText}>{idx + 1}</Text>
                 </View>
-                <View style={s.stepIcon}>
+                <View style={[s.stepIcon, { backgroundColor: tc.accent }]}>
                   <MaterialIcons name={step.icon as any} size={20} color={TOKENS.color.primary} />
                 </View>
                 <View style={s.stepText}>
-                  <Text style={s.stepTitle}>{step.title}</Text>
-                  <Text style={s.stepDesc}>{step.description}</Text>
+                  <Text style={[s.stepTitle, { color: tc.text }]}>{step.title}</Text>
+                  <Text style={[s.stepDesc, { color: tc.textSub }]}>{step.description}</Text>
                 </View>
               </View>
             ))}
@@ -107,7 +108,7 @@ export default function KYCIntroScreen() {
         <FadeSlide delay={300}>
           <View style={s.privacyBanner}>
             <MaterialIcons name="security" size={18} color="#16a34a" />
-            <Text style={s.privacyText}>
+            <Text style={[s.privacyText, { color: tc.textSub }]}>
               Tus datos se encriptan y nunca se comparten con terceros.
               Solo se usan para verificar tu identidad.
             </Text>
@@ -156,7 +157,7 @@ export default function KYCIntroScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [s.secondaryButton, pressed && s.buttonPressed]}
           >
-            <Text style={s.secondaryButtonText}>Lo haré más tarde</Text>
+            <Text style={[s.secondaryButtonText, { color: tc.textSub }]}>Lo haré más tarde</Text>
           </Pressable>
         </MotiView>
       </ScrollView>

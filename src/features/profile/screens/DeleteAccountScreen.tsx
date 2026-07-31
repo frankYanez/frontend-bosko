@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 
 const CONFIRM_WORD = 'ELIMINAR';
 
@@ -45,6 +46,7 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 }
 
 export default function DeleteAccountScreen() {
+  const tc = useThemeColors();
   const { logout } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
@@ -111,7 +113,7 @@ export default function DeleteAccountScreen() {
 
   return (
     <LinearGradient
-      colors={['#fff5f5', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.bg}
@@ -122,11 +124,11 @@ export default function DeleteAccountScreen() {
           <Pressable
             onPress={() => step === 2 ? (setStep(1), setPassword(''), setError('')) : router.back()}
             hitSlop={12}
-            style={s.backBtn}
+            style={[s.backBtn, { backgroundColor: tc.surface }]}
           >
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={s.headerTitle}>
+          <Text style={[s.headerTitle, { color: tc.text }]}>
             {step === 1 ? 'Eliminar cuenta' : 'Confirmar identidad'}
           </Text>
           <View style={{ width: 40 }} />
@@ -134,9 +136,9 @@ export default function DeleteAccountScreen() {
 
         {/* Step indicator */}
         <View style={s.stepRow}>
-          <View style={[s.stepDot, s.stepDotActive]} />
-          <View style={s.stepLine} />
-          <View style={[s.stepDot, step === 2 && s.stepDotActive]} />
+          <View style={[s.stepDot, { backgroundColor: tc.border }, s.stepDotActive]} />
+          <View style={[s.stepLine, { backgroundColor: tc.divider }]} />
+          <View style={[s.stepDot, { backgroundColor: tc.border }, step === 2 && s.stepDotActive]} />
         </View>
 
         {/* Warning icon */}
@@ -145,7 +147,7 @@ export default function DeleteAccountScreen() {
             <MaterialIcons name={step === 1 ? 'warning' : 'lock'} size={48} color="#dc2626" />
           </View>
           <Text style={s.warningTitle}>{step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}</Text>
-          <Text style={s.warningSubtitle}>
+          <Text style={[s.warningSubtitle, { color: tc.textSub }]}>
             {step === 1
               ? 'Esta acción es permanente e irreversible.'
               : 'Ingresá tu contraseña para confirmar la eliminación.'}
@@ -156,12 +158,12 @@ export default function DeleteAccountScreen() {
           <>
             {/* Consequences */}
             <FadeSlide delay={100}>
-              <View style={s.card}>
-                <Text style={s.cardTitle}>Si eliminás tu cuenta:</Text>
+              <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+                <Text style={[s.cardTitle, { color: tc.text }]}>Si eliminás tu cuenta:</Text>
                 {WARNINGS.map((w, i) => (
                   <View key={i} style={s.warningItem}>
                     <MaterialIcons name="close" size={16} color="#dc2626" style={{ marginTop: 2 }} />
-                    <Text style={s.warningText}>{w}</Text>
+                    <Text style={[s.warningText, { color: tc.textSub }]}>{w}</Text>
                   </View>
                 ))}
               </View>
@@ -169,18 +171,18 @@ export default function DeleteAccountScreen() {
 
             {/* Confirm word input */}
             <FadeSlide delay={200}>
-              <View style={s.card}>
-                <Text style={s.confirmLabel}>
+              <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+                <Text style={[s.confirmLabel, { color: tc.textSub }]}>
                   Escribí{' '}
                   <Text style={s.confirmWord}>{CONFIRM_WORD}</Text>
                   {' '}para continuar:
                 </Text>
                 <TextInput
-                  style={[s.confirmInput, canProceed && s.confirmInputValid]}
+                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, canProceed && s.confirmInputValid]}
                   value={confirmText}
                   onChangeText={setConfirmText}
                   placeholder={CONFIRM_WORD}
-                  placeholderTextColor="rgba(30,30,30,0.25)"
+                  placeholderTextColor={tc.textMuted}
                   autoCapitalize="characters"
                   autoCorrect={false}
                 />
@@ -215,25 +217,25 @@ export default function DeleteAccountScreen() {
         {step === 2 && (
           <Animated.View style={{ opacity: step2Opacity, transform: [{ translateY: step2Ty }], gap: 16 }}>
             {/* Password input */}
-            <View style={s.card}>
-              <Text style={s.confirmLabel}>Ingresá tu contraseña actual:</Text>
+            <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+              <Text style={[s.confirmLabel, { color: tc.textSub }]}>Ingresá tu contraseña actual:</Text>
               <View style={s.passwordRow}>
                 <TextInput
-                  style={[s.confirmInput, s.passwordInput, password.length >= 6 && s.confirmInputValid]}
+                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, s.passwordInput, password.length >= 6 && s.confirmInputValid]}
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
-                  placeholderTextColor="rgba(30,30,30,0.25)"
+                  placeholderTextColor={tc.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoFocus
                 />
-                <Pressable onPress={() => setShowPassword(v => !v)} style={s.eyeBtn} hitSlop={8}>
+                <Pressable onPress={() => setShowPassword(v => !v)} style={[s.eyeBtn, { borderColor: tc.border, backgroundColor: tc.surface }]} hitSlop={8}>
                   <MaterialIcons
                     name={showPassword ? 'visibility-off' : 'visibility'}
                     size={20}
-                    color={TOKENS.color.sub}
+                    color={tc.textSub}
                   />
                 </Pressable>
               </View>
@@ -285,7 +287,7 @@ export default function DeleteAccountScreen() {
         )}
 
         <Pressable onPress={() => router.back()} style={s.cancelRow}>
-          <Text style={s.cancelText}>Cancelar, mantener mi cuenta</Text>
+          <Text style={[s.cancelText, { color: tc.textSub }]}>Cancelar, mantener mi cuenta</Text>
         </Pressable>
       </ScrollView>
     </LinearGradient>

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node /home/gonza/frontend-bosko/.claude/hooks/sync-dashboard.js"
+            "command": "node .claude/hooks/sync-dashboard.js"
           }
         ]
       }

@@ -1,5 +1,4 @@
 import { TOKENS } from './tokens';
-import type { ThemeColors } from '@/stores/theme.store';
 
 // Presets que consolidan los gradientes repetidos a mano en ~45 pantallas.
 // No reemplazan los call-sites existentes esta sesión — quedan disponibles
@@ -26,6 +25,6 @@ export const GRADIENTS = {
  * call-sites a `GRADIENTS.wash(tc)` es trabajo de la migración incremental,
  * no de esta sesión.
  */
-export function wash(tc: ThemeColors): readonly [string, string, string] {
+export function wash(tc: { bg: string; surface2: string }): readonly [string, string, string] {
   return [tc.bg, tc.surface2, tc.bg] as const;
 }

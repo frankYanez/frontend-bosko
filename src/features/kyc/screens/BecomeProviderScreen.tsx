@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -22,24 +22,30 @@ import {
 } from '../services/background-check.service';
 import type { KYCStatus } from '../types/kyc.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors } from '@/stores/theme.store';
 
-const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  border:  '#EDEDF0',
-  green:   '#16A34A',
-  greenBg: '#F0FFF4',
-  blue:    '#2563EB',
-  blueBg:  '#EFF6FF',
-  amber:   '#D97706',
-  amberBg: '#FFFBEB',
-  red:     '#DC2626',
-  redBg:   '#FEF2F2',
-};
+function makeC(tc: ReturnType<typeof useThemeColors>) {
+  return {
+    primary: TOKENS.color.primary,
+    dark:    TOKENS.color.primaryDark,
+    bg:      tc.bg,
+    card:    tc.card,
+    text:    tc.text,
+    sub:     tc.textSub,
+    border:  tc.border,
+    surface2: tc.surface2,
+    green:   '#16A34A',
+    greenBg: 'rgba(22,163,74,0.12)',
+    blue:    '#2563EB',
+    blueBg:  'rgba(37,99,235,0.12)',
+    amber:   '#D97706',
+    amberBg: 'rgba(217,119,6,0.12)',
+    red:     '#DC2626',
+    redBg:   'rgba(220,38,38,0.12)',
+  };
+}
+
+type C = ReturnType<typeof makeC>;
 
 type StepState = 'done' | 'in_progress' | 'pending' | 'error' | 'locked';
 
@@ -53,13 +59,13 @@ interface Step {
   actionLabel?: string;
 }
 
-function stepColor(state: StepState) {
+function stepColor(state: StepState, C: C) {
   switch (state) {
     case 'done':        return { icon: C.green,   bg: C.greenBg, border: '#BBF7D0' };
     case 'in_progress': return { icon: C.blue,    bg: C.blueBg,  border: '#BFDBFE' };
     case 'pending':     return { icon: C.amber,   bg: C.amberBg, border: '#FDE68A' };
     case 'error':       return { icon: C.red,     bg: C.redBg,   border: '#FECACA' };
-    case 'locked':      return { icon: C.sub,     bg: '#F3F4F6', border: C.border };
+    case 'locked':      return { icon: C.sub,     bg: C.surface2, border: C.border };
   }
 }
 
@@ -73,8 +79,8 @@ function stepIcon(state: StepState): React.ComponentProps<typeof Ionicons>['name
   }
 }
 
-function StepCard({ step, index, anim }: { step: Step; index: number; anim: Animated.Value }) {
-  const colors = stepColor(step.state);
+function StepCard({ step, index, anim, C, s }: { step: Step; index: number; anim: Animated.Value; C: C; s: ReturnType<typeof makeStyles> }) {
+  const colors = stepColor(step.state, C);
   const scale  = useRef(new Animated.Value(1)).current;
   const isActionable = !!step.action && step.state !== 'locked' && step.state !== 'done';
 
@@ -136,7 +142,7 @@ function StepCard({ step, index, anim }: { step: Step; index: number; anim: Anim
   );
 }
 
-function ProviderActiveCard() {
+function ProviderActiveCard({ C, s }: { C: C; s: ReturnType<typeof makeStyles> }) {
   return (
     <View style={s.activeCard}>
       <LinearGradient colors={[C.dark, C.primary, '#c0002f']} style={s.activeGrad}>
@@ -154,6 +160,9 @@ function ProviderActiveCard() {
 
 export function BecomeProviderScreen() {
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
+  const C = useMemo(() => makeC(tc), [tc]);
+  const s = useMemo(() => makeStyles(C), [C]);
   const { profile } = useProfile();
   const { verification, loading: kycLoading, refresh: refreshKYC } = useKYC();
 
@@ -354,7 +363,7 @@ export function BecomeProviderScreen() {
           <Animated.View style={{ opacity: headerAnim }}>
 
             {/* ── Proveedor activo ──────────────────────────────────────── */}
-            {isProvider && <ProviderActiveCard />}
+            {isProvider && <ProviderActiveCard C={C} s={s} />}
 
             {/* ── Progress bar ─────────────────────────────────────────── */}
             <View style={s.progressSection}>
@@ -371,7 +380,7 @@ export function BecomeProviderScreen() {
             <View style={s.stepsSection}>
               {steps.map((step, i) => (
                 <View key={step.id}>
-                  <StepCard step={step} index={i} anim={anims[i]} />
+                  <StepCard step={step} index={i} anim={anims[i]} C={C} s={s} />
                   {i < steps.length - 1 && (
                     <View style={[
                       s.connector,
@@ -409,7 +418,7 @@ export function BecomeProviderScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C: C) => StyleSheet.create({
   root:    { flex: 1, backgroundColor: C.bg },
 
   header: {

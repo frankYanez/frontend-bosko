@@ -13,7 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
 import { KYCStatus } from '../types/kyc.types';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, wash, useThemeColors } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
 
 type StatusUIConfig = {
@@ -103,6 +103,7 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 
 export default function KYCStatusScreen() {
   const { verification, loading, refresh } = useKYC();
+  const tc = useThemeColors();
 
   const iconScale = useRef(new Animated.Value(0.9)).current;
   const iconOpacity = useRef(new Animated.Value(0)).current;
@@ -118,7 +119,7 @@ export default function KYCStatusScreen() {
 
   if (loading && !verification) {
     return (
-      <View style={[s.background, s.centered]}>
+      <View style={[s.background, s.centered, { backgroundColor: tc.bg }]}>
         <ActivityIndicator color={TOKENS.color.primary} size="large" />
       </View>
     );
@@ -131,7 +132,7 @@ export default function KYCStatusScreen() {
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.background}
@@ -139,10 +140,10 @@ export default function KYCStatusScreen() {
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={s.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={s.headerTitle}>Verificación de identidad</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Verificación de identidad</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -152,7 +153,7 @@ export default function KYCStatusScreen() {
             <MaterialIcons name={ui.icon} size={48} color={ui.color} />
           </View>
           <Text style={[s.statusTitle, { color: ui.color }]}>{ui.title}</Text>
-          <Text style={s.statusDescription}>{ui.description}</Text>
+          <Text style={[s.statusDescription, { color: tc.textSub }]}>{ui.description}</Text>
         </Animated.View>
 
         {/* Beneficios (solo si no está aprobado) */}
@@ -162,8 +163,8 @@ export default function KYCStatusScreen() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 400, delay: 200 }}
           >
-            <View style={s.card}>
-              <Text style={s.cardTitle}>¿Por qué verificar tu identidad?</Text>
+            <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+              <Text style={[s.cardTitle, { color: tc.text }]}>¿Por qué verificar tu identidad?</Text>
               {[
                 { icon: 'work', text: 'Publicar servicios en el marketplace' },
                 { icon: 'shopping-cart', text: 'Contratar servicios de otros proveedores' },
@@ -171,10 +172,10 @@ export default function KYCStatusScreen() {
                 { icon: 'security', text: 'Mayor confianza de los clientes' },
               ].map(item => (
                 <View key={item.icon} style={s.benefitRow}>
-                  <View style={s.benefitIcon}>
+                  <View style={[s.benefitIcon, { backgroundColor: tc.accent }]}>
                     <MaterialIcons name={item.icon as any} size={16} color={TOKENS.color.primary} />
                   </View>
-                  <Text style={s.benefitText}>{item.text}</Text>
+                  <Text style={[s.benefitText, { color: tc.text }]}>{item.text}</Text>
                 </View>
               ))}
             </View>
@@ -183,9 +184,9 @@ export default function KYCStatusScreen() {
 
         {/* Attempts remaining */}
         {verification && (
-          <View style={s.attemptsCard}>
-            <MaterialIcons name="info-outline" size={16} color={TOKENS.color.sub} />
-            <Text style={s.attemptsText}>
+          <View style={[s.attemptsCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
+            <MaterialIcons name="info-outline" size={16} color={tc.textSub} />
+            <Text style={[s.attemptsText, { color: tc.textSub }]}>
               Intentos utilizados: {verification.attemptCount} de 3
             </Text>
           </View>

@@ -25,10 +25,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { uploadAvatar } from '@/features/servicesUser/services/profile';
 import { TOKENS } from '@/core/design-system/tokens';
-import { Button } from '@/core/design-system';
+import { Button, useThemeColors, useIsDark, wash } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 
 export default function EditProfileScreen() {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const { profile, updateProfile, isLoading } = useProfile();
 
   const [firstName, setFirstName] = useState(profile?.firstName || '');
@@ -95,17 +97,17 @@ export default function EditProfileScreen() {
 
   return (
     <LinearGradient
-      colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.bg}
     >
       {/* Header */}
-      <BlurView intensity={25} tint="light" style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.border }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Editar Perfil</Text>
+        <Text style={[styles.headerTitle, { color: tc.text }]}>Editar Perfil</Text>
         <View style={{ width: 40 }} />
       </BlurView>
 
@@ -128,25 +130,25 @@ export default function EditProfileScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.avatarBorder}
             >
-              <View style={styles.avatarContainer}>
+              <View style={[styles.avatarContainer, { backgroundColor: tc.surface2 }]}>
                 {uploadingAvatar ? (
                   <ActivityIndicator color={TOKENS.color.primary} size="large" />
                 ) : displayUri ? (
                   <Image source={{ uri: displayUri }} style={styles.avatarImage} />
                 ) : (
-                  <View style={styles.avatarPlaceholder}>
+                  <View style={[styles.avatarPlaceholder, { backgroundColor: tc.surface2 }]}>
                     <Text style={styles.avatarInitial}>
                       {(profile?.firstName || 'U').charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
-                <View style={styles.cameraBadge}>
+                <View style={[styles.cameraBadge, { borderColor: tc.bg }]}>
                   <MaterialIcons name="camera-alt" size={16} color="#fff" />
                 </View>
               </View>
             </LinearGradient>
           </Pressable>
-          <Text style={styles.avatarHint}>Tocá para cambiar foto</Text>
+          <Text style={[styles.avatarHint, { color: tc.textSub }]}>Tocá para cambiar foto</Text>
         </MotiView>
 
         {/* Form */}
@@ -154,40 +156,40 @@ export default function EditProfileScreen() {
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 350, delay: 100 }}
-          style={styles.formCard}
+          style={[styles.formCard, { borderColor: tc.cardBorder }]}
         >
-          <BlurView intensity={25} tint="light" style={styles.formBlur}>
+          <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={styles.formBlur}>
             {/* Nombre */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Nombre</Text>
+              <Text style={[styles.label, { color: tc.text }]}>Nombre</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholder="Tu nombre"
-                placeholderTextColor="rgba(107,107,107,0.4)"
+                placeholderTextColor={tc.textMuted}
               />
             </View>
 
             {/* Apellido */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Apellido</Text>
+              <Text style={[styles.label, { color: tc.text }]}>Apellido</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
                 value={lastName}
                 onChangeText={setLastName}
                 placeholder="Tu apellido"
-                placeholderTextColor="rgba(107,107,107,0.4)"
+                placeholderTextColor={tc.textMuted}
               />
             </View>
 
             {/* Username (solo lectura, se muestra) */}
             {username ? (
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Usuario</Text>
-                <View style={styles.readonlyField}>
-                  <Text style={styles.readonlyText}>@{username}</Text>
-                  <MaterialIcons name="lock" size={14} color="rgba(107,107,107,0.4)" />
+                <Text style={[styles.label, { color: tc.text }]}>Usuario</Text>
+                <View style={[styles.readonlyField, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+                  <Text style={[styles.readonlyText, { color: tc.textSub }]}>@{username}</Text>
+                  <MaterialIcons name="lock" size={14} color={tc.textMuted} />
                 </View>
               </View>
             ) : null}
@@ -195,7 +197,7 @@ export default function EditProfileScreen() {
             {/* Teléfono */}
             <View style={styles.fieldGroup}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={styles.label}>Teléfono</Text>
+                <Text style={[styles.label, { color: tc.text }]}>Teléfono</Text>
                 {profile?.isPhoneVerified ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <MaterialIcons name="verified" size={14} color="#16a34a" />
@@ -208,41 +210,41 @@ export default function EditProfileScreen() {
                 )}
               </View>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="+54 11 1234 5678"
-                placeholderTextColor="rgba(107,107,107,0.4)"
+                placeholderTextColor={tc.textMuted}
                 keyboardType="phone-pad"
               />
             </View>
 
             {/* Ubicación */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Ubicación</Text>
+              <Text style={[styles.label, { color: tc.text }]}>Ubicación</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
                 value={location}
                 onChangeText={setLocation}
                 placeholder="Ciudad, País"
-                placeholderTextColor="rgba(107,107,107,0.4)"
+                placeholderTextColor={tc.textMuted}
               />
             </View>
 
             {/* Bio */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Bio</Text>
+              <Text style={[styles.label, { color: tc.text }]}>Bio</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Contanos sobre vos..."
-                placeholderTextColor="rgba(107,107,107,0.4)"
+                placeholderTextColor={tc.textMuted}
                 multiline
                 maxLength={500}
                 textAlignVertical="top"
               />
-              <Text style={styles.charCount}>{bio.length}/500</Text>
+              <Text style={[styles.charCount, { color: tc.textMuted }]}>{bio.length}/500</Text>
             </View>
           </BlurView>
         </MotiView>

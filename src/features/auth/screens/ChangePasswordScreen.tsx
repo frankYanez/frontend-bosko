@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -71,6 +72,7 @@ function FieldInput({
   focused,
   onFocus,
   onBlur,
+  tc,
 }: {
   label: string;
   value: string;
@@ -83,19 +85,20 @@ function FieldInput({
   focused?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
+  tc: ReturnType<typeof useThemeColors>;
 }) {
   return (
     <View style={s.fieldContainer}>
-      <Text style={s.fieldLabel}>{label}</Text>
-      <View style={[s.inputWrapper, focused && s.inputWrapperFocused]}>
-        <Ionicons name="lock-closed-outline" size={20} color={focused ? PRIMARY : TOKENS.color.sub} />
+      <Text style={[s.fieldLabel, { color: tc.text }]}>{label}</Text>
+      <View style={[s.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }, focused && s.inputWrapperFocused]}>
+        <Ionicons name="lock-closed-outline" size={20} color={focused ? PRIMARY : tc.textSub} />
         <TextInput
           ref={inputRef}
-          style={s.input}
+          style={[s.input, { color: tc.text }]}
           value={value}
           onChangeText={onChange}
           secureTextEntry={!show}
-          placeholderTextColor={TOKENS.color.sub}
+          placeholderTextColor={tc.textSub}
           placeholder="••••••••"
           autoCapitalize="none"
           autoCorrect={false}
@@ -108,7 +111,7 @@ function FieldInput({
           <Ionicons
             name={show ? 'eye-outline' : 'eye-off-outline'}
             size={20}
-            color={focused ? PRIMARY : TOKENS.color.sub}
+            color={focused ? PRIMARY : tc.textSub}
           />
         </Pressable>
       </View>
@@ -117,6 +120,7 @@ function FieldInput({
 }
 
 export default function ChangePasswordScreen() {
+  const tc = useThemeColors();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -171,7 +175,7 @@ export default function ChangePasswordScreen() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <LinearGradient
-        colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+        colors={wash(tc)}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={s.background}
@@ -188,23 +192,23 @@ export default function ChangePasswordScreen() {
             <Animated.View style={[s.inner, { opacity: fadeAnim, transform: [{ translateY }] }]}>
               {/* Header */}
               <View style={s.header}>
-                <Pressable onPress={() => router.back()} hitSlop={12} style={s.backButton}>
-                  <Ionicons name="arrow-back" size={24} color={TOKENS.color.text} />
+                <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+                  <Ionicons name="arrow-back" size={24} color={tc.text} />
                 </Pressable>
-                <Text style={s.headerTitle}>Cambiar contraseña</Text>
+                <Text style={[s.headerTitle, { color: tc.text }]}>Cambiar contraseña</Text>
                 <View style={{ width: 40 }} />
               </View>
 
               {/* Icon */}
-              <View style={s.iconCircle}>
+              <View style={[s.iconCircle, { backgroundColor: tc.accent }]}>
                 <Ionicons name="shield-checkmark" size={36} color={PRIMARY} />
               </View>
-              <Text style={s.subtitle}>
+              <Text style={[s.subtitle, { color: tc.textSub }]}>
                 Tu contraseña debe tener al menos 8 caracteres.
               </Text>
 
               {/* Card */}
-              <View style={s.card}>
+              <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
                 <FieldInput
                   label="Contraseña actual"
                   value={currentPassword}
@@ -215,6 +219,7 @@ export default function ChangePasswordScreen() {
                   focused={focused === 'current'}
                   onFocus={() => setFocused('current')}
                   onBlur={() => setFocused(null)}
+                  tc={tc}
                 />
                 <FieldInput
                   label="Nueva contraseña"
@@ -227,6 +232,7 @@ export default function ChangePasswordScreen() {
                   focused={focused === 'new'}
                   onFocus={() => setFocused('new')}
                   onBlur={() => setFocused(null)}
+                  tc={tc}
                 />
                 <StrengthBar password={newPassword} />
 
@@ -241,6 +247,7 @@ export default function ChangePasswordScreen() {
                   focused={focused === 'confirm'}
                   onFocus={() => setFocused('confirm')}
                   onBlur={() => setFocused(null)}
+                  tc={tc}
                 />
 
                 {!!error && <Text style={s.errorText}>{error}</Text>}

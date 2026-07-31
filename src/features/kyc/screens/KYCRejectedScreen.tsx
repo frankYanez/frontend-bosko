@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useKYC } from '../state/KYCContext';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, wash, useThemeColors } from '@/core/design-system';
 
 const MAX_ATTEMPTS = 3;
 
@@ -42,6 +42,7 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 }
 
 export default function KYCRejectedScreen() {
+  const tc = useThemeColors();
   const { verification, retry, loading, error, clearError } = useKYC();
 
   const attemptCount = verification?.attemptCount ?? 0;
@@ -60,7 +61,7 @@ export default function KYCRejectedScreen() {
 
   return (
     <LinearGradient
-      colors={['#fff5f5', '#fef7ff', '#f0f4ff']}
+      colors={wash(tc)}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.bg}
@@ -68,10 +69,10 @@ export default function KYCRejectedScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
-            <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
+            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
-          <Text style={s.headerTitle}>Verificación rechazada</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Verificación rechazada</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -81,7 +82,7 @@ export default function KYCRejectedScreen() {
             <MaterialIcons name="cancel" size={52} color="#dc2626" />
           </View>
           <Text style={s.title}>Verificación rechazada</Text>
-          <Text style={s.subtitle}>
+          <Text style={[s.subtitle, { color: tc.textSub }]}>
             Tu verificación de identidad no fue aprobada. Revisá el motivo y volvé a intentarlo.
           </Text>
         </Animated.View>
@@ -101,14 +102,14 @@ export default function KYCRejectedScreen() {
 
         {/* Tips */}
         <FadeSlide delay={150}>
-          <View style={s.card}>
-            <Text style={s.cardTitle}>Consejos para el reintento</Text>
+          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+            <Text style={[s.cardTitle, { color: tc.text }]}>Consejos para el reintento</Text>
             {REJECTION_TIPS.map((tip, i) => (
               <View key={i} style={s.tipRow}>
                 <View style={s.tipBullet}>
                   <Text style={s.tipNumber}>{i + 1}</Text>
                 </View>
-                <Text style={s.tipText}>{tip}</Text>
+                <Text style={[s.tipText, { color: tc.textSub }]}>{tip}</Text>
               </View>
             ))}
           </View>
@@ -116,7 +117,7 @@ export default function KYCRejectedScreen() {
 
         {/* Attempts counter */}
         <FadeSlide delay={200}>
-          <View style={s.attemptsCard}>
+          <View style={[s.attemptsCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
             <MaterialIcons
               name="refresh"
               size={18}
@@ -166,11 +167,11 @@ export default function KYCRejectedScreen() {
             </View>
           </FadeSlide>
         ) : (
-          <View style={s.supportCard}>
+          <View style={[s.supportCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
             <MaterialIcons name="support-agent" size={24} color={TOKENS.color.primary} />
             <View style={{ flex: 1 }}>
-              <Text style={s.supportTitle}>¿Necesitás ayuda?</Text>
-              <Text style={s.supportText}>
+              <Text style={[s.supportTitle, { color: tc.text }]}>¿Necesitás ayuda?</Text>
+              <Text style={[s.supportText, { color: tc.textSub }]}>
                 Contactá a nuestro equipo de soporte con tu problema de verificación.
               </Text>
             </View>

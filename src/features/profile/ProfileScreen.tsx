@@ -492,7 +492,7 @@ export const ProfileScreen: React.FC = () => {
             <>
               <StatCell value={stats.completedOrders ?? 0} label="Pedidos" color={C.green} />
               <View style={s.statDivider} />
-              <Pressable onPress={() => router.push('/(tabs)/profile/favorites')}>
+              <Pressable style={s.statCell} onPress={() => router.push('/(tabs)/profile/favorites')}>
                 <StatCell value={favCount} label="Favoritos" color={C.primary} />
               </Pressable>
             </>
@@ -716,7 +716,7 @@ const ss = StyleSheet.create({
   settingsRight:{ flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge:        { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3 },
   badgeText:    { fontSize: 12, fontWeight: '600' },
-  group:        { gap: 8 },
+  group:        { gap: 8, marginHorizontal: 16, marginTop: 22 },
   groupTitle:   { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase', paddingHorizontal: 4 },
   groupCard:    { borderRadius: 18, overflow: 'hidden', borderWidth: 1 },
 });

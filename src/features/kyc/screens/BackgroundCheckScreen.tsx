@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
 import {
   BackgroundCheckState,
@@ -26,29 +27,38 @@ import {
   uploadBackgroundCheck,
 } from '../services/background-check.service';
 
-const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  border:  '#EDEDF0',
-  green:   '#22C55E',
-  amber:   '#F59E0B',
-  red:     '#EF4444',
-  blue:    '#3B82F6',
-};
+function makeC(tc: ReturnType<typeof useThemeColors>) {
+  return {
+    primary: TOKENS.color.primary,
+    dark:    TOKENS.color.primaryDark,
+    bg:      tc.bg,
+    card:    tc.card,
+    text:    tc.text,
+    sub:     tc.textSub,
+    border:  tc.border,
+    green:   '#22C55E',
+    amber:   '#F59E0B',
+    red:     '#EF4444',
+    blue:    '#3B82F6',
+  };
+}
 
-const STATUS_CONFIG: Record<BackgroundCheckStatus, { label: string; color: string; bg: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
-  NOT_SUBMITTED: { label: 'Sin enviar',       color: C.sub,   bg: '#F3F4F6', icon: 'document-outline' },
-  UNDER_REVIEW:  { label: 'En revisión',      color: C.amber, bg: '#FFF8E1', icon: 'time-outline' },
-  APPROVED:      { label: 'Aprobado',         color: C.green, bg: '#F0FFF4', icon: 'checkmark-circle' },
-  REJECTED:      { label: 'Rechazado',        color: C.red,   bg: '#FEF2F2', icon: 'close-circle' },
-};
+function makeStatusConfig(C: ReturnType<typeof makeC>, tc: ReturnType<typeof useThemeColors>): Record<BackgroundCheckStatus, { label: string; color: string; bg: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> {
+  return {
+    NOT_SUBMITTED: { label: 'Sin enviar',       color: C.sub,   bg: tc.surface2,          icon: 'document-outline' },
+    UNDER_REVIEW:  { label: 'En revisión',      color: C.amber, bg: 'rgba(245,158,11,0.12)', icon: 'time-outline' },
+    APPROVED:      { label: 'Aprobado',         color: C.green, bg: 'rgba(34,197,94,0.12)',  icon: 'checkmark-circle' },
+    REJECTED:      { label: 'Rechazado',        color: C.red,   bg: 'rgba(239,68,68,0.12)',  icon: 'close-circle' },
+  };
+}
 
 export default function BackgroundCheckScreen() {
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
+  const isDark = useIsDark();
+  const C = useMemo(() => makeC(tc), [tc]);
+  const STATUS_CONFIG = useMemo(() => makeStatusConfig(C, tc), [C, tc]);
+  const s = useMemo(() => makeStyles(C), [C]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [state, setState]       = useState<BackgroundCheckState | null>(null);
@@ -141,7 +151,7 @@ export default function BackgroundCheckScreen() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
       {/* Header */}
       <View style={s.header}>
@@ -252,7 +262,7 @@ export default function BackgroundCheckScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C: ReturnType<typeof makeC>) => StyleSheet.create({
   root:         { flex: 1, backgroundColor: C.bg },
   header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   backBtn:      { width: 36, height: 36, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },

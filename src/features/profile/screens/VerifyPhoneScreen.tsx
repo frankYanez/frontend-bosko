@@ -25,10 +25,13 @@ import { router } from 'expo-router';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { verifyPhoneWithFirebase } from '@/features/servicesUser/services/profile';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark, wash } from '@/core/design-system';
 
 type Step = 'phone' | 'code';
 
 export default function VerifyPhoneScreen() {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const { refreshProfile } = useProfile();
 
   const [step, setStep] = useState<Step>('phone');
@@ -97,7 +100,7 @@ export default function VerifyPhoneScreen() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <LinearGradient
-        colors={['#fdf2f4', '#fef7ff', '#f0f4ff']}
+        colors={wash(tc)}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.bg}
@@ -108,15 +111,15 @@ export default function VerifyPhoneScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-              <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
-            <Text style={styles.headerTitle}>Verificar teléfono</Text>
+            <Text style={[styles.headerTitle, { color: tc.text }]}>Verificar teléfono</Text>
             <View style={{ width: 40 }} />
           </View>
 
           <View style={styles.container}>
-            <BlurView intensity={30} tint="light" style={styles.card}>
+            <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: tc.cardBorder }]}>
               {/* Ícono */}
               <View style={styles.iconWrap}>
                 <MaterialIcons
@@ -126,22 +129,22 @@ export default function VerifyPhoneScreen() {
                 />
               </View>
 
-              <Text style={styles.title}>
+              <Text style={[styles.title, { color: tc.text }]}>
                 {step === 'phone' ? 'Ingresá tu número' : 'Ingresá el código'}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.subtitle, { color: tc.textSub }]}>
                 {step === 'phone'
                   ? 'Te enviaremos un SMS con un código de verificación'
                   : `Enviamos un código de 6 dígitos a ${phone}`}
               </Text>
 
               {step === 'phone' ? (
-                <View style={styles.inputWrap}>
+                <View style={[styles.inputWrap, { backgroundColor: tc.surface, borderColor: tc.border }]}>
                   <Text style={styles.flag}>🇦🇷</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: tc.text }]}
                     placeholder="+54 9 11 1234-5678"
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
@@ -151,12 +154,12 @@ export default function VerifyPhoneScreen() {
                   />
                 </View>
               ) : (
-                <View style={styles.inputWrap}>
-                  <MaterialIcons name="lock" size={20} color={TOKENS.color.sub} />
+                <View style={[styles.inputWrap, { backgroundColor: tc.surface, borderColor: tc.border }]}>
+                  <MaterialIcons name="lock" size={20} color={tc.textSub} />
                   <TextInput
-                    style={[styles.input, styles.codeInput]}
+                    style={[styles.input, styles.codeInput, { color: tc.text }]}
                     placeholder="123456"
-                    placeholderTextColor={TOKENS.color.sub}
+                    placeholderTextColor={tc.textSub}
                     value={code}
                     onChangeText={setCode}
                     keyboardType="number-pad"

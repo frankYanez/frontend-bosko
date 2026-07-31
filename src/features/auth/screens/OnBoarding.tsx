@@ -18,9 +18,10 @@ import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/core/design-system/Colors";
+import { useThemeColors } from "@/core/design-system";
 
 const { width: W, height: H } = Dimensions.get("window");
-const CARD_H = 300;
+const CARD_H = 340; // altura fija del bottomsheet — no debe variar con el largo del texto por slide
 
 type Slide = {
   key: string;
@@ -69,6 +70,7 @@ const SLIDES: Slide[] = [
 ];
 
 export default function OnBoarding() {
+  const tc = useThemeColors();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const insets = useSafeAreaInsets();
@@ -166,7 +168,7 @@ export default function OnBoarding() {
       />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.logoRow}>
           <View style={styles.logoCircle}>
             <Image
@@ -182,10 +184,19 @@ export default function OnBoarding() {
         </Pressable>
       </View>
 
-      {/* Bottom card */}
-      <View style={[styles.card, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+      {/* Bottom card — altura fija, no se mueve con el largo del texto */}
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: tc.card,
+            height: CARD_H + Math.max(insets.bottom, 16),
+            paddingBottom: Math.max(insets.bottom, 16) + 12,
+          },
+        ]}
+      >
         {/* Drag handle */}
-        <View style={styles.handle} />
+        <View style={[styles.handle, { backgroundColor: tc.border }]} />
 
         {/* Animated dots */}
         <View style={styles.dotsRow}>
@@ -209,12 +220,17 @@ export default function OnBoarding() {
           })}
         </View>
 
-        {/* Text */}
+        {/* Text — flex:1 absorbe la diferencia de largo entre slides, así dots/botón no se mueven */}
         <Animated.View
-          style={{ opacity: titleOpacity, transform: [{ translateY: titleTranslate }] }}
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            opacity: titleOpacity,
+            transform: [{ translateY: titleTranslate }],
+          }}
         >
-          <Text style={styles.title}>{slide.title}</Text>
-          <Text style={styles.subtitle}>{slide.subtitle}</Text>
+          <Text style={[styles.title, { color: tc.text }]}>{slide.title}</Text>
+          <Text style={[styles.subtitle, { color: tc.textSub }]}>{slide.subtitle}</Text>
         </Animated.View>
 
         {/* CTA Button */}

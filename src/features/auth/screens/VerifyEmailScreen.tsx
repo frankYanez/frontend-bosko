@@ -22,10 +22,12 @@ import { Animated } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, wash } from '@/core/design-system';
 
 const CODE_LENGTH = 6;
 
 export default function VerifyEmailScreen() {
+  const tc = useThemeColors();
   const { email = '' } = useLocalSearchParams<{ email: string }>();
   const { verifyEmail } = useAuth();
 
@@ -107,14 +109,14 @@ export default function VerifyEmailScreen() {
 
   if (success) {
     return (
-      <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
+      <LinearGradient colors={wash(tc)} style={styles.bg}>
         <Animated.View style={[styles.successContainer, { opacity: fadeAnim }]}>
-          <BlurView intensity={30} tint="light" style={styles.successCard}>
-            <View style={styles.successIcon}>
+          <BlurView intensity={30} tint="light" style={[styles.successCard, { borderColor: tc.cardBorder }]}>
+            <View style={[styles.successIcon, { backgroundColor: tc.accent }]}>
               <MaterialIcons name="mark-email-read" size={56} color="#16a34a" />
             </View>
-            <Text style={styles.successTitle}>¡Email verificado!</Text>
-            <Text style={styles.successText}>
+            <Text style={[styles.successTitle, { color: tc.text }]}>¡Email verificado!</Text>
+            <Text style={[styles.successText, { color: tc.textSub }]}>
               Tu cuenta fue activada correctamente. Ya podés usar todas las funciones de Bosko.
             </Text>
             <View style={styles.btnShadow}>
@@ -139,7 +141,7 @@ export default function VerifyEmailScreen() {
   }
 
   return (
-    <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
+    <LinearGradient colors={wash(tc)} style={styles.bg}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -147,33 +149,33 @@ export default function VerifyEmailScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-              <MaterialIcons name="arrow-back" size={24} color={TOKENS.color.text} />
+            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
           </View>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
             {/* Título */}
             <View style={styles.titleRow}>
-              <View style={styles.iconCircle}>
+              <View style={[styles.iconCircle, { backgroundColor: tc.accent }]}>
                 <MaterialIcons name="email" size={32} color={TOKENS.color.primary} />
               </View>
-              <Text style={styles.title}>Verificá tu email</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: tc.text }]}>Verificá tu email</Text>
+              <Text style={[styles.subtitle, { color: tc.textSub }]}>
                 Enviamos un código de 6 dígitos a{'\n'}
                 <Text style={styles.emailHighlight}>{email}</Text>
               </Text>
             </View>
 
             {/* Inputs OTP */}
-            <BlurView intensity={30} tint="light" style={styles.otpCard}>
-              <Text style={styles.otpLabel}>Ingresá el código</Text>
+            <BlurView intensity={30} tint="light" style={[styles.otpCard, { borderColor: tc.cardBorder }]}>
+              <Text style={[styles.otpLabel, { color: tc.textSub }]}>Ingresá el código</Text>
               <View style={styles.otpRow}>
                 {digits.map((d, i) => (
                   <TextInput
                     key={i}
                     ref={ref => { inputRefs.current[i] = ref; }}
-                    style={[styles.otpInput, d ? styles.otpInputFilled : null]}
+                    style={[styles.otpInput, { borderColor: tc.border, backgroundColor: tc.surface2, color: tc.text }, d ? styles.otpInputFilled : null]}
                     value={d}
                     onChangeText={val => handleDigit(val, i)}
                     onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}

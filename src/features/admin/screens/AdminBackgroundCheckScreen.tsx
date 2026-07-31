@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { adminReview } from '@/features/kyc/services/background-check.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const C = {
   primary: TOKENS.color.primary,
@@ -45,10 +46,11 @@ interface PendingUser {
 }
 
 function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: string) => void }) {
+  const tc = useThemeColors();
   const scaleA = useRef(new Animated.Value(1)).current;
 
   return (
-    <Animated.View style={[s.card, { transform: [{ scale: scaleA }] }]}>
+    <Animated.View style={[s.card, { backgroundColor: tc.card, transform: [{ scale: scaleA }] }]}>
       {/* Header */}
       <View style={s.cardHeader}>
         {item.avatarUrl ? (
@@ -59,8 +61,8 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
           </LinearGradient>
         )}
         <View style={{ flex: 1 }}>
-          <Text style={s.cardName}>{item.firstName} {item.lastName}</Text>
-          <Text style={s.cardEmail}>{item.email}</Text>
+          <Text style={[s.cardName, { color: tc.text }]}>{item.firstName} {item.lastName}</Text>
+          <Text style={[s.cardEmail, { color: tc.textSub }]}>{item.email}</Text>
         </View>
         <View style={s.pendingBadge}>
           <Ionicons name="time-outline" size={12} color={C.amber} />
@@ -70,14 +72,14 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
 
       {/* Doc preview link */}
       <Pressable
-        style={s.docRow}
+        style={[s.docRow, { backgroundColor: tc.accent }]}
         onPress={() => {
           Alert.alert('Documento', `URL del certificado:\n${item.backgroundCheckUrl}`, [{ text: 'OK' }]);
         }}
       >
         <Ionicons name="document-text-outline" size={18} color={C.primary} />
         <Text style={s.docText}>Ver certificado subido</Text>
-        <Ionicons name="open-outline" size={14} color={C.sub} />
+        <Ionicons name="open-outline" size={14} color={tc.textSub} />
       </Pressable>
 
       {/* Acciones */}
@@ -143,6 +145,8 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
 }
 
 export default function AdminBackgroundCheckScreen() {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const insets = useSafeAreaInsets();
   const [items, setItems]         = useState<PendingUser[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -163,16 +167,16 @@ export default function AdminBackgroundCheckScreen() {
   };
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+    <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
-          <Ionicons name="arrow-back" size={20} color={C.text} />
+        <Pressable onPress={() => router.back()} style={[s.backBtn, { backgroundColor: tc.card }]} hitSlop={8}>
+          <Ionicons name="arrow-back" size={20} color={tc.text} />
         </Pressable>
         <View>
-          <Text style={s.headerTitle}>Antecedentes</Text>
-          <Text style={s.headerSub}>Panel de administración</Text>
+          <Text style={[s.headerTitle, { color: tc.text }]}>Antecedentes</Text>
+          <Text style={[s.headerSub, { color: tc.textSub }]}>Panel de administración</Text>
         </View>
         <View style={s.countBadge}>
           <Text style={s.countText}>{items.length}</Text>
@@ -190,8 +194,8 @@ export default function AdminBackgroundCheckScreen() {
           {items.length === 0 ? (
             <View style={s.empty}>
               <Ionicons name="checkmark-done-circle-outline" size={56} color={C.green} />
-              <Text style={s.emptyTitle}>Todo al día</Text>
-              <Text style={s.emptySub}>No hay antecedentes pendientes de revisión.</Text>
+              <Text style={[s.emptyTitle, { color: tc.text }]}>Todo al día</Text>
+              <Text style={[s.emptySub, { color: tc.textSub }]}>No hay antecedentes pendientes de revisión.</Text>
             </View>
           ) : (
             items.map(item => (
