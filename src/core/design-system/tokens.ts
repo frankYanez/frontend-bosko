@@ -1,21 +1,45 @@
 // /theme/tokens.ts
+// Identidad "Señal Nocturna" — el bordo se enciende en rosa señal.
 export const TOKENS = {
   color: {
-    primary: '#850021',       // bordo Bosko
-    primaryDark: '#4A0F20',
-    bg: '#FAFAFC',            // fondo claro
+    primary: '#850021',       // bordo Bosko (ancla, fijo en ambos temas)
+    primaryDark: '#3C0014',
+    primaryMid: '#A0032A',
+    signal: '#FF2D6F',        // NUEVO — acento "señal", solo en gradiente con primary
+    mint: '#00E5A0',          // NUEVO — verificado / completado / en vivo
+    bg: '#FAFAFC',
     text: '#1E1E1E',
-    sub: '#6B6B6B'
+    sub: '#6B6B6B',
+    error: '#FF4D4D',
+    warning: '#FFB020',
+    success: '#00E5A0',
   },
-  radius: { sm: 10, md: 16, lg: 22, xl: 28, pill: 999 },
+  // Colores semánticos de ciclo de vida (órdenes, KYC) — fg + bg translúcido a juego.
+  // Fuente: Sistema de patrones reutilizables, sección tokens/colors.css.
+  status: {
+    pending:   { fg: '#FFB020', bg: 'rgba(255,176,32,0.14)' },
+    accepted:  { fg: '#4C9DFF', bg: 'rgba(76,157,255,0.14)' },
+    progress:  { fg: '#B07CFF', bg: 'rgba(176,124,255,0.14)' },
+    done:      { fg: '#00E5A0', bg: 'rgba(0,229,160,0.14)' },
+    cancelled: { fg: '#FF4D4D', bg: 'rgba(255,77,77,0.14)' },
+  },
+  radius: { sm: 12, md: 16, lg: 22, xl: 26, pill: 999 }, // sm/xl actualizados (10→12, 28→26)
   shadow: {
-    soft: { shadowColor:'#000', shadowOpacity:0.08, shadowRadius:12, elevation:3 },
+    soft: { shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
     card: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.08,
       shadowRadius: 24,
       elevation: 4,
+    },
+    // NUEVO — glow rosa, reemplaza la sombra negra genérica en botones/CTAs primarios
+    glow: {
+      shadowColor: '#FF2D6F',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.4,
+      shadowRadius: 24,
+      elevation: 6,
     },
     button: {
       shadowColor: '#850021',
@@ -26,6 +50,5 @@ export const TOKENS = {
     },
   },
   glass: { bg: 'rgba(255,255,255,0.55)' },
-  text: { color: '#fff', fontWeight: '700' }
-
+  text: { color: '#fff', fontWeight: '700' },
 };

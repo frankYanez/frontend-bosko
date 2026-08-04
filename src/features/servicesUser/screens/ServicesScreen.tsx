@@ -1,4 +1,8 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+/**
+ * Rebrand "Señal Nocturna" — ServicesScreen (lista de categorías): misma lógica, estado y navegación que
+ * el archivo original. Mismas 10 gradientes curadas por índice, mismo flip-in/press-depth — el stop bordo intermedio pasa a signal, el header/search (antes hardcodeados en modo claro) pasan a vidrio dark, y el emoji de ícono cae a un Ionicons.
+ */
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -17,8 +21,9 @@ import { router } from 'expo-router';
 import { useServices } from '../state/ServicesContext';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
+import { RadialBlob } from '@/core/components/RadialBlob';
 import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors } from '@/stores/theme.store';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const { width: W } = Dimensions.get('window');
 const CARD_GAP   = 12;
@@ -29,7 +34,7 @@ const HALF_W     = (W - H_PAD * 2 - CARD_GAP) / 2;
 const GRADIENTS: [string, string, string][] = [
   ['#0f0c29', '#302b63', '#24243e'],   // 0  deep violet
   ['#134e5e', '#71b280', '#134e5e'],   // 1  teal forest
-  [TOKENS.color.primaryDark, TOKENS.color.primary, '#c0002f'],   // 2  bosko red
+  [TOKENS.color.primaryDark, TOKENS.color.primary, TOKENS.color.signal],   // 2  bosko red/signal
   ['#0d0d0d', '#2c3e50', '#4ca1af'],   // 3  midnight steel
   ['#1a1a2e', '#16213e', '#0f3460'],   // 4  deep navy
   ['#2d1b69', '#553c9a', '#6d28d9'],   // 5  purple
@@ -207,8 +212,18 @@ function CategoryCard({
           />
 
           {/* Decorative blobs */}
-          <View style={[s.blob, { width: cardW * 0.8, height: cardW * 0.8, top: -cardW * 0.3, right: -cardW * 0.2, opacity: 0.12 }]} />
-          <View style={[s.blob, { width: cardW * 0.4, height: cardW * 0.4, bottom: -20, right: cardW * 0.3, opacity: 0.08 }]} />
+          <RadialBlob
+            size={cardW * 0.8}
+            color="rgb(255,255,255)"
+            opacity={0.35}
+            style={{ position: 'absolute', top: -cardW * 0.3, right: -cardW * 0.2 }}
+          />
+          <RadialBlob
+            size={cardW * 0.4}
+            color="rgb(255,255,255)"
+            opacity={0.22}
+            style={{ position: 'absolute', bottom: -20, right: cardW * 0.3 }}
+          />
 
           {/* Service count badge */}
           {(category.servicesCount ?? 0) > 0 && (
@@ -280,6 +295,7 @@ function SearchBar({ anim }: { anim: Animated.Value }) {
 export default function ServicesScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
+  const isDark = useIsDark();
   const { categories, categoriesStatus, fetchCategories } = useServices();
 
   const loading = categoriesStatus.loading && categories.length === 0;
@@ -309,7 +325,7 @@ export default function ServicesScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={tc.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       <Header titleAnim={headerAnim} />
       <SearchBar anim={searchAnim} />
@@ -458,11 +474,6 @@ const s = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 16,
     elevation: 10,
-  },
-  blob: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
   },
   countBadge: {
     alignSelf: 'flex-end',

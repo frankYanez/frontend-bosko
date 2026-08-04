@@ -4,16 +4,14 @@ import RegisterView from "@/app/login/RegisterView";
 import { router } from "expo-router";
 
 const mockRegisterUser = jest.fn();
-const mockCheckEmailAvailability = jest.fn();
-const mockCheckUsernameAvailability = jest.fn();
-const mockIsPhoneUnique = jest.fn();
+const mockClearError = jest.fn();
 
-jest.mock("@/context/AuthContext", () => ({
+jest.mock("@/features/auth/state/AuthContext", () => ({
   useAuth: () => ({
     registerUser: mockRegisterUser,
-    checkEmailAvailability: mockCheckEmailAvailability,
-    checkUsernameAvailability: mockCheckUsernameAvailability,
-    isPhoneUnique: mockIsPhoneUnique,
+    isLoading: false,
+    error: null,
+    clearError: mockClearError,
   }),
 }));
 
@@ -27,117 +25,107 @@ jest.mock("expo-router", () => ({
 describe("RegisterView", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCheckEmailAvailability.mockResolvedValue(true);
-    mockCheckUsernameAvailability.mockResolvedValue(true);
-    mockIsPhoneUnique.mockResolvedValue(true);
   });
 
-  it("permite completar el carrusel y registrar al usuario", async () => {
+  it("permite completar los 4 pasos y registrar al usuario", async () => {
     mockRegisterUser.mockResolvedValueOnce({});
 
-    const { getByPlaceholderText, getByText } = render(
-      <RegisterView toLogin={jest.fn()} />
+    const { getByPlaceholderText, getByText, getAllByText } = render(
+      <RegisterView toRegister={jest.fn()} />
     );
 
+    // Paso 1: Nombre
+    fireEvent.changeText(getByPlaceholderText("Tu nombre"), "Nuevo");
+    await act(async () => {
+      fireEvent.press(getByText("Siguiente"));
+    });
+
+    // Paso 2: Apellido
+    fireEvent.changeText(getByPlaceholderText("Tu apellido"), "Usuario");
+    await act(async () => {
+      fireEvent.press(getByText("Siguiente"));
+    });
+
+    // Paso 3: Email
     fireEvent.changeText(
-      getByPlaceholderText("nombre@ejemplo.com"),
+      getByPlaceholderText("tucorreo@ejemplo.com"),
       "nuevo@bosko.com"
     );
-    fireEvent.changeText(
-      getByPlaceholderText("Nombre y apellido"),
-      "Nuevo Usuario"
-    );
-
     await act(async () => {
       fireEvent.press(getByText("Siguiente"));
     });
 
-    await waitFor(() =>
-      expect(mockCheckEmailAvailability).toHaveBeenCalledWith("nuevo@bosko.com")
-    );
-
-    fireEvent.changeText(getByPlaceholderText("tu_usuario"), "nuevoUsuario");
-    fireEvent.changeText(getByPlaceholderText("Ej. Argentina"), "Argentina");
-
-    await act(async () => {
-      fireEvent.press(getByText("Siguiente"));
-    });
-
-    await waitFor(() =>
-      expect(mockCheckUsernameAvailability).toHaveBeenCalledWith("nuevoUsuario")
-    );
-
-    fireEvent.changeText(
-      getByPlaceholderText("Dónde vives actualmente"),
-      "Argentina"
-    );
-    fireEvent.changeText(
-      getByPlaceholderText("+54 11 1234 5678"),
-      "+54 11 2222 3333"
-    );
-
-    await act(async () => {
-      fireEvent.press(getByText("Siguiente"));
-    });
-
-    await waitFor(() =>
-      expect(mockIsPhoneUnique).toHaveBeenCalledWith("+54 11 2222 3333")
-    );
-
+    // Paso 4: Contraseña
     fireEvent.changeText(
       getByPlaceholderText("Mínimo 8 caracteres"),
       "Password1!"
     );
-    fireEvent.changeText(
-      getByPlaceholderText("Repite tu contraseña"),
-      "Password1!"
-    );
-
     await act(async () => {
-      fireEvent.press(getByText("Crear cuenta"));
+      fireEvent.press(getAllByText("Crear cuenta")[1]);
     });
 
     await waitFor(() =>
       expect(mockRegisterUser).toHaveBeenCalledWith({
+        firstName: "Nuevo",
+        lastName: "Usuario",
         email: "nuevo@bosko.com",
-        fullName: "Nuevo Usuario",
-        username: "nuevoUsuario",
-        nationality: "Argentina",
-        countryOfResidence: "Argentina",
-        phone: "+54 11 2222 3333",
         password: "Password1!",
       })
     );
 
     await waitFor(() =>
-      expect(router.push).toHaveBeenCalledWith("/login/termsAndConditions")
+      expect(router.replace).toHaveBeenCalledWith(
+        "/auth/verify-email?email=nuevo%40bosko.com"
+      )
     );
   });
 
-  it("muestra mensajes cuando el correo ya está registrado", async () => {
-    mockCheckEmailAvailability.mockResolvedValueOnce(false);
-
-    const { getByPlaceholderText, getByText, findByText } = render(
-      <RegisterView toLogin={jest.fn()} />
-    );
-
-    fireEvent.changeText(
-      getByPlaceholderText("nombre@ejemplo.com"),
-      "repetido@bosko.com"
-    );
-    fireEvent.changeText(
-      getByPlaceholderText("Nombre y apellido"),
-      "Usuario Existente"
+  it("no avanza si el campo del paso actual está vacío", async () => {
+    const { getByText, findByText } = render(
+      <RegisterView toRegister={jest.fn()} />
     );
 
     await act(async () => {
       fireEvent.press(getByText("Siguiente"));
     });
 
-    expect(
-      await findByText("Este correo electrónico ya está registrado")
-    ).toBeTruthy();
+    expect(await findByText("Este campo es obligatorio")).toBeTruthy();
     expect(mockRegisterUser).not.toHaveBeenCalled();
-    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("muestra el error del backend cuando falla el registro", async () => {
+    mockRegisterUser.mockRejectedValueOnce({
+      response: { data: { message: "El correo ya está registrado" } },
+    });
+
+    const { getByPlaceholderText, getByText, getAllByText } = render(
+      <RegisterView toRegister={jest.fn()} />
+    );
+
+    fireEvent.changeText(getByPlaceholderText("Tu nombre"), "Nuevo");
+    await act(async () => {
+      fireEvent.press(getByText("Siguiente"));
+    });
+    fireEvent.changeText(getByPlaceholderText("Tu apellido"), "Usuario");
+    await act(async () => {
+      fireEvent.press(getByText("Siguiente"));
+    });
+    fireEvent.changeText(
+      getByPlaceholderText("tucorreo@ejemplo.com"),
+      "repetido@bosko.com"
+    );
+    await act(async () => {
+      fireEvent.press(getByText("Siguiente"));
+    });
+    fireEvent.changeText(
+      getByPlaceholderText("Mínimo 8 caracteres"),
+      "Password1!"
+    );
+    await act(async () => {
+      fireEvent.press(getAllByText("Crear cuenta")[1]);
+    });
+
+    await waitFor(() => expect(mockRegisterUser).toHaveBeenCalled());
+    expect(router.replace).not.toHaveBeenCalled();
   });
 });

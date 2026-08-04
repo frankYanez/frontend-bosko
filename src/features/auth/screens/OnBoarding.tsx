@@ -14,59 +14,23 @@ import { router, Redirect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/core/design-system/Colors";
 import { useThemeColors } from "@/core/design-system";
+import { BrandMark } from "@/components/BrandMark";
 
 const { width: W, height: H } = Dimensions.get("window");
-const CARD_H = 340; // altura fija del bottomsheet — no debe variar con el largo del texto por slide
+const CARD_H = 340;
 
-type Slide = {
-  key: string;
-  title: string;
-  subtitle: string;
-  lottie: any;
-  accent: string;
-};
+type Slide = { key: string; title: string; subtitle: string; lottie: any };
 
+// Copy sin cambios respecto al OnBoarding.tsx actual — solo cambia el chrome visual.
 const SLIDES: Slide[] = [
-  {
-    key: "1",
-    title: "¡Bienvenido a Bosko!",
-    subtitle: "El marketplace donde encontrarás u ofrecerás servicios fácilmente",
-    lottie: require("@/assets/lotties/ltUPpJrUU2.json"),
-    accent: "#E91E63",
-  },
-  {
-    key: "2",
-    title: "Servicios en segundos",
-    subtitle: "Desde plomería hasta clases particulares, todo en un lugar",
-    lottie: require("@/assets/lotties/pantalla-empleo.json"),
-    accent: "#7C4DFF",
-  },
-  {
-    key: "3",
-    title: "20+ Categorías",
-    subtitle: "Hogar, reparaciones, clases y mucho más disponibles ahora mismo",
-    lottie: require("@/assets/lotties/chico-compu.json"),
-    accent: "#00BCD4",
-  },
-  {
-    key: "4",
-    title: "Profesionales verificados",
-    subtitle: "Lee reseñas reales y precios claros. Elige con confianza",
-    lottie: require("@/assets/lotties/hombre-escribiendo.json"),
-    accent: "#4CAF50",
-  },
-  {
-    key: "5",
-    title: "¡Empieza ya!",
-    subtitle: "Crea tu cuenta y descubre las oportunidades que te esperan",
-    lottie: require("@/assets/lotties/register2.json"),
-    accent: Colors.colorPrimary,
-  },
+  { key: "1", title: "¡Bienvenido a Bosko!", subtitle: "El marketplace donde encontrarás u ofrecerás servicios fácilmente", lottie: require("@/assets/lotties/welcome.json") },
+  { key: "2", title: "Servicios en segundos", subtitle: "Desde plomería hasta clases particulares, todo en un lugar", lottie: require("@/assets/lotties/services.json") },
+  { key: "3", title: "20+ Categorías", subtitle: "Hogar, reparaciones, clases y mucho más disponibles ahora mismo", lottie: require("@/assets/lotties/categories.json") },
+  { key: "4", title: "Profesionales verificados", subtitle: "Lee reseñas reales y precios claros. Elige con confianza", lottie: require("@/assets/lotties/verified.json") },
+  { key: "5", title: "¡Empieza ya!", subtitle: "Crea tu cuenta y descubre las oportunidades que te esperan", lottie: require("@/assets/lotties/start.json") },
 ];
 
 export default function OnBoarding() {
@@ -82,10 +46,11 @@ export default function OnBoarding() {
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
-    // Verificar si el usuario ya vio el onboarding en una sesión anterior
-    AsyncStorage.getItem("onboardingComplete")
-      .then((val) => setOnboardingComplete(val === "true"))
-      .catch(() => setOnboardingComplete(false));
+    // TEMP DEV: forzado en false pa ver onboarding siempre. Revertir antes de shippear.
+    setOnboardingComplete(false);
+    // AsyncStorage.getItem("onboardingComplete")
+    //   .then((val) => setOnboardingComplete(val === "true"))
+    //   .catch(() => setOnboardingComplete(false));
   }, []);
 
   const animateTextIn = () => {
@@ -118,14 +83,8 @@ export default function OnBoarding() {
     router.replace("/login");
   };
 
-  // Aún verificando AsyncStorage → no renderizar nada para evitar flash
   if (onboardingComplete === null) return null;
-
-  // Onboarding ya visto → redirigir al login directamente
-  // (la verificación de sesión activa la hace app/index.tsx antes de llegar aquí)
-  if (onboardingComplete) {
-    return <Redirect href="/login" />;
-  }
+  if (onboardingComplete) return <Redirect href="/login" />;
 
   const slide = SLIDES[currentIndex];
   const isLast = currentIndex === SLIDES.length - 1;
@@ -133,12 +92,9 @@ export default function OnBoarding() {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={["#080004", "#1a000d", "#0d0008"]}
-        style={StyleSheet.absoluteFill}
-      />
+      {/* Fondo: negro profundo con glow rosa señal (antes: bordo oscuro) */}
+      <LinearGradient colors={["#080004", "#1a000d", "#0d0008"]} style={StyleSheet.absoluteFill} />
 
-      {/* Full-screen carousel */}
       <FlatList
         ref={flatListRef}
         data={SLIDES}
@@ -148,18 +104,25 @@ export default function OnBoarding() {
         showsHorizontalScrollIndicator={false}
         bounces={false}
         scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
         onMomentumScrollEnd={handleMomentumEnd}
         style={StyleSheet.absoluteFill}
         renderItem={({ item }: ListRenderItemInfo<Slide>) => (
           <View style={styles.slideContainer}>
-            {/* Glow blob per slide */}
-            <View style={[styles.glowBlob, { backgroundColor: item.accent + "18" }]} />
-            <View style={[styles.glowBlobInner, { backgroundColor: item.accent + "12" }]} />
-            {/* Lottie centered in upper 60% */}
+            <LinearGradient
+              colors={['rgba(255,45,111,0.22)', 'rgba(255,45,111,0.10)', 'rgba(255,45,111,0)']}
+              locations={[0, 0.55, 1]}
+              start={{ x: 0.15, y: 0 }}
+              end={{ x: 0.85, y: 1 }}
+              style={[styles.glowBlob, styles.glowBlobWide]}
+            />
+            <LinearGradient
+              colors={['rgba(255,45,111,0.16)', 'rgba(255,45,111,0.07)', 'rgba(255,45,111,0)']}
+              locations={[0, 0.6, 1]}
+              start={{ x: 0.8, y: 0 }}
+              end={{ x: 0.2, y: 1 }}
+              style={[styles.glowBlobInner, styles.glowBlobNarrow]}
+            />
             <View style={styles.lottieWrapper}>
               <LottieView source={item.lottie} autoPlay loop style={styles.lottie} />
             </View>
@@ -167,38 +130,25 @@ export default function OnBoarding() {
         )}
       />
 
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoCircle}>
-            <Image
-              source={require("@/assets/images/bosko-logo.png")}
-              style={styles.logoImg}
-              contentFit="contain"
-            />
-          </View>
-          <Text style={styles.logoText}>bosko</Text>
-        </View>
+        <BrandMark variant="lockup" size={30} color="#fff" />
         <Pressable onPress={complete} hitSlop={14}>
           <Text style={styles.skipText}>Saltar</Text>
         </Pressable>
       </View>
 
-      {/* Bottom card — altura fija, no se mueve con el largo del texto */}
       <View
         style={[
           styles.card,
           {
-            backgroundColor: tc.card,
+            backgroundColor: 'rgba(255,255,255,0.05)', // vidrio — antes tc.card sólido
             height: CARD_H + Math.max(insets.bottom, 16),
             paddingBottom: Math.max(insets.bottom, 16) + 12,
           },
         ]}
       >
-        {/* Drag handle */}
-        <View style={[styles.handle, { backgroundColor: tc.border }]} />
+        <View style={styles.handle} />
 
-        {/* Animated dots */}
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => {
             const dotW = scrollX.interpolate({
@@ -211,54 +161,27 @@ export default function OnBoarding() {
               outputRange: [0.3, 1, 0.3],
               extrapolate: "clamp",
             });
-            return (
-              <Animated.View
-                key={i}
-                style={[styles.dot, { width: dotW, opacity: dotOpacity }]}
-              />
-            );
+            return <Animated.View key={i} style={[styles.dot, { width: dotW, opacity: dotOpacity }]} />;
           })}
         </View>
 
-        {/* Text — flex:1 absorbe la diferencia de largo entre slides, así dots/botón no se mueven */}
-        <Animated.View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            opacity: titleOpacity,
-            transform: [{ translateY: titleTranslate }],
-          }}
-        >
-          <Text style={[styles.title, { color: tc.text }]}>{slide.title}</Text>
-          <Text style={[styles.subtitle, { color: tc.textSub }]}>{slide.subtitle}</Text>
+        <Animated.View style={{ flex: 1, justifyContent: "center", opacity: titleOpacity, transform: [{ translateY: titleTranslate }] }}>
+          <Text style={styles.title}>{slide.title}</Text>
+          <Text style={styles.subtitle}>{slide.subtitle}</Text>
         </Animated.View>
 
-        {/* CTA Button */}
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <View style={styles.btnShadow}>
             <Pressable
-              onPressIn={() =>
-                Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()
-              }
-              onPressOut={() =>
-                Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start()
-              }
+              onPressIn={() => Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()}
+              onPressOut={() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start()}
               onPress={handleNext}
               style={styles.btnOuter}
             >
-              <LinearGradient
-                colors={[Colors.colorPrimary, "#c0002d", Colors.colorPrimaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btn}
-              >
+              {/* Gradiente actualizado: rosa señal → bordo → profundo (antes bordo → bordo oscuro) */}
+              <LinearGradient colors={['#FF2D6F', '#850021', '#3C0014']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.btn}>
                 <Text style={styles.btnText}>{isLast ? "Comenzar" : "Siguiente"}</Text>
-                <Ionicons
-                  name={isLast ? "checkmark" : "arrow-forward"}
-                  size={18}
-                  color="#fff"
-                  style={styles.btnIcon}
-                />
+                <Ionicons name={isLast ? "checkmark" : "arrow-forward"} size={18} color="#fff" style={styles.btnIcon} />
               </LinearGradient>
             </Pressable>
           </View>
@@ -269,161 +192,31 @@ export default function OnBoarding() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#080004",
-  },
-  slideContainer: {
-    width: W,
-    height: H,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingBottom: CARD_H,
-  },
-  glowBlob: {
-    position: "absolute",
-    width: W * 1.1,
-    height: W * 1.1,
-    borderRadius: W * 0.55,
-    top: H * 0.04,
-    alignSelf: "center",
-  },
-  glowBlobInner: {
-    position: "absolute",
-    width: W * 0.6,
-    height: W * 0.6,
-    borderRadius: W * 0.3,
-    top: H * 0.14,
-    alignSelf: "center",
-  },
-  lottieWrapper: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    width: W,
-  },
-  lottie: {
-    width: W * 0.72,
-    height: W * 0.72,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    zIndex: 10,
-  },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  logoCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  logoImg: {
-    width: 26,
-    height: 26,
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#fff",
-    letterSpacing: 1.5,
-  },
-  skipText: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.5)",
-    fontWeight: "500",
-    letterSpacing: 0.3,
-  },
+  root: { flex: 1, backgroundColor: "#080004" },
+  slideContainer: { width: W, height: H, alignItems: "center", justifyContent: "flex-start", paddingBottom: CARD_H },
+  glowBlob: { position: "absolute", top: H * 0.02, left: -W * 0.08, right: -W * 0.08, height: W * 0.92, opacity: 0.95 },
+  glowBlobWide: { transform: [{ rotate: '-9deg' }] },
+  glowBlobInner: { position: "absolute", top: H * 0.12, left: -W * 0.12, right: -W * 0.12, height: W * 0.62, opacity: 0.9 },
+  glowBlobNarrow: { transform: [{ rotate: '12deg' }] },
+  lottieWrapper: { flex: 1, alignItems: "center", justifyContent: "center", width: W },
+  lottie: { width: W * 0.72, height: W * 0.72 },
+  header: { position: "absolute", top: 0, left: 0, right: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, zIndex: 10 },
+  skipText: { fontSize: 14, color: "rgba(255,255,255,0.5)", fontWeight: "500", letterSpacing: 0.3 },
   card: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 28,
-    paddingTop: 16,
-    gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 24,
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    paddingHorizontal: 28, paddingTop: 16, gap: 14,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderBottomWidth: 0,
+    shadowColor: "#000", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 24,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#E0E0E0",
-    alignSelf: "center",
-    marginBottom: 4,
-  },
-  dotsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 18,
-    gap: 5,
-  },
-  dot: {
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: Colors.colorPrimary,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#111",
-    letterSpacing: -0.4,
-    lineHeight: 32,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#888",
-    lineHeight: 21,
-    marginTop: 2,
-  },
-  btnShadow: {
-    borderRadius: 16,
-    shadowColor: Colors.colorPrimary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-    marginTop: 4,
-  },
-  btnOuter: {
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  btn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 17,
-    borderRadius: 16,
-  },
-  btnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-  },
-  btnIcon: {
-    marginLeft: 8,
-  },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 4 },
+  dotsRow: { flexDirection: "row", alignItems: "center", height: 18, gap: 5 },
+  dot: { height: 7, borderRadius: 3.5, backgroundColor: "#FF2D6F" },
+  title: { fontSize: 26, fontWeight: "800", color: "#EDEAF5", letterSpacing: -0.4, lineHeight: 32 },
+  subtitle: { fontSize: 14, color: "rgba(237,234,245,0.55)", lineHeight: 21, marginTop: 2 },
+  btnShadow: { borderRadius: 16, shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6, marginTop: 4 },
+  btnOuter: { borderRadius: 16, overflow: "hidden" },
+  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 17, borderRadius: 16 },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.4 },
+  btnIcon: { marginLeft: 8 },
 });

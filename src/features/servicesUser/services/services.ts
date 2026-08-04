@@ -10,6 +10,7 @@
 
 import api from "@/core/api/axiosinstance";
 import { Service } from "./service";
+import type { ServiceSummary } from "@/types/services";
 
 /**
  * fetchAllServices
@@ -45,7 +46,7 @@ export async function fetchServiceById(id: string): Promise<Service> {
   };
 }
 
-export async function fetchFeaturedServices(): Promise<Service[]> {
+export async function fetchFeaturedServices(): Promise<ServiceSummary[]> {
   const { data } = await api.get<any>('/services/featured');
   return (data as any)?.data ?? (Array.isArray(data) ? data : []);
 }

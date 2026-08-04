@@ -9,22 +9,17 @@
  */
 
 import React from 'react';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import OnBoarding from '@/features/auth/screens/OnBoarding';
-import { TOKENS } from '@/core/design-system/tokens';
+import { AnimatedSplashScreen } from '@/features/auth/screens/AnimatedSplashScreen';
 
 export default function IndexScreen() {
   const { authLoaded, isAuthenticated } = useAuth();
 
-  // Mientras AuthProvider verifica la sesión guardada, no renderizar nada visible
+  // Mientras AuthProvider verifica la sesión guardada, mostrar el splash animado
   if (!authLoaded) {
-    return (
-      <View style={styles.splash}>
-        <ActivityIndicator size="large" color={TOKENS.color.primary} />
-      </View>
-    );
+    return <AnimatedSplashScreen onDone={() => {}} />;
   }
 
   // Sesión activa → ir al dashboard sin pasar por onboarding
@@ -40,12 +35,3 @@ export default function IndexScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  splash: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-});

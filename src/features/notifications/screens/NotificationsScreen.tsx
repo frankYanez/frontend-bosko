@@ -1,3 +1,7 @@
+/**
+ * Rebrand "Señal Nocturna" — NotificationsScreen: misma lógica, estado y navegación que
+ * el archivo original. Mismo agrupamiento por tipo, swipe/delete y polling — TYPE_ICON pasa de pasteles claros a tintes translúcidos legibles en dark, wash de fondo a glow rosa, header/cards a vidrio.
+ */
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -25,7 +29,7 @@ const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
   order_completed: { name: 'done-all', color: '#065f46', bg: '#d1fae5' },
   order_cancelled: { name: 'block', color: '#92400e', bg: '#fef3c7' },
   payment_received: { name: 'attach-money', color: '#065f46', bg: '#d1fae5' },
-  kyc_approved: { name: 'verified-user', color: TOKENS.color.primary, bg: 'rgba(133,0,33,0.1)' },
+  kyc_approved: { name: 'verified-user', color: TOKENS.color.signal, bg: 'rgba(133,0,33,0.1)' },
   kyc_rejected: { name: 'gpp-bad', color: '#dc2626', bg: '#fee2e2' },
   message: { name: 'chat-bubble', color: '#1e40af', bg: '#dbeafe' },
   default: { name: 'notifications', color: TOKENS.color.sub, bg: 'rgba(100,100,120,0.1)' },
@@ -119,7 +123,7 @@ function EmptyState() {
   return (
     <View style={s.emptyWrap}>
       <Animated.View style={{ alignItems: 'center', gap: 12, opacity, transform: [{ scale }] }}>
-        <MaterialIcons name="notifications-none" size={64} color="rgba(133,0,33,0.2)" />
+        <MaterialIcons name="notifications-none" size={64} color="rgba(255,45,111,0.25)" />
         <Text style={[s.emptyTitle, { color: tc.text }]}>Sin notificaciones</Text>
         <Text style={[s.emptyText, { color: tc.textSub }]}>
           Aquí aparecerán tus notificaciones de órdenes, pagos y más.
@@ -159,7 +163,7 @@ export default function NotificationsScreen() {
 
   return (
     <LinearGradient
-      colors={wash(tc)}
+      colors={['#07060C', '#1a000d', '#0d0008']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={s.bg}
@@ -179,7 +183,7 @@ export default function NotificationsScreen() {
         <View style={s.headerActions}>
           {unreadCount > 0 && (
             <Pressable onPress={markAllRead} hitSlop={8} style={[s.actionBtn, { backgroundColor: tc.surface }]}>
-              <MaterialIcons name="done-all" size={20} color={TOKENS.color.primary} />
+              <MaterialIcons name="done-all" size={20} color={TOKENS.color.signal} />
             </Pressable>
           )}
           {notifications.length > 0 && (
@@ -192,7 +196,7 @@ export default function NotificationsScreen() {
 
       {loading && notifications.length === 0 && (
         <View style={s.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.primary} size="large" />
+          <ActivityIndicator color={TOKENS.color.signal} size="large" />
         </View>
       )}
 
@@ -212,7 +216,7 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={() => load()}
-            colors={[TOKENS.color.primary]}
+            colors={[TOKENS.color.signal]}
           />
         }
       />
@@ -242,7 +246,7 @@ const s = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
   countBadge: {
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -276,7 +280,7 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: 'rgba(255,255,255,0.09)',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     position: 'relative',
@@ -288,7 +292,7 @@ const s = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
   },
   itemIcon: {
     width: 42,

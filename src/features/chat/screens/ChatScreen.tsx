@@ -1,4 +1,8 @@
 /**
+ * Rebrand "Señal Nocturna" — ChatScreen (chat individual): misma lógica, estado y navegación que
+ * el archivo original. Mismo WebSocket + polling fallback, mismas burbujas de audio/video/documento/imagen — el acento bordo pasa a signal (burbuja propia, waveform, íconos de documento).
+ */
+/**
  * ChatScreen — Chat individual ligado a una orden.
  * WebSocket en tiempo real con fallback a polling REST cada 5s.
  * Soporta texto, imágenes y mensajes de audio (estilo WhatsApp).
@@ -92,8 +96,8 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
   const timeLabel = !status.isLoaded || durationMs === 0
     ? '--:--'
     : formatDuration(status.playing || positionMs > 0 ? positionMs : durationMs);
-  const accent = isMine ? '#fff' : TOKENS.color.primary;
-  const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(133,0,33,0.25)';
+  const accent = isMine ? '#fff' : TOKENS.color.signal;
+  const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(255,45,111,0.3)';
 
   return (
     <View style={[styles.audioBubble]}>
@@ -132,7 +136,7 @@ function VideoBubble({ uri }: { uri: string }) {
 // ── Burbuja de documento ─────────────────────────────────────────────────────
 function DocumentBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
   const filename = msg.mediaUrl?.split('/').pop()?.split('?')[0] ?? 'documento';
-  const accent = isMine ? 'rgba(255,255,255,0.9)' : TOKENS.color.primary;
+  const accent = isMine ? 'rgba(255,255,255,0.9)' : TOKENS.color.signal;
   return (
     <Pressable
       onPress={() => msg.mediaUrl && Linking.openURL(msg.mediaUrl)}
@@ -282,7 +286,7 @@ function RecordingIndicator({ duration, locked, lockProgress }: { duration: numb
       <Animated.View style={[styles.recordingDot, { transform: [{ scale: pulse }] }]} />
       <Text style={styles.recordingTimer}>{formatDuration(duration * 1000)}</Text>
       {locked ? null : progress > 0.1 ? (
-        <MaterialIcons name="lock" size={16} color={TOKENS.color.primary} style={{ opacity: progress }} />
+        <MaterialIcons name="lock" size={16} color={TOKENS.color.signal} style={{ opacity: progress }} />
       ) : (
         <Text style={[styles.recordingHint, { color: tc.textSub }]}>← cancelar  ↑ bloquear</Text>
       )}
@@ -751,7 +755,7 @@ export default function ChatScreen() {
   if (loading) {
     return (
       <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
-        <ActivityIndicator color={TOKENS.color.primary} size="large" />
+        <ActivityIndicator color={TOKENS.color.signal} size="large" />
       </View>
     );
   }
@@ -786,7 +790,7 @@ export default function ChatScreen() {
             hitSlop={12}
             onPress={() => router.push({ pathname: '/orders/[id]', params: { id: conversation.orderId } })}
           >
-            <MaterialIcons name="assignment" size={24} color={TOKENS.color.primary} />
+            <MaterialIcons name="assignment" size={24} color={TOKENS.color.signal} />
           </Pressable>
         )}
       </BlurView>
@@ -807,7 +811,7 @@ export default function ChatScreen() {
         windowSize={10}
         onEndReached={() => { if (convId) loadOlderMessages(convId); }}
         onEndReachedThreshold={0.2}
-        ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.primary} style={{ padding: 12 }} /> : null}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.signal} style={{ padding: 12 }} /> : null}
         ListEmptyComponent={
           <View style={styles.emptyChat}>
             <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
@@ -864,7 +868,7 @@ export default function ChatScreen() {
           {isRecording || recordingLocked ? (
             <RecordingIndicator duration={recordingDuration} locked={recordingLocked} lockProgress={lockProgress} />
           ) : sendingAudio ? (
-            <ActivityIndicator color={TOKENS.color.primary} size="small" style={{ flex: 1 }} />
+            <ActivityIndicator color={TOKENS.color.signal} size="small" style={{ flex: 1 }} />
           ) : (
             <TextInput
               style={[styles.input, { color: tc.text }]}
@@ -958,7 +962,7 @@ const styles = StyleSheet.create({
   headerAvatar: { width: 40, height: 40, borderRadius: 20 },
   headerAvatarPlaceholder: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     alignItems: 'center', justifyContent: 'center',
   },
   headerAvatarText: { fontSize: 16, fontWeight: '700', color: '#fff' },
@@ -981,7 +985,7 @@ const styles = StyleSheet.create({
   },
   bubbleAvatarText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
-  bubbleMine: { backgroundColor: TOKENS.color.primary, borderBottomRightRadius: 4 },
+  bubbleMine: { backgroundColor: TOKENS.color.signal, borderBottomRightRadius: 4 },
   bubbleOther: {
     borderBottomLeftRadius: 4,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
@@ -992,7 +996,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#111',
     borderWidth: 2.5,
-    borderColor: TOKENS.color.primary,
+    borderColor: TOKENS.color.signal,
   },
   mediaTimestampOverlay: {
     position: 'absolute', bottom: 6, right: 8,
@@ -1070,7 +1074,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 15, maxHeight: 100, paddingTop: 4 },
   rightBtn: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     alignItems: 'center', justifyContent: 'center',
   },
   rightBtnRecording: { backgroundColor: '#dc2626' },

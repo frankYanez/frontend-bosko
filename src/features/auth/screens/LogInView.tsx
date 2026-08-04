@@ -1,6 +1,8 @@
 /**
  * LogInView — Pantalla de inicio de sesión.
- * Diseño glassmorphism con gradiente de fondo y tarjeta glass translúcida.
+ * Rebrand "Señal Nocturna": insignia bo, glass sobre negro profundo, usa los
+ * componentes reales del design system (`Input`, `Button`) para los campos y
+ * el CTA en vez de duplicar estilos a mano.
  */
 
 import React, { useRef, useState } from 'react';
@@ -14,55 +16,56 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator,
   Dimensions,
+  Animated,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
-import { AuthBackgroundVideo } from '@/core/components/AuthBackgroundVideo';
-import { Image } from 'expo-image';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Animated } from 'react-native';
+import { Input } from '@/core/components/Input';
+import { Button } from '@/core/design-system';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
+import { BrandMark } from '@/components/BrandMark';
 
 const { width } = Dimensions.get('window');
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const { login, isLoading, error, clearError } = useAuth();
-  const tc = useThemeColors();
-  const isDark = useIsDark();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const glow = useRef(new Animated.Value(0.7)).current;
 
   React.useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, damping: 20, useNativeDriver: true }),
     ]).start();
+
+    // Glow de fondo pulsante — mismo lenguaje que AnimatedSplashScreen, le da vida al gradiente estático
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, { toValue: 1, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(glow, { toValue: 0.7, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    ).start();
   }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
 
   const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-
-    // Validación básica
     if (!email.trim() || !password.trim()) {
       setLocalError('Por favor completa todos los campos');
       return;
     }
     setLocalError('');
     clearError();
-
     try {
       await login({ email: email.trim().toLowerCase(), password });
       router.replace('/(tabs)');
@@ -76,40 +79,47 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.background}>
-        {/* Video de fondo, siempre reproduciendo, con wash oscuro sutil fijo */}
-        <AuthBackgroundVideo />
+        <LinearGradient colors={['#0A0910', '#1a000d', '#0A0910']} style={StyleSheet.absoluteFill} />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.glow,
+            {
+              opacity: glow.interpolate({ inputRange: [0.7, 1], outputRange: [0.5, 1] }),
+              transform: [{ scale: glow.interpolate({ inputRange: [0.7, 1], outputRange: [1, 1.18] }) }, { rotate: '-8deg' }],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={['rgba(255,45,111,0.24)', 'rgba(255,45,111,0.10)', 'rgba(255,45,111,0)']}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <Animated.View
-            style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
-          >
-            {/* Logo */}
-            <Image
-              source={require('@/assets/images/bosko-logo.png')}
-              style={styles.logo}
-              contentFit="contain"
-            />
-            <Text style={styles.brand}>Bosko</Text>
-            <Text style={[styles.subtitle, { color: tc.textSub }]}>Encontrá o publicá servicios fácilmente</Text>
+          <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            <BrandMark variant="mark" size={68} />
+            <View style={{ height: 14 }} />
+            <BrandMark variant="wordmark" size={30} color="#fff" tagline />
+            <View style={{ height: 28 }} />
 
-            {/* Tarjeta glass — Android: elevation dibuja rectángulo si la view es transparente,
-                necesita backgroundColor opaco en la misma view para respetar el borderRadius */}
-            <View style={[styles.cardGlow, { backgroundColor: tc.card }]}>
-            <View style={[styles.cardShadow, { backgroundColor: tc.card }]}>
-              <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.card}>
-                <Text style={[styles.cardTitle, { color: tc.text }]}>Iniciar sesión</Text>
+            <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+            <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+              <BlurView intensity={30} tint="dark" style={styles.card}>
+                <Text style={styles.cardTitle}>Iniciar sesión</Text>
 
-                {/* Email */}
-                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2 }, displayError ? styles.inputError : null]}>
-                  <MaterialIcons name="email" size={20} color={tc.textSub} />
-                  <TextInput
+                <View style={styles.fieldGap}>
+                  <Input
                     testID="login-email"
-                    style={[styles.input, { color: tc.text }]}
+                    leftIcon="mail-outline"
                     placeholder="Correo electrónico"
-                    placeholderTextColor={tc.textSub}
                     value={email}
                     onChangeText={text => { setEmail(text); setLocalError(''); clearError(); }}
                     keyboardType="email-address"
@@ -120,69 +130,32 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                   />
                 </View>
 
-                {/* Contraseña */}
-                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2 }, displayError ? styles.inputError : null]}>
-                  <MaterialIcons name="lock" size={20} color={tc.textSub} />
-                  <TextInput
+                <View style={styles.fieldGap}>
+                  <Input
                     ref={passwordRef}
                     testID="login-password"
-                    style={[styles.input, { color: tc.text }]}
+                    leftIcon="lock-closed-outline"
                     placeholder="Contraseña"
-                    placeholderTextColor={tc.textSub}
                     value={password}
                     onChangeText={text => { setPassword(text); setLocalError(''); clearError(); }}
-                    secureTextEntry={!showPassword}
+                    secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="done"
                     onSubmitEditing={handleLogin}
                   />
-                  <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
-                    <MaterialIcons
-                      name={showPassword ? 'visibility' : 'visibility-off'}
-                      size={20}
-                      color={tc.textSub}
-                    />
-                  </Pressable>
                 </View>
 
-                {/* Error */}
-                {!!displayError && (
-                  <Text style={styles.errorText}>{displayError}</Text>
-                )}
+                {!!displayError && <Text style={styles.errorText}>{displayError}</Text>}
 
-                {/* Olvidé contraseña */}
-                <Pressable
-                  onPress={() => router.push('/login/forgot-password')}
-                  style={styles.forgotContainer}
-                >
+                <Pressable onPress={() => router.push('/login/forgot-password')} style={styles.forgotContainer}>
                   <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
                 </Pressable>
 
-                {/* Botón ingresar */}
-                <View style={styles.buttonShadow}>
-                  <Pressable
-                    onPress={handleLogin}
-                    disabled={isLoading}
-                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-                  >
-                    <LinearGradient
-                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.buttonGradient}
-                    >
-                      {isLoading
-                        ? <ActivityIndicator color="#fff" size="small" />
-                        : <Text style={styles.buttonText}>Ingresar</Text>
-                      }
-                    </LinearGradient>
-                  </Pressable>
-                </View>
+                <Button label="Ingresar" onPress={handleLogin} loading={isLoading} fullWidth style={styles.ctaButton} />
 
-                {/* Ir a registro */}
                 <View style={styles.registerRow}>
-                  <Text style={[styles.registerPrompt, { color: tc.textSub }]}>¿No tenés cuenta? </Text>
+                  <Text style={styles.registerPrompt}>¿No tenés cuenta? </Text>
                   <Pressable onPress={toRegister}>
                     <Text style={styles.registerLink}>Registrarse</Text>
                   </Pressable>
@@ -198,142 +171,48 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1 },
+  background: { flex: 1, backgroundColor: '#0A0910' },
+  glow: {
+    position: 'absolute',
+    top: -180,
+    left: -40,
+    right: -40,
+    height: 520,
+    opacity: 0.9,
+  },
   flex: { flex: 1 },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
-  },
-  brand: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: TOKENS.color.primary,
-    letterSpacing: -0.5,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
   cardShadow: {
-    borderRadius: 24,
-    // Sombra negra sola no se nota sobre el video oscuro de fondo — se suma un glow
-    // blanco tenue para separar la card visualmente (look glass sobre fondo oscuro).
-    shadowColor: '#000',
+    borderRadius: 26,
+    shadowColor: '#FF2D6F',
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.45,
-    shadowRadius: 30,
+    shadowOpacity: 0.28,
+    shadowRadius: 34,
     elevation: 12,
   },
   cardGlow: {
-    borderRadius: 24,
+    borderRadius: 26,
     shadowColor: '#fff',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.06,
     shadowRadius: 20,
   },
   card: {
     width: width - 48,
-    borderRadius: 24,
+    borderRadius: 26,
     overflow: 'hidden',
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    marginBottom: 20,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    gap: 10,
-    marginBottom: 12,
-    minHeight: 52,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: TOKENS.color.text,
-    paddingVertical: 8,
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#ef4444',
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  forgotContainer: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
-  },
-  forgotText: {
-    fontSize: 13,
-    color: TOKENS.color.primary,
-    fontWeight: '500',
-  },
-  buttonShadow: {
-    borderRadius: 14,
-    marginBottom: 16,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  button: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  buttonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  buttonGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 14,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  registerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  registerPrompt: {
-    fontSize: 14,
-    color: TOKENS.color.sub, // overridden inline
-  },
-  registerLink: {
-    fontSize: 14,
-    color: TOKENS.color.primary,
-    fontWeight: '600',
-  },
+  cardTitle: { fontSize: 22, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 26 },
+  fieldGap: { marginBottom: 16 },
+  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 10, marginLeft: 4 },
+  forgotContainer: { alignSelf: 'flex-end', marginBottom: 24 },
+  forgotText: { fontSize: 13, color: '#FF2D6F', fontWeight: '500' },
+  ctaButton: { marginBottom: 20 },
+  registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  registerPrompt: { fontSize: 14, color: 'rgba(237,234,245,0.55)' },
+  registerLink: { fontSize: 14, color: '#FF2D6F', fontWeight: '600' },
 });

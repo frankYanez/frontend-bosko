@@ -1,4 +1,8 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+/**
+ * Rebrand "Señal Nocturna" — ProviderProfileScreen: misma lógica, estado y navegación que
+ * el archivo original. Misma carga de perfil/servicios/reseñas y el modal de detalle — hero y CTA pasan al gradiente signal→bordo→profundo, badges de verificación a tintes translúcidos legibles en dark.
+ */
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -184,7 +188,7 @@ export default function ProviderProfileScreen() {
     return (
       <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={TOKENS.color.primary} />
+        <ActivityIndicator size="large" color={TOKENS.color.signal} />
       </View>
     );
   }
@@ -231,7 +235,7 @@ export default function ProviderProfileScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={[TOKENS.color.primary, '#c0002f', TOKENS.color.primaryDark]}
+          colors={[TOKENS.color.signal, TOKENS.color.signal, TOKENS.color.primaryDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.hero}
@@ -358,7 +362,7 @@ export default function ProviderProfileScreen() {
               return (
                 <View key={r.id} style={[s.reviewCard, { borderBottomColor: c.border }]}>
                   <View style={s.reviewHeader}>
-                    <View style={[s.reviewAvatar, { backgroundColor: TOKENS.color.primary }]}>
+                    <View style={[s.reviewAvatar, { backgroundColor: TOKENS.color.signal }]}>
                       {r.reviewer.avatarUrl
                         ? <Image source={{ uri: r.reviewer.avatarUrl }} style={{ width: 36, height: 36, borderRadius: 18 }} contentFit="cover" />
                         : <Text style={s.reviewInitial}>{initial}</Text>
@@ -376,8 +380,8 @@ export default function ProviderProfileScreen() {
                   </View>
                   {r.comment ? <Text style={[s.reviewComment, { color: c.sub }]}>{r.comment}</Text> : null}
                   {r.reply ? (
-                    <View style={[s.replyBox, { backgroundColor: c.surface2, borderLeftColor: TOKENS.color.primary }]}>
-                      <Text style={[s.replyLabel, { color: TOKENS.color.primary }]}>Respuesta del proveedor</Text>
+                    <View style={[s.replyBox, { backgroundColor: c.surface2, borderLeftColor: TOKENS.color.signal }]}>
+                      <Text style={[s.replyLabel, { color: TOKENS.color.signal }]}>Respuesta del proveedor</Text>
                       <Text style={[s.replyText, { color: c.sub }]}>{r.reply}</Text>
                     </View>
                   ) : null}
@@ -466,7 +470,7 @@ const s = StyleSheet.create({
   },
   ctaBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: TOKENS.color.primary, borderRadius: 16,
+    backgroundColor: TOKENS.color.signal, borderRadius: 16,
     paddingVertical: 15,
   },
   ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },

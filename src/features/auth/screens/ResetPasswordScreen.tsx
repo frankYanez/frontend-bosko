@@ -1,39 +1,37 @@
 /**
  * ResetPasswordScreen — Restablecer contraseña con token del email.
  * POST /auth/reset-password — body: { email, token, newPassword }
+ * Rebrand "Señal Nocturna" — usa los componentes reales del design system
+ * (`Input`, `Button`), mismo chrome que el resto del flujo de auth.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Animated,
+  Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Input } from '@/core/components/Input';
+import { Button, TOKENS } from '@/core/design-system';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import api from '@/core/api/axiosinstance';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash } from '@/core/design-system';
+
+const { width } = Dimensions.get('window');
 
 export default function ResetPasswordScreen() {
-  const tc = useThemeColors();
   // email y token vienen como query params del deep link del email
   const { email = '', token = '' } = useLocalSearchParams<{ email: string; token: string }>();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -74,259 +72,162 @@ export default function ResetPasswordScreen() {
 
   if (success) {
     return (
-      <LinearGradient colors={wash(tc)} style={styles.bg}>
-        <Animated.View style={[styles.successContainer, { opacity: fadeAnim }]}>
-          <BlurView intensity={30} tint="light" style={[styles.successCard, { borderColor: tc.cardBorder }]}>
-            <View style={[styles.successIcon, { backgroundColor: tc.accent }]}>
-              <MaterialIcons name="check-circle" size={56} color="#16a34a" />
-            </View>
-            <Text style={[styles.successTitle, { color: tc.text }]}>¡Contraseña actualizada!</Text>
-            <Text style={[styles.successText, { color: tc.textSub }]}>
-              Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
-            </Text>
-            <View style={styles.btnShadow}>
-              <Pressable
-                onPress={() => router.replace('/login')}
-                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.btnGradient}
-                >
-                  <Text style={styles.btnText}>Iniciar sesión</Text>
-                </LinearGradient>
-              </Pressable>
-            </View>
-          </BlurView>
-        </Animated.View>
-      </LinearGradient>
+      <View style={styles.background}>
+        <View style={styles.successContainer}>
+          <Animated.View style={[styles.cardGlow, { backgroundColor: '#0A0910', opacity: fadeAnim }]}>
+          <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+            <BlurView intensity={30} tint="dark" style={[styles.card, styles.successCard]}>
+              <View style={styles.successIconCircle}>
+                <Ionicons name="checkmark-circle" size={48} color="#00E5A0" />
+              </View>
+              <Text style={styles.successTitle}>¡Contraseña actualizada!</Text>
+              <Text style={styles.successText}>
+                Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
+              </Text>
+              <Button label="Iniciar sesión" onPress={() => router.replace('/login')} fullWidth />
+            </BlurView>
+          </View>
+          </Animated.View>
+        </View>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={wash(tc)} style={styles.bg}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+    <View style={styles.background}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {/* Header */}
-          <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
-              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-            </Pressable>
-          </View>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
+          </Pressable>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
-            {/* Ícono + título */}
             <View style={styles.titleRow}>
-              <View style={[styles.iconCircle, { backgroundColor: tc.accent }]}>
-                <MaterialIcons name="lock-reset" size={32} color={TOKENS.color.primary} />
+              <View style={styles.heroIconCircle}>
+                <Ionicons name="key-outline" size={32} color={TOKENS.color.signal} />
               </View>
-              <Text style={[styles.title, { color: tc.text }]}>Nueva contraseña</Text>
-              <Text style={[styles.subtitle, { color: tc.textSub }]}>
+              <Text style={styles.title}>Nueva contraseña</Text>
+              <Text style={styles.subtitle}>
                 Elegí una contraseña segura de al menos 8 caracteres.
               </Text>
             </View>
 
-            {/* Formulario */}
-            <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
-              {/* Nueva contraseña */}
-              <View style={styles.fieldWrap}>
-                <MaterialIcons name="lock" size={20} color={tc.textSub} style={styles.fieldIcon} />
-                <TextInput
-                  style={[styles.input, { color: tc.text }]}
-                  placeholder="Nueva contraseña"
-                  placeholderTextColor={tc.textMuted}
-                  secureTextEntry={!showNew}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  autoCapitalize="none"
-                />
-                <Pressable onPress={() => setShowNew(v => !v)} hitSlop={8}>
-                  <MaterialIcons
-                    name={showNew ? 'visibility-off' : 'visibility'}
-                    size={20}
-                    color={tc.textSub}
+            <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+            <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+              <BlurView intensity={30} tint="dark" style={styles.card}>
+                <View style={styles.fieldGap}>
+                  <Input
+                    leftIcon="lock-closed-outline"
+                    placeholder="Nueva contraseña"
+                    secureTextEntry
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    autoCapitalize="none"
                   />
-                </Pressable>
-              </View>
+                </View>
 
-              <View style={[styles.divider, { backgroundColor: tc.border }]} />
-
-              {/* Confirmar contraseña */}
-              <View style={styles.fieldWrap}>
-                <MaterialIcons name="lock-outline" size={20} color={tc.textSub} style={styles.fieldIcon} />
-                <TextInput
-                  style={[styles.input, { color: tc.text }]}
-                  placeholder="Confirmar contraseña"
-                  placeholderTextColor={tc.textMuted}
-                  secureTextEntry={!showConfirm}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  autoCapitalize="none"
-                />
-                <Pressable onPress={() => setShowConfirm(v => !v)} hitSlop={8}>
-                  <MaterialIcons
-                    name={showConfirm ? 'visibility-off' : 'visibility'}
-                    size={20}
-                    color={tc.textSub}
+                <View style={styles.fieldGap}>
+                  <Input
+                    leftIcon="lock-closed-outline"
+                    placeholder="Confirmar contraseña"
+                    secureTextEntry
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    autoCapitalize="none"
                   />
-                </Pressable>
-              </View>
-            </BlurView>
+                </View>
 
-            {/* Error */}
-            {!!error && (
-              <View style={styles.errorBanner}>
-                <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
+                {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-            {/* Botón */}
-            <View style={styles.btnShadow}>
-              <Pressable
-                onPress={handleSubmit}
-                disabled={loading}
-                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.btnGradient}
-                >
-                  {loading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.btnText}>Restablecer contraseña</Text>
-                  }
-                </LinearGradient>
-              </Pressable>
+                <Button label="Restablecer contraseña" onPress={handleSubmit} loading={loading} fullWidth />
+              </BlurView>
+            </View>
             </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1 },
-  scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: { marginBottom: 8 },
+  background: { flex: 1, backgroundColor: '#0A0910' },
+  flex: { flex: 1 },
+  scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24 },
   backBtn: {
     alignSelf: 'flex-start',
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 20,
   },
-  titleRow: { alignItems: 'center', gap: 10, marginBottom: 8 },
-  iconCircle: {
+  heroIconCircle: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(133,0,33,0.08)',
+    backgroundColor: 'rgba(255,45,111,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
   },
+  titleRow: { alignItems: 'center', marginBottom: 28 },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: TOKENS.color.text,
+    fontFamily: 'Archivo_700Bold',
+    color: '#EDEAF5',
     textAlign: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: 'rgba(237,234,245,0.55)',
     textAlign: 'center',
     lineHeight: 20,
+    paddingHorizontal: 8,
+  },
+  cardShadow: {
+    borderRadius: 26,
+    shadowColor: '#FF2D6F',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.28,
+    shadowRadius: 34,
+    elevation: 12,
+  },
+  cardGlow: {
+    borderRadius: 26,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
   },
   card: {
-    borderRadius: 20,
+    width: width - 48,
+    borderRadius: 26,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
-    paddingHorizontal: 16,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  fieldWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    gap: 10,
-  },
-  fieldIcon: { marginRight: 2 },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: TOKENS.color.text,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(200,200,220,0.4)',
-    marginHorizontal: -16,
-  },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
-    padding: 12,
-  },
-  errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  btnShadow: {
-    borderRadius: 14,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  primaryBtn: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  btnGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  successCard: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    padding: 32,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
-    alignItems: 'center',
-    gap: 16,
-  },
-  successIcon: {
+  fieldGap: { marginBottom: 14 },
+  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
+  successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  successCard: { alignItems: 'center', gap: 14 },
+  successIconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: 'rgba(0,229,160,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  successTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: TOKENS.color.text,
-    textAlign: 'center',
-  },
+  successTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', textAlign: 'center' },
   successText: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: 'rgba(237,234,245,0.55)',
     textAlign: 'center',
     lineHeight: 20,
   },

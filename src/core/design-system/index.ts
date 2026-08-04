@@ -6,6 +6,7 @@ export { SPACING } from './spacing';
 export type { SpacingKey } from './spacing';
 export { TYPE_SCALE, FONT_FAMILY } from './typography';
 export { GRADIENTS, wash } from './gradients';
+export { MOTION } from './motion';
 
 export { useThemeColors, useIsDark, useToggleTheme, useThemeMode, THEME_COLORS } from '@/stores/theme.store';
 export type { ThemeColors, ThemeMode } from '@/stores/theme.store';

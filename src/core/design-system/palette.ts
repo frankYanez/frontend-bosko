@@ -1,56 +1,56 @@
-// Fuente única de la paleta dark/light. src/stores/theme.store.ts importa esto
-// y solo se queda con la lógica de toggle/persist (Zustand) — el store no
-// define color acá.
+// Fuente única de la paleta dark/light — "Señal Nocturna".
+// Cambios vs. la paleta actual: bg más profundo, superficies pasan a vidrio
+// translúcido (para backdrop-blur / BlurView), se agrega signal + mint.
 export const PALETTE = {
   dark: {
     // Fondos
-    bg:           '#0B0A0F',
-    bgGlow:       'rgba(133,0,33,0.16)',
-    bgGlowFade:   'rgba(133,0,33,0.0)',
+    bg:           '#0A0910',   // antes #0B0A0F
+    bgGlow:       'rgba(255,45,111,0.18)',   // antes bordo — ahora rosa señal
+    bgGlowFade:   'rgba(255,45,111,0.0)',
     surface:      '#131118',
-    surface2:     '#1C1925',
-    card:         '#18151F',
-    cardBorder:   'rgba(255,255,255,0.07)',
+    surface2:     'rgba(255,255,255,0.06)',  // antes sólido #1C1925 — ahora vidrio
+    card:         'rgba(255,255,255,0.045)', // antes sólido #18151F — ahora vidrio + blur
+    cardBorder:   'rgba(255,255,255,0.09)',
 
     // Texto
-    text:         '#F2F0F8',
-    textSub:      'rgba(242,240,248,0.52)',
-    textMuted:    'rgba(242,240,248,0.28)',
+    text:         '#EDEAF5',   // antes #F2F0F8
+    textSub:      'rgba(237,234,245,0.55)',
+    textMuted:    'rgba(237,234,245,0.30)',
 
     // UI
-    border:       'rgba(255,255,255,0.08)',
-    divider:      'rgba(255,255,255,0.05)',
-    overlay:      'rgba(0,0,0,0.70)',
-    accent:       'rgba(133,0,33,0.15)',
+    border:       'rgba(255,255,255,0.10)',
+    divider:      'rgba(255,255,255,0.06)',
+    overlay:      'rgba(5,4,9,0.78)',
+    accent:       'rgba(255,45,111,0.14)',   // antes bordo — ahora rosa señal
 
     // Brand
     primary:      '#850021',
-    primaryLight: '#C0002F',
+    primaryLight: '#FF2D6F',   // antes #C0002F
+    signal:       '#FF2D6F',   // NUEVO
+    mint:         '#00E5A0',   // NUEVO
   },
   light: {
-    // Fondos
-    bg:           '#F9F7FB',
-    bgGlow:       'rgba(133,0,33,0.06)',
-    bgGlowFade:   'rgba(133,0,33,0.0)',
+    bg:           '#F7F5FB',
+    bgGlow:       'rgba(255,45,111,0.08)',
+    bgGlowFade:   'rgba(255,45,111,0.0)',
     surface:      '#FFFFFF',
     surface2:     '#F0EDF5',
     card:         '#FFFFFF',
-    cardBorder:   'rgba(0,0,0,0.06)',
+    cardBorder:   'rgba(10,9,16,0.08)',
 
-    // Texto
-    text:         '#1A1520',
-    textSub:      'rgba(26,21,32,0.52)',
-    textMuted:    'rgba(26,21,32,0.32)',
+    text:         '#14111C',
+    textSub:      'rgba(20,17,28,0.55)',
+    textMuted:    'rgba(20,17,28,0.32)',
 
-    // UI
-    border:       'rgba(0,0,0,0.07)',
-    divider:      'rgba(0,0,0,0.05)',
-    overlay:      'rgba(0,0,0,0.40)',
-    accent:       'rgba(133,0,33,0.06)',
+    border:       'rgba(10,9,16,0.10)',
+    divider:      'rgba(10,9,16,0.06)',
+    overlay:      'rgba(10,9,16,0.45)',
+    accent:       'rgba(255,45,111,0.10)',
 
-    // Brand
     primary:      '#850021',
-    primaryLight: '#C0002F',
+    primaryLight: '#FF2D6F',
+    signal:       '#FF2D6F',
+    mint:         '#00E5A0',
   },
 } as const;
 

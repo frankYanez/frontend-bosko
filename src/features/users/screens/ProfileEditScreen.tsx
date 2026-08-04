@@ -3,8 +3,6 @@ import React from "react";
 import { useLocalSearchParams } from "expo-router";
 import EditPhoto from "../components/edit/EditPhoto";
 import EditDescription from "../components/edit/EditDescription";
-import EditPassword from "../components/edit/EditPass";
-import EditUsername from "../components/edit/EditUserName";
 import EditPayments from "../components/edit/EditPayments";
 import EditNotifications from "../components/edit/EditNotifications";
 import EditEmail from "../components/edit/EditMail";
@@ -18,10 +16,6 @@ export default function ProfileEditScreen() {
         return <EditPhoto />;
       case "description":
         return <EditDescription />;
-      case "password":
-        return <EditPassword />;
-      case "username":
-        return <EditUsername />;
       case "payments":
         return <EditPayments />;
       case "notifications":

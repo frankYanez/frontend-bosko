@@ -1,4 +1,8 @@
 /**
+ * Rebrand "Señal Nocturna" — OrderDetailScreen: misma lógica, estado y navegación que
+ * el archivo original. Mismo timeline, acciones (aceptar/rechazar/iniciar/completar/cancelar/disputar) — íconos de timeline pendiente pasan de tinte bordo apagado a signal.
+ */
+/**
  * OrderDetailScreen — Detalle completo de una orden.
  * Muestra el estado, timeline, y acciones disponibles según rol y estado.
  * Acciones: aceptar, rechazar, iniciar, completar, cancelar, disputar.
@@ -37,6 +41,10 @@ const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
 ];
 
 const STATUS_ORDER: OrderStatus[] = ['pending', 'accepted', 'in_progress', 'completed'];
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
+}
 
 function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
   const tc = useThemeColors();
@@ -78,7 +86,7 @@ function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
                 <MaterialIcons
                   name={step.icon as any}
                   size={14}
-                  color={done ? '#fff' : 'rgba(133,0,33,0.3)'}
+                  color={done ? '#fff' : 'rgba(255,45,111,0.35)'}
                 />
               </View>
               {idx < TIMELINE_STEPS.length - 1 && (
@@ -176,7 +184,7 @@ export default function OrderDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
-        <ActivityIndicator color={TOKENS.color.primary} size="large" />
+        <ActivityIndicator color={TOKENS.color.signal} size="large" />
       </View>
     );
   }
@@ -205,7 +213,7 @@ export default function OrderDetailScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={loadOrder}
-            tintColor={TOKENS.color.primary}
+            tintColor={TOKENS.color.signal}
           />
         }
       >
@@ -260,10 +268,25 @@ export default function OrderDetailScreen() {
           style={({ pressed }) => [styles.chatButton, pressed && styles.buttonPressed]}
           onPress={() => router.push({ pathname: '/chat/[id]', params: { id: order.id } })}
         >
-          <MaterialIcons name="chat" size={18} color={TOKENS.color.primary} />
+          <MaterialIcons name="chat" size={18} color={TOKENS.color.signal} />
           <Text style={styles.chatButtonText}>Abrir chat de esta orden</Text>
-          <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.primary} />
+          <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
         </Pressable>
+
+        {/* Banner de reembolso */}
+        {order.paymentStatus === 'refunded' && (
+          <View style={styles.refundBanner}>
+            <MaterialIcons name="assignment-return" size={22} color="#6b21a8" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.refundTitle}>
+                Reembolsado{order.agreedPrice ? ` — ${formatCurrency(order.agreedPrice)}` : ''}
+              </Text>
+              <Text style={styles.refundSub}>
+                {order.disputeReason || order.cancellationReason || 'El monto fue devuelto a tu método de pago original.'}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Banner de orden completada */}
         {order.status === 'completed' && (
@@ -312,7 +335,7 @@ export default function OrderDetailScreen() {
             <ActionButton
               label="Iniciar trabajo"
               icon="play-arrow"
-              color={TOKENS.color.primary}
+              color={TOKENS.color.signal}
               loading={actionLoading === 'Iniciar trabajo'}
               onPress={() => runAction('Iniciar trabajo', () => startOrder(order.id))}
             />
@@ -555,11 +578,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timelineDotDone: {
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
   },
   timelineDotActive: {
-    backgroundColor: TOKENS.color.primary,
-    shadowColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
+    shadowColor: TOKENS.color.signal,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
@@ -572,7 +595,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timelineLineDone: {
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
   },
   timelineLabel: {
     fontSize: 14,
@@ -603,6 +626,26 @@ const styles = StyleSheet.create({
     color: '#15803d',
     marginTop: 2,
   },
+  refundBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#f3e8ff',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e9d5ff',
+  },
+  refundTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6b21a8',
+  },
+  refundSub: {
+    fontSize: 13,
+    color: '#7e22ce',
+    marginTop: 2,
+  },
   cancelledBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -629,7 +672,7 @@ const styles = StyleSheet.create({
   chatButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: TOKENS.color.primary,
+    color: TOKENS.color.signal,
     flex: 1,
   },
   actionsContainer: { gap: 10 },
@@ -657,7 +700,7 @@ const styles = StyleSheet.create({
   backLink: { padding: 8 },
   backLinkText: {
     fontSize: 15,
-    color: TOKENS.color.primary,
+    color: TOKENS.color.signal,
     fontWeight: '600',
   },
   modalOverlay: {
@@ -709,7 +752,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     alignItems: 'center',
   },
   modalConfirmText: {

@@ -1,4 +1,8 @@
 /**
+ * Rebrand "Señal Nocturna" — OrdersListScreen (Solicitudes): misma lógica, estado y navegación que
+ * el archivo original. Misma lógica cliente/proveedor y estados — solo acento bordo → signal.
+ */
+/**
  * OrdersListScreen — Lista de órdenes del usuario.
  * Muestra tabs "Como cliente" y "Como proveedor" con sus órdenes respectivas.
  */
@@ -65,7 +69,7 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
           onPress={onPress}
         >
         {/* Acento de color según estado */}
-        <View style={[styles.statusStripe, { backgroundColor: STATUS_CONFIG[order.status]?.color || TOKENS.color.primary }]} />
+        <View style={[styles.statusStripe, { backgroundColor: STATUS_CONFIG[order.status]?.color || TOKENS.color.signal }]} />
 
         <View style={styles.orderContent}>
           <View style={styles.orderHeader}>
@@ -75,7 +79,7 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
             <StatusBadge status={order.status} />
           </View>
           {otherName ? (
-            <Text style={[styles.orderService, { color: TOKENS.color.primary }]} numberOfLines={1}>{serviceTitle}</Text>
+            <Text style={[styles.orderService, { color: TOKENS.color.signal }]} numberOfLines={1}>{serviceTitle}</Text>
           ) : null}
 
           <Text style={[styles.orderMessage, { color: tc.textSub }]} numberOfLines={2}>{order.clientMessage}</Text>
@@ -156,9 +160,9 @@ export default function OrdersListScreen() {
             <MaterialIcons
               name={tab === 'client' ? 'shopping-bag' : 'work'}
               size={16}
-              color={activeTab === tab ? TOKENS.color.primary : tc.textSub}
+              color={activeTab === tab ? TOKENS.color.signal : tc.textSub}
             />
-            <Text style={[styles.tabText, { color: activeTab === tab ? TOKENS.color.primary : tc.textSub }, activeTab === tab && styles.tabTextActive]}>
+            <Text style={[styles.tabText, { color: activeTab === tab ? TOKENS.color.signal : tc.textSub }, activeTab === tab && styles.tabTextActive]}>
               {tab === 'client' ? 'Como cliente' : 'Como proveedor'}
             </Text>
           </Pressable>
@@ -167,7 +171,7 @@ export default function OrdersListScreen() {
 
       {loading && !refreshing && orders.length === 0 ? (
         <ActivityIndicator
-          color={TOKENS.color.primary}
+          color={TOKENS.color.signal}
           size="large"
           style={styles.loader}
         />
@@ -191,8 +195,8 @@ export default function OrdersListScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={TOKENS.color.primary}
-              colors={[TOKENS.color.primary]}
+              tintColor={TOKENS.color.signal}
+              colors={[TOKENS.color.signal]}
             />
           }
         />
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     marginTop: 8,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,

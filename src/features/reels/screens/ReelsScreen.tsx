@@ -39,6 +39,8 @@ import {
   useDeleteReelComment,
   useReportReel,
 } from '@/hooks/queries/useReelsQuery';
+import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
+import { useThemeColors } from '@/stores/theme.store';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -158,6 +160,7 @@ function CommentsSheet({
   onCommentPosted: () => void;
 }) {
   const insets      = useSafeAreaInsets();
+  const tc          = useThemeColors();
   const [text,    setText]    = useState('');
   const [sending, setSending] = useState(false);
 
@@ -205,19 +208,19 @@ function CommentsSheet({
         {/* Backdrop */}
         <Pressable style={[StyleSheet.absoluteFill, s.commentsBackdrop]} onPress={onClose} />
 
-        <View style={[s.commentsSheet, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={[s.commentsSheet, { paddingBottom: insets.bottom + 8, backgroundColor: tc.card }]}>
           {/* Handle */}
-          <View style={s.commentsHandle} />
-          <Text style={s.commentsTitle}>Comentarios</Text>
+          <View style={[s.commentsHandle, { backgroundColor: tc.border }]} />
+          <Text style={[s.commentsTitle, { color: tc.text }]}>Comentarios</Text>
 
           {isLoading ? (
             <View style={s.commentsEmpty}>
-              <ActivityIndicator color="rgba(255,255,255,0.5)" />
+              <ActivityIndicator color={tc.textSub} />
             </View>
           ) : comments.length === 0 ? (
             <View style={s.commentsEmpty}>
-              <Ionicons name="chatbubbles-outline" size={44} color="rgba(255,255,255,0.25)" />
-              <Text style={s.commentsEmptyText}>Sé el primero en comentar</Text>
+              <Ionicons name="chatbubbles-outline" size={44} color={tc.textMuted} />
+              <Text style={[s.commentsEmptyText, { color: tc.textSub }]}>Sé el primero en comentar</Text>
             </View>
           ) : (
             <FlatList
@@ -225,17 +228,17 @@ function CommentsSheet({
               keyExtractor={(c) => c.id}
               style={{ maxHeight: 320 }}
               renderItem={({ item }) => (
-                <View style={s.commentItem}>
+                <View style={[s.commentItem, { borderBottomColor: tc.divider }]}>
                   <View style={s.commentAvatar}>
-                    <Ionicons name="person-circle" size={32} color="rgba(255,255,255,0.4)" />
+                    <Ionicons name="person-circle" size={32} color={tc.textMuted} />
                   </View>
                   <View style={s.commentBody}>
-                    <Text style={s.commentUser}>{item.user.name}</Text>
-                    <Text style={s.commentText}>{item.comment}</Text>
+                    <Text style={[s.commentUser, { color: tc.text }]}>{item.user.name}</Text>
+                    <Text style={[s.commentText, { color: tc.textSub }]}>{item.comment}</Text>
                   </View>
                   {item.userId === currentUserId && (
                     <Pressable onPress={() => handleDeleteComment(item.id)} style={s.commentDelete}>
-                      <Ionicons name="trash-outline" size={16} color="rgba(255,255,255,0.35)" />
+                      <Ionicons name="trash-outline" size={16} color={tc.textMuted} />
                     </Pressable>
                   )}
                 </View>
@@ -244,20 +247,20 @@ function CommentsSheet({
           )}
 
           {/* Input */}
-          <View style={s.commentsInputRow}>
+          <View style={[s.commentsInputRow, { borderTopColor: tc.divider }]}>
             <TextInput
-              style={s.commentsInput}
+              style={[s.commentsInput, { backgroundColor: tc.surface2, color: tc.text }]}
               placeholder="Escribí un comentario..."
-              placeholderTextColor="rgba(255,255,255,0.35)"
+              placeholderTextColor={tc.textMuted}
               value={text}
               onChangeText={setText}
               multiline
               maxLength={500}
             />
-            <Pressable onPress={handleSend} disabled={!text.trim() || sending} style={s.commentsSendBtn}>
+            <Pressable onPress={handleSend} disabled={!text.trim() || sending} style={[s.commentsSendBtn, { backgroundColor: tc.surface2 }]}>
               {sending
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Ionicons name="send" size={20} color={text.trim() ? '#fff' : 'rgba(255,255,255,0.25)'} />
+                ? <ActivityIndicator size="small" color={tc.text} />
+                : <Ionicons name="send" size={20} color={text.trim() ? tc.text : tc.textMuted} />
               }
             </Pressable>
           </View>
@@ -313,14 +316,18 @@ const ReelItem = React.memo(function ReelItem({
   reel,
   isActive,
   currentUserId,
+  onNotInterested,
 }: {
   reel: Reel;
   isActive: boolean;
   currentUserId?: string;
+  onNotInterested: (id: string) => void;
 }) {
   const insets = useSafeAreaInsets();
   const { mutate: deleteReelMutate } = useDeleteReel();
   const { mutate: reportReelMutate } = useReportReel();
+  const { mutate: followUserMutate } = useFollowUser();
+  const { mutate: unfollowUserMutate } = useUnfollowUser();
 
   const isBeforeAfter = reel.type === 'before_after';
 
@@ -430,9 +437,16 @@ const ReelItem = React.memo(function ReelItem({
   }, [reel.user.id]);
 
   const handleFollow = useCallback(() => {
-    setIsFollowing(f => !f);
-    // TODO: conectar a API follow/unfollow cuando exista el endpoint
-  }, []);
+    setIsFollowing(f => {
+      const next = !f;
+      if (next) {
+        followUserMutate(reel.user.id, { onError: () => setIsFollowing(false) });
+      } else {
+        unfollowUserMutate(reel.user.id, { onError: () => setIsFollowing(true) });
+      }
+      return next;
+    });
+  }, [reel.user.id, followUserMutate, unfollowUserMutate]);
 
   const handleShare = useCallback(async () => {
     try {
@@ -446,7 +460,7 @@ const ReelItem = React.memo(function ReelItem({
   const handleMore = useCallback(() => {
     const isOwner = reel.user.id === currentUserId;
     const options: any[] = [
-      { text: 'No me interesa', onPress: () => {} },
+      { text: 'No me interesa', onPress: () => onNotInterested(reel.id) },
       {
         text: 'Reportar contenido',
         style: 'destructive',
@@ -479,7 +493,7 @@ const ReelItem = React.memo(function ReelItem({
     }
     options.push({ text: 'Cancelar', style: 'cancel' });
     Alert.alert('Opciones', undefined, options);
-  }, [reel.id, reel.user.id, currentUserId, reportReelMutate, deleteReelMutate]);
+  }, [reel.id, reel.user.id, currentUserId, reportReelMutate, deleteReelMutate, onNotInterested]);
 
   const handleCommentPosted = useCallback(() => {
     setCommentCount(c => c + 1);
@@ -668,8 +682,13 @@ export default function ReelsScreen() {
   const { authState } = useAuth();
   const currentUserId = authState.user?.id;
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useReelsFeed();
-  const reels = data?.pages.flat() ?? [];
+  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+  const reels = (data?.pages.flat() ?? []).filter(r => !ignoredIds.has(r.id));
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleNotInterested = useCallback((id: string) => {
+    setIgnoredIds(prev => new Set(prev).add(id));
+  }, []);
 
   const loadMore = useCallback(() => {
     if (hasNextPage) fetchNextPage();
@@ -694,9 +713,14 @@ export default function ReelsScreen() {
   // the two items whose isActive prop actually flipped get re-rendered.
   const renderItem = useCallback(
     ({ item, index }: { item: Reel; index: number }) => (
-      <ReelItem reel={item} isActive={index === activeIndex} currentUserId={currentUserId} />
+      <ReelItem
+        reel={item}
+        isActive={index === activeIndex}
+        currentUserId={currentUserId}
+        onNotInterested={handleNotInterested}
+      />
     ),
-    [activeIndex, currentUserId],
+    [activeIndex, currentUserId, handleNotInterested],
   );
 
   const keyExtractor = useCallback((item: Reel) => item.id, []);

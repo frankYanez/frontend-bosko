@@ -1,6 +1,7 @@
 /**
  * VerifyEmailScreen — Verificación de email con OTP de 6 dígitos.
  * POST /auth/verify-email — body: { email, code }
+ * Rebrand "Señal Nocturna" — mismo chrome que el resto del flujo de auth.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -14,20 +15,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash } from '@/core/design-system';
+import { Button, TOKENS } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
+const { width } = Dimensions.get('window');
 const CODE_LENGTH = 6;
 
 export default function VerifyEmailScreen() {
-  const tc = useThemeColors();
   const { email = '' } = useLocalSearchParams<{ email: string }>();
   const { verifyEmail } = useAuth();
 
@@ -41,6 +43,7 @@ export default function VerifyEmailScreen() {
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
+  const successPop = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -48,6 +51,13 @@ export default function VerifyEmailScreen() {
       Animated.timing(translateY, { toValue: 0, duration: 450, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    if (success) {
+      successPop.setValue(0.4);
+      Animated.spring(successPop, { toValue: 1, friction: 5, tension: 60, useNativeDriver: true }).start();
+    }
+  }, [success]);
 
   // Cuenta regresiva para reenviar
   useEffect(() => {
@@ -109,285 +119,220 @@ export default function VerifyEmailScreen() {
 
   if (success) {
     return (
-      <LinearGradient colors={wash(tc)} style={styles.bg}>
-        <Animated.View style={[styles.successContainer, { opacity: fadeAnim }]}>
-          <BlurView intensity={30} tint="light" style={[styles.successCard, { borderColor: tc.cardBorder }]}>
-            <View style={[styles.successIcon, { backgroundColor: tc.accent }]}>
-              <MaterialIcons name="mark-email-read" size={56} color="#16a34a" />
+      <View style={styles.background}>
+        <AnimatedBackground variant="minimal" />
+        <View style={styles.successOuter}>
+          <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+            <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+              <BlurView intensity={30} tint="dark" style={styles.card}>
+                <View style={styles.successContainer}>
+                  <Animated.View
+                    style={[styles.successIconCircle, { opacity: successPop, transform: [{ scale: successPop }] }]}
+                  >
+                    <LinearGradient colors={[TOKENS.color.mint, '#00b382']} style={styles.successIconGradient}>
+                      <Ionicons name="mail-open" size={40} color="#fff" />
+                    </LinearGradient>
+                  </Animated.View>
+                  <Text style={styles.successTitle}>¡Email verificado!</Text>
+                  <Text style={styles.successText}>
+                    Tu cuenta fue activada correctamente. Ya podés usar todas las funciones de Bosko.
+                  </Text>
+                  <Button label="Ir al inicio" onPress={() => router.replace('/(tabs)')} fullWidth />
+                </View>
+              </BlurView>
             </View>
-            <Text style={[styles.successTitle, { color: tc.text }]}>¡Email verificado!</Text>
-            <Text style={[styles.successText, { color: tc.textSub }]}>
-              Tu cuenta fue activada correctamente. Ya podés usar todas las funciones de Bosko.
-            </Text>
-            <View style={styles.btnShadow}>
-              <Pressable
-                onPress={() => router.replace('/(tabs)')}
-                style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
-              >
-                <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.btnGradient}
-                >
-                  <Text style={styles.btnText}>Ir al inicio</Text>
-                </LinearGradient>
-              </Pressable>
-            </View>
-          </BlurView>
-        </Animated.View>
-      </LinearGradient>
+          </View>
+        </View>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={wash(tc)} style={styles.bg}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+    <View style={styles.background}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {/* Header */}
-          <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
-              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-            </Pressable>
-          </View>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
+          </Pressable>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
-            {/* Título */}
             <View style={styles.titleRow}>
-              <View style={[styles.iconCircle, { backgroundColor: tc.accent }]}>
-                <MaterialIcons name="email" size={32} color={TOKENS.color.primary} />
+              <View style={styles.heroIconCircle}>
+                <Ionicons name="mail-outline" size={32} color={TOKENS.color.signal} />
               </View>
-              <Text style={[styles.title, { color: tc.text }]}>Verificá tu email</Text>
-              <Text style={[styles.subtitle, { color: tc.textSub }]}>
+              <Text style={styles.title}>Verificá tu email</Text>
+              <Text style={styles.subtitle}>
                 Enviamos un código de 6 dígitos a{'\n'}
                 <Text style={styles.emailHighlight}>{email}</Text>
               </Text>
             </View>
 
-            {/* Inputs OTP */}
-            <BlurView intensity={30} tint="light" style={[styles.otpCard, { borderColor: tc.cardBorder }]}>
-              <Text style={[styles.otpLabel, { color: tc.textSub }]}>Ingresá el código</Text>
-              <View style={styles.otpRow}>
-                {digits.map((d, i) => (
-                  <TextInput
-                    key={i}
-                    ref={ref => { inputRefs.current[i] = ref; }}
-                    style={[styles.otpInput, { borderColor: tc.border, backgroundColor: tc.surface2, color: tc.text }, d ? styles.otpInputFilled : null]}
-                    value={d}
-                    onChangeText={val => handleDigit(val, i)}
-                    onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    selectTextOnFocus
-                    textAlign="center"
-                  />
-                ))}
+            <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+              <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+                <BlurView intensity={30} tint="dark" style={styles.card}>
+                  <View style={styles.otpContainer}>
+                    <Text style={styles.otpLabel}>Ingresá el código</Text>
+                    <View style={styles.otpRow}>
+                      {digits.map((d, i) => (
+                        <TextInput
+                          key={i}
+                          ref={ref => { inputRefs.current[i] = ref; }}
+                          style={[styles.otpInput, d ? styles.otpInputFilled : null]}
+                          value={d}
+                          onChangeText={val => handleDigit(val, i)}
+                          onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, i)}
+                          keyboardType="number-pad"
+                          maxLength={1}
+                          selectTextOnFocus
+                          textAlign="center"
+                        />
+                      ))}
+                    </View>
+                  </View>
+                </BlurView>
               </View>
-            </BlurView>
-
-            {/* Error */}
-            {!!error && (
-              <View style={styles.errorBanner}>
-                <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
-            {/* Botón verificar */}
-            <View style={[styles.btnShadow, code.length < CODE_LENGTH && styles.btnShadowDisabled]}>
-              <Pressable
-                onPress={handleVerify}
-                disabled={loading || code.length < CODE_LENGTH}
-                style={({ pressed }) => [
-                  styles.primaryBtn,
-                  pressed && code.length === CODE_LENGTH && styles.btnPressed,
-                ]}
-              >
-                <LinearGradient
-                  colors={
-                    code.length === CODE_LENGTH
-                      ? [TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]
-                      : ['#ccc', '#bbb']
-                  }
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.btnGradient}
-                >
-                  {loading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.btnText}>Verificar</Text>
-                  }
-                </LinearGradient>
-              </Pressable>
             </View>
 
-            {/* Reenviar */}
-            <Pressable
-              onPress={handleResend}
-              disabled={resending || cooldown > 0}
-              style={styles.resendRow}
-            >
-              {resending
-                ? <ActivityIndicator size="small" color={TOKENS.color.primary} />
-                : (
-                  <Text style={styles.resendText}>
-                    {cooldown > 0
-                      ? `Reenviar en ${cooldown}s`
-                      : '¿No recibiste el código? Reenviar'
-                    }
-                  </Text>
-                )
-              }
+            {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+            <View style={styles.btnGap}>
+              <Button
+                label="Verificar"
+                onPress={handleVerify}
+                loading={loading}
+                disabled={code.length < CODE_LENGTH}
+                fullWidth
+              />
+            </View>
+
+            <Pressable onPress={handleResend} disabled={resending || cooldown > 0} style={styles.resendRow}>
+              {resending ? (
+                <ActivityIndicator size="small" color={TOKENS.color.signal} />
+              ) : (
+                <Text style={styles.resendText}>
+                  {cooldown > 0 ? `Reenviar en ${cooldown}s` : '¿No recibiste el código? Reenviar'}
+                </Text>
+              )}
             </Pressable>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1 },
-  scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: { marginBottom: 8 },
+  background: { flex: 1, backgroundColor: '#0A0910' },
+  flex: { flex: 1 },
+  scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24 },
   backBtn: {
     alignSelf: 'flex-start',
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 20,
   },
-  titleRow: { alignItems: 'center', gap: 10, marginBottom: 8 },
-  iconCircle: {
+  heroIconCircle: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(133,0,33,0.08)',
+    backgroundColor: 'rgba(255,45,111,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
   },
+  titleRow: { alignItems: 'center', marginBottom: 22, gap: 8 },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: TOKENS.color.text,
+    fontFamily: 'Archivo_700Bold',
+    color: '#EDEAF5',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: 'rgba(237,234,245,0.55)',
     textAlign: 'center',
     lineHeight: 20,
   },
   emailHighlight: {
     fontWeight: '700',
-    color: TOKENS.color.primary,
+    color: '#FF2D6F',
   },
-  otpCard: {
-    borderRadius: 20,
+  cardShadow: {
+    borderRadius: 26,
+    shadowColor: '#FF2D6F',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.28,
+    shadowRadius: 34,
+    elevation: 12,
+  },
+  cardGlow: {
+    borderRadius: 26,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+  },
+  card: {
+    width: width - 48,
+    borderRadius: 26,
     overflow: 'hidden',
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
-    alignItems: 'center',
-    gap: 16,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  otpLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: TOKENS.color.sub,
-  },
-  otpRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
+  otpContainer: { alignItems: 'center', gap: 16 },
+  otpLabel: { fontSize: 13, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: 'rgba(237,234,245,0.55)' },
+  otpRow: { flexDirection: 'row', gap: 9 },
   otpInput: {
-    width: 46,
+    width: 44,
     height: 56,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(200,200,220,0.6)',
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    fontSize: 22,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    textAlign: 'center',
-  },
-  otpInputFilled: {
-    borderColor: TOKENS.color.primary,
-    backgroundColor: 'rgba(133,0,33,0.06)',
-  },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
-    padding: 12,
-  },
-  errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  btnShadow: {
-    borderRadius: 14,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  primaryBtn: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  btnShadowDisabled: { shadowOpacity: 0, elevation: 0 },
-  btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  btnGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  resendRow: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  resendText: {
-    fontSize: 14,
-    color: TOKENS.color.primary,
-    fontWeight: '600',
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  successCard: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    padding: 32,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
-    alignItems: 'center',
-    gap: 16,
-  },
-  successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#f0fdf4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successTitle: {
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     fontSize: 22,
     fontWeight: '800',
-    color: TOKENS.color.text,
-    textAlign: 'center',
+    fontFamily: 'Archivo_700Bold',
+    color: '#EDEAF5',
   },
+  otpInputFilled: {
+    borderColor: '#FF2D6F',
+    backgroundColor: 'rgba(255,45,111,0.14)',
+  },
+  errorText: { fontSize: 13, color: '#FF4D4D', textAlign: 'center', marginTop: 14, marginBottom: -2 },
+  btnGap: { marginTop: 20 },
+  resendRow: { alignItems: 'center', paddingVertical: 14 },
+  resendText: { fontSize: 14, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#FF2D6F' },
+  successOuter: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  successContainer: { alignItems: 'center', gap: 14 },
+  successIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    shadowColor: '#00E5A0',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  successIconGradient: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5' },
   successText: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: 'rgba(237,234,245,0.55)',
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 8,
   },
 });

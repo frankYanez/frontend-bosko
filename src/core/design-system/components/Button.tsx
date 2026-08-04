@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, PressableProps, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TOKENS } from '../tokens';
@@ -12,7 +12,6 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
-  /** Icono a la izquierda del label — pasar el elemento ya armado, ej. `<MaterialIcons name="send" size={18} color="#fff" />` */
   icon?: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -24,6 +23,13 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
 const SIZE_H = { sm: 38, md: 48, lg: 56 } as const;
 const SIZE_PAD = { sm: SPACING.md, md: SPACING.lg, lg: SPACING.xl } as const;
 
+/**
+ * Botón — "Señal Nocturna". El primary lleva el glow rosa (`TOKENS.shadow.glow`)
+ * en vez de una sombra negra genérica, y ese glow se INTENSIFICA al presionar
+ * (RN no tiene :hover real en mobile, así que el estado de "encendido" vive en
+ * el press: shadowRadius/shadowOpacity suben y el botón escala a 0.97).
+ * Secondary/outline/ghost pasan a superficie de vidrio + borde rosa translúcido.
+ */
 export function Button({
   label,
   icon,
@@ -36,6 +42,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const tc = useThemeColors();
+  const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
   const height = SIZE_H[size];
 
@@ -51,8 +58,7 @@ export function Button({
     ...(fullWidth ? { width: '100%' } : null),
   };
 
-  const textColor =
-    variant === 'outline' || variant === 'ghost' ? tc.primary : '#fff';
+  const textColor = variant === 'outline' || variant === 'ghost' ? '#FF2D6F' : '#fff';
 
   const content = loading ? (
     <ActivityIndicator color={textColor} />
@@ -63,10 +69,30 @@ export function Button({
     </>
   );
 
+  const press = { onPressIn: () => setPressed(true), onPressOut: () => setPressed(false) };
+
   if (variant === 'primary') {
+    // Glow wrapper: shadowRadius/Opacity sube al presionar — es el reemplazo
+    // de un :hover, ya que en touch no existe estado de hover real.
+    const glowStyle: ViewStyle = {
+      borderRadius: TOKENS.radius.md,
+      // Android: elevation sin backgroundColor opaco dibuja una caja negra
+      // detrás en vez de respetar el borderRadius — mismo fix que cards/inputs.
+      backgroundColor: tc.bg,
+      shadowColor: '#FF2D6F',
+      shadowOffset: { width: 0, height: pressed ? 4 : 8 },
+      shadowOpacity: pressed ? 0.55 : 0.4,
+      shadowRadius: pressed ? 30 : 24,
+      elevation: pressed ? 8 : 6,
+    };
     return (
-      <View style={[styles.shadowWrap, fullWidth && { width: '100%' }]}>
-        <Pressable disabled={isDisabled} {...rest} style={[styles.pressable, fullWidth && { width: '100%' }, style]}>
+      <View style={[glowStyle, fullWidth && { width: '100%' }]}>
+        <Pressable
+          disabled={isDisabled}
+          {...press}
+          {...rest}
+          style={[styles.pressable, fullWidth && { width: '100%' }, { transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}
+        >
           <LinearGradient colors={GRADIENTS.brand} style={shell}>
             {content}
           </LinearGradient>
@@ -77,22 +103,24 @@ export function Button({
 
   if (variant === 'danger') {
     return (
-      <Pressable
-        disabled={isDisabled}
-        {...rest}
-        style={[shell, { backgroundColor: '#ef4444' }, style]}
-      >
+      <Pressable disabled={isDisabled} {...press} {...rest} style={[shell, { backgroundColor: '#FF4D4D', transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}>
         {content}
       </Pressable>
     );
   }
 
   if (variant === 'secondary') {
+    // Vidrio: superficie translúcida + borde — antes backgroundColor sólido tc.surface2
     return (
       <Pressable
         disabled={isDisabled}
+        {...press}
         {...rest}
-        style={[shell, { backgroundColor: tc.surface2 }, style]}
+        style={[shell, {
+          backgroundColor: pressed ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)',
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.1)',
+        }, style]}
       >
         {loading ? <ActivityIndicator color={tc.text} /> : <>{icon}<Text variant="button" color={tc.text}>{label}</Text></>}
       </Pressable>
@@ -103,8 +131,13 @@ export function Button({
     return (
       <Pressable
         disabled={isDisabled}
+        {...press}
         {...rest}
-        style={[shell, { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: tc.primary }, style]}
+        style={[shell, {
+          backgroundColor: pressed ? 'rgba(255,45,111,0.14)' : 'transparent',
+          borderWidth: 1.5,
+          borderColor: 'rgba(255,45,111,0.5)',
+        }, style]}
       >
         {content}
       </Pressable>
@@ -115,8 +148,9 @@ export function Button({
   return (
     <Pressable
       disabled={isDisabled}
+      {...press}
       {...rest}
-      style={[shell, { backgroundColor: 'transparent' }, style]}
+      style={[shell, { backgroundColor: pressed ? 'rgba(255,45,111,0.14)' : 'transparent' }, style]}
     >
       {content}
     </Pressable>
@@ -124,6 +158,5 @@ export function Button({
 }
 
 const styles = StyleSheet.create({
-  shadowWrap: { borderRadius: TOKENS.radius.md, ...TOKENS.shadow.button },
   pressable: { borderRadius: TOKENS.radius.md, overflow: 'hidden' },
 });

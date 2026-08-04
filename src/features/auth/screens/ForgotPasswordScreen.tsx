@@ -1,6 +1,7 @@
 /**
  * ForgotPasswordScreen — Recuperación de contraseña.
- * Envía un email de reseteo al usuario (POST /auth/forgot-password).
+ * Rebrand "Señal Nocturna" — misma lógica (POST /auth/forgot-password),
+ * usa los componentes reales del design system (`Input`, `Button`, `AnimatedBackground`).
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,34 +9,33 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   Pressable,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator,
   Dimensions,
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Input } from '@/core/components/Input';
+import { Button, TOKENS } from '@/core/design-system';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import api from '@/core/api/axiosinstance';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
 
 export default function ForgotPasswordScreen() {
-  const tc = useThemeColors();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
+  const successPop = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -43,6 +43,13 @@ export default function ForgotPasswordScreen() {
       Animated.timing(translateY, { toValue: 0, duration: 500, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  useEffect(() => {
+    if (success) {
+      successPop.setValue(0.4);
+      Animated.spring(successPop, { toValue: 1, friction: 5, tension: 60, useNativeDriver: true }).start();
+    }
+  }, [success]);
 
   const handleSend = async () => {
     Keyboard.dismiss();
@@ -70,118 +77,94 @@ export default function ForgotPasswordScreen() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient
-        colors={wash(tc)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.background}
-      >
+      <View style={styles.background}>
+        <AnimatedBackground variant="minimal" />
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
         >
           <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY }] }]}>
-            {/* Botón volver */}
-            <Pressable
-              onPress={() => router.back()}
-              style={[styles.backButton, { backgroundColor: tc.surface }]}
-              hitSlop={12}
-            >
-              <MaterialIcons name="arrow-back" size={24} color={tc.text} />
+            <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={12}>
+              <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
             </Pressable>
 
-            {/* Ícono decorativo */}
-            <View style={[styles.iconCircle, { backgroundColor: tc.accent }]}>
-              <MaterialIcons name="lock-reset" size={36} color={TOKENS.color.primary} />
-            </View>
-
-            <Text style={[styles.title, { color: tc.text }]}>¿Olvidaste tu contraseña?</Text>
-            <Text style={[styles.description, { color: tc.textSub }]}>
-              Ingresá tu email y te enviamos un enlace para restablecerla.
-            </Text>
-
-            <View style={styles.cardShadow}>
-              <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
-                {success ? (
-                  <View style={styles.successContainer}>
-                    <MaterialIcons name="check-circle" size={48} color="#22c55e" />
-                    <Text style={[styles.successTitle, { color: tc.text }]}>¡Email enviado!</Text>
-                    <Text style={[styles.successText, { color: tc.textSub }]}>
-                      Si ese email está registrado, recibirás las instrucciones en minutos.
-                      Revisá también tu carpeta de spam.
-                    </Text>
-                    <View style={styles.buttonShadow}>
-                      <Pressable
-                        onPress={() => router.back()}
-                        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            {success ? (
+              <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+                <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+                  <BlurView intensity={30} tint="dark" style={styles.card}>
+                    <View style={styles.successContainer}>
+                      <Animated.View
+                        style={[
+                          styles.successIconCircle,
+                          { opacity: successPop, transform: [{ scale: successPop }] },
+                        ]}
                       >
                         <LinearGradient
-                          colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={styles.buttonGradient}
+                          colors={[TOKENS.color.mint, '#00b382']}
+                          style={styles.successIconGradient}
                         >
-                          <Text style={styles.buttonText}>Volver al inicio</Text>
+                          <Ionicons name="checkmark" size={40} color="#fff" />
                         </LinearGradient>
-                      </Pressable>
+                      </Animated.View>
+                      <Text style={styles.successTitle}>¡Email enviado!</Text>
+                      <Text style={styles.successText}>
+                        Si ese email está registrado, recibirás las instrucciones en minutos.
+                        Revisá también tu carpeta de spam.
+                      </Text>
+                      <Button label="Volver al inicio" onPress={() => router.back()} fullWidth />
                     </View>
+                  </BlurView>
+                </View>
+              </View>
+            ) : (
+              <>
+                <View style={styles.heroIconCircle}>
+                  <Ionicons name="key-outline" size={36} color={TOKENS.color.signal} />
+                </View>
+
+                <Text style={styles.title}>¿Olvidaste tu contraseña?</Text>
+                <Text style={styles.description}>
+                  Ingresá tu email y te enviamos un enlace para restablecerla.
+                </Text>
+
+                <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+                  <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+                    <BlurView intensity={30} tint="dark" style={styles.card}>
+                      <Text style={styles.cardTitle}>Recuperar contraseña</Text>
+
+                      <View style={styles.fieldGap}>
+                        <Input
+                          leftIcon="mail-outline"
+                          placeholder="Correo electrónico"
+                          value={email}
+                          onChangeText={text => { setEmail(text); setError(''); }}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          returnKeyType="done"
+                          onSubmitEditing={handleSend}
+                          autoFocus
+                        />
+                      </View>
+
+                      {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+                      <Button label="Enviar email" onPress={handleSend} loading={isLoading} fullWidth />
+                    </BlurView>
                   </View>
-                ) : (
-                  /* Formulario */
-                  <>
-                    <Text style={[styles.cardTitle, { color: tc.text }]}>Recuperar contraseña</Text>
-
-                    <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }, error ? styles.inputError : null]}>
-                      <MaterialIcons name="email" size={20} color={tc.textSub} />
-                      <TextInput
-                        style={[styles.input, { color: tc.text }]}
-                        placeholder="Correo electrónico"
-                        placeholderTextColor={tc.textSub}
-                        value={email}
-                        onChangeText={text => { setEmail(text); setError(''); }}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        returnKeyType="done"
-                        onSubmitEditing={handleSend}
-                        autoFocus
-                      />
-                    </View>
-
-                    {!!error && <Text style={styles.errorText}>{error}</Text>}
-
-                    <View style={styles.buttonShadow}>
-                      <Pressable
-                        onPress={handleSend}
-                        disabled={isLoading}
-                        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-                      >
-                        <LinearGradient
-                          colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={styles.buttonGradient}
-                        >
-                          {isLoading
-                            ? <ActivityIndicator color="#fff" size="small" />
-                            : <Text style={styles.buttonText}>Enviar email</Text>
-                          }
-                        </LinearGradient>
-                      </Pressable>
-                    </View>
-                  </>
-                )}
-              </BlurView>
-            </View>
+                </View>
+              </>
+            )}
           </Animated.View>
         </KeyboardAvoidingView>
-      </LinearGradient>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1 },
+  background: { flex: 1, backgroundColor: '#0A0910' },
   flex: { flex: 1 },
   container: {
     flex: 1,
@@ -193,121 +176,88 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     top: 60,
-    left: 0,
+    left: 24,
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    zIndex: 10,
   },
-  iconCircle: {
+  heroIconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(133,0,33,0.08)',
+    backgroundColor: 'rgba(255,45,111,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: TOKENS.color.text,
+    fontFamily: 'Archivo_700Bold',
+    color: '#EDEAF5',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   description: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: 'rgba(237,234,245,0.55)',
     textAlign: 'center',
     marginBottom: 28,
     lineHeight: 20,
     paddingHorizontal: 8,
   },
   cardShadow: {
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 4,
+    borderRadius: 26,
+    shadowColor: '#FF2D6F',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.28,
+    shadowRadius: 34,
+    elevation: 12,
+  },
+  cardGlow: {
+    borderRadius: 26,
+    shadowColor: '#fff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
   },
   card: {
     width: width - 48,
-    borderRadius: 24,
+    borderRadius: 26,
     overflow: 'hidden',
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    marginBottom: 16,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    gap: 10,
-    marginBottom: 8,
-    minHeight: 52,
-  },
-  inputError: { borderColor: '#ef4444' },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: TOKENS.color.text,
-    paddingVertical: 8,
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#ef4444',
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-  buttonShadow: {
-    borderRadius: 14,
-    marginTop: 8,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
+  cardTitle: { fontSize: 18, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 20 },
+  fieldGap: { marginBottom: 14 },
+  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
+  successContainer: { alignItems: 'center', gap: 14 },
+  successIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    shadowColor: '#00E5A0',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  button: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonGradient: {
-    paddingVertical: 16,
+  successIconGradient: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  successContainer: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  successTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-  },
+  successTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5' },
   successText: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: 'rgba(237,234,245,0.55)',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 8,

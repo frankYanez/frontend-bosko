@@ -1,7 +1,8 @@
 /**
  * RegisterView — Pantalla de registro multi-paso.
- * Cada paso es un campo distinto con validación progresiva.
- * Diseño glassmorphism consistente con LogInView.
+ * Rebrand "Señal Nocturna" — misma lógica de 4 pasos, validación y flujo
+ * que el archivo original; usa los componentes reales del design system
+ * (`Input`, `Button`) para el campo del paso y el CTA.
  */
 
 import React, { useRef, useState } from 'react';
@@ -15,20 +16,19 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator,
   Dimensions,
+  Animated,
   Alert,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
-import { AuthBackgroundVideo } from '@/core/components/AuthBackgroundVideo';
-import { Image } from 'expo-image';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Animated } from 'react-native';
+import { Input } from '@/core/components/Input';
+import { Button } from '@/core/design-system';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors } from '@/core/design-system';
+import { BrandMark } from '@/components/BrandMark';
 
 const { width } = Dimensions.get('window');
 
@@ -38,7 +38,7 @@ interface Step {
   field: keyof FormData;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   secure?: boolean;
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
 }
 
 interface FormData {
@@ -49,71 +49,52 @@ interface FormData {
 }
 
 const STEPS: Step[] = [
-  { label: 'Nombre',     placeholder: 'Tu nombre',            field: 'firstName', keyboardType: 'default',       icon: 'person' },
-  { label: 'Apellido',   placeholder: 'Tu apellido',          field: 'lastName',  keyboardType: 'default',       icon: 'person' },
-  { label: 'Email',      placeholder: 'tucorreo@ejemplo.com', field: 'email',     keyboardType: 'email-address', icon: 'email'  },
-  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres',  field: 'password',  secure: true,                  icon: 'lock'   },
+  { label: 'Nombre',     placeholder: 'Tu nombre',            field: 'firstName', keyboardType: 'default',       icon: 'person-outline' },
+  { label: 'Apellido',   placeholder: 'Tu apellido',          field: 'lastName',  keyboardType: 'default',       icon: 'person-outline' },
+  { label: 'Email',      placeholder: 'tucorreo@ejemplo.com', field: 'email',     keyboardType: 'email-address', icon: 'mail-outline'  },
+  { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres',  field: 'password',  secure: true,                  icon: 'lock-closed-outline' },
 ];
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
-  const tc = useThemeColors();
   const { registerUser, isLoading, error, clearError } = useAuth();
 
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    lastName:  '',
-    email:     '',
-    password:  '',
-  });
-  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState<FormData>({ firstName: '', lastName: '', email: '', password: '' });
   const [fieldError, setFieldError] = useState('');
 
   const inputRef = useRef<TextInput>(null);
   const progress = useRef(new Animated.Value(1 / STEPS.length)).current;
+  const glow = useRef(new Animated.Value(0.7)).current;
+
+  React.useEffect(() => {
+    // Glow de fondo pulsante — mismo lenguaje que AnimatedSplashScreen, le da vida al gradiente estático
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glow, { toValue: 1, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(glow, { toValue: 0.7, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    ).start();
+  }, []);
 
   const currentStep = STEPS[step];
   const isLastStep = step === STEPS.length - 1;
 
   const progressStyle = {
-    width: progress.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0%', '100%'],
-    }),
+    width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
   };
 
-  // Validar el campo del paso actual antes de avanzar
   const validateCurrent = async (): Promise<boolean> => {
     const value = formData[currentStep.field].trim();
-
-    if (!value) {
-      setFieldError('Este campo es obligatorio');
-      return false;
-    }
-
+    if (!value) { setFieldError('Este campo es obligatorio'); return false; }
     if (currentStep.field === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        setFieldError('Ingresá un email válido');
-        return false;
-      }
+      if (!emailRegex.test(value)) { setFieldError('Ingresá un email válido'); return false; }
     }
-
     if (currentStep.field === 'password') {
-      if (value.length < 8) {
-        setFieldError('La contraseña debe tener al menos 8 caracteres');
-        return false;
-      }
-      if (!/[A-Z]/.test(value)) {
-        setFieldError('La contraseña debe tener al menos una mayúscula');
-        return false;
-      }
-      if (!/[0-9]/.test(value)) {
-        setFieldError('La contraseña debe tener al menos un número');
-        return false;
-      }
+      if (value.length < 8) { setFieldError('La contraseña debe tener al menos 8 caracteres'); return false; }
+      if (!/[A-Z]/.test(value)) { setFieldError('La contraseña debe tener al menos una mayúscula'); return false; }
+      if (!/[0-9]/.test(value)) { setFieldError('La contraseña debe tener al menos un número'); return false; }
     }
-
     return true;
   };
 
@@ -127,9 +108,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
       await handleFinish();
     } else {
       setStep(s => s + 1);
-      // Actualizar progress para la barra animada
       Animated.timing(progress, { toValue: (step + 2) / STEPS.length, duration: 300, useNativeDriver: false }).start();
-      // Foco en el nuevo input
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
@@ -145,9 +124,9 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
   };
 
   const handleFinish = async () => {
-    const email     = formData.email.trim().toLowerCase();
+    const email = formData.email.trim().toLowerCase();
     const firstName = formData.firstName.trim();
-    const lastName  = formData.lastName.trim();
+    const lastName = formData.lastName.trim();
     try {
       await registerUser({ firstName, lastName, email, password: formData.password });
       router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
@@ -162,106 +141,83 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.background}>
-        {/* Video de fondo, siempre reproduciendo, con wash oscuro sutil fijo */}
-        <AuthBackgroundVideo />
+        <LinearGradient colors={['#0A0910', '#1a000d', '#0A0910']} style={StyleSheet.absoluteFill} />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.glow,
+            {
+              opacity: glow.interpolate({ inputRange: [0.7, 1], outputRange: [0.5, 1] }),
+              transform: [{ scale: glow.interpolate({ inputRange: [0.7, 1], outputRange: [1, 1.18] }) }, { rotate: '10deg' }],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={['rgba(255,45,111,0.24)', 'rgba(255,45,111,0.10)', 'rgba(255,45,111,0)']}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <View style={styles.container}>
-            {/* Logo compacto */}
-            <Image
-              source={require('@/assets/images/bosko-logo.png')}
-              style={styles.logo}
-              contentFit="contain"
-            />
+            <BrandMark variant="mark" size={52} />
 
-            {/* Tarjeta glass — Android: elevation dibuja rectángulo si la view es transparente,
-                necesita backgroundColor opaco en la misma view para respetar el borderRadius */}
-            <View style={[styles.cardGlow, { backgroundColor: tc.card }]}>
-            <View style={[styles.cardShadow, { backgroundColor: tc.card }]}>
-              <BlurView intensity={30} tint="light" style={[styles.card, { borderColor: tc.cardBorder }]}>
-                {/* Header con barra de progreso */}
+            <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
+            <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
+              <BlurView intensity={30} tint="dark" style={styles.card}>
                 <View style={styles.cardHeader}>
                   <Pressable onPress={handleBack} hitSlop={8}>
-                    <MaterialIcons name="arrow-back" size={22} color={tc.text} />
+                    <Ionicons name="arrow-back" size={22} color="#EDEAF5" />
                   </Pressable>
-                  <Text style={[styles.stepCounter, { color: tc.textSub }]}>
-                    {step + 1} / {STEPS.length}
-                  </Text>
+                  <Text style={styles.stepCounter}>{step + 1} / {STEPS.length}</Text>
                 </View>
 
-                {/* Barra de progreso */}
-                <View style={[styles.progressTrack, { backgroundColor: tc.border }]}>
-                  <Animated.View style={[styles.progressFill, progressStyle]} />
+                <View style={styles.progressTrack}>
+                  <Animated.View style={[styles.progressFill, progressStyle]}>
+                    <LinearGradient colors={['#FF2D6F', '#850021']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                  </Animated.View>
                 </View>
 
-                <Text style={[styles.cardTitle, { color: tc.text }]}>Crear cuenta</Text>
-                <Text style={[styles.stepLabel, { color: tc.textSub }]}>{currentStep.label}</Text>
+                <Text style={styles.cardTitle}>Crear cuenta</Text>
+                <Text style={styles.stepLabel}>{currentStep.label}</Text>
 
-                {/* Input del paso actual */}
-                <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }, displayError ? styles.inputError : null]}>
-                  <MaterialIcons name={currentStep.icon} size={20} color={tc.textSub} />
-                  <TextInput
+                <View style={styles.fieldGap}>
+                  <Input
                     ref={inputRef}
-                    style={[styles.input, { color: tc.text }]}
+                    leftIcon={currentStep.icon}
                     placeholder={currentStep.placeholder}
-                    placeholderTextColor={tc.textSub}
                     value={formData[currentStep.field]}
-                    onChangeText={text => {
-                      setFormData(prev => ({ ...prev, [currentStep.field]: text }));
-                      setFieldError('');
-                      clearError();
-                    }}
+                    onChangeText={text => { setFormData(prev => ({ ...prev, [currentStep.field]: text })); setFieldError(''); clearError(); }}
                     keyboardType={currentStep.keyboardType || 'default'}
-                    secureTextEntry={currentStep.secure && !showPassword}
+                    secureTextEntry={currentStep.secure}
                     autoCapitalize={['firstName', 'lastName'].includes(currentStep.field) ? 'words' : 'none'}
                     autoCorrect={false}
                     returnKeyType={isLastStep ? 'done' : 'next'}
                     onSubmitEditing={handleNext}
                     autoFocus
                   />
-                  {currentStep.secure && (
-                    <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
-                      <MaterialIcons
-                        name={showPassword ? 'visibility' : 'visibility-off'}
-                        size={20}
-                        color={tc.textSub}
-                      />
-                    </Pressable>
-                  )}
                 </View>
 
-                {!!displayError && (
-                  <Text style={styles.errorText}>{displayError}</Text>
-                )}
+                {!!displayError && <Text style={styles.errorText}>{displayError}</Text>}
 
-                {/* Botón siguiente / finalizar */}
-                <View style={styles.buttonShadow}>
-                  <Pressable
-                    onPress={handleNext}
-                    disabled={isLoading}
-                    style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-                  >
-                    <LinearGradient
-                      colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.buttonGradient}
-                    >
-                      {isLoading
-                        ? <ActivityIndicator color="#fff" size="small" />
-                        : <Text style={styles.buttonText}>{isLastStep ? 'Crear cuenta' : 'Siguiente'}</Text>
-                      }
-                    </LinearGradient>
-                  </Pressable>
-                </View>
+                <Button
+                  label={isLastStep ? 'Crear cuenta' : 'Siguiente'}
+                  onPress={handleNext}
+                  loading={isLoading}
+                  fullWidth
+                  style={styles.ctaButton}
+                />
 
-                {/* Link a login */}
                 {step === 0 && (
                   <View style={styles.loginRow}>
-                    <Text style={[styles.loginPrompt, { color: tc.textSub }]}>¿Ya tenés cuenta? </Text>
+                    <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
                     <Pressable onPress={toRegister}>
                       <Text style={styles.loginLink}>Ingresar</Text>
                     </Pressable>
@@ -278,143 +234,45 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1 },
+  background: { flex: 1, backgroundColor: '#0A0910' },
+  glow: {
+    position: 'absolute',
+    top: -180,
+    left: -40,
+    right: -40,
+    height: 520,
+    opacity: 0.9,
+  },
   flex: { flex: 1 },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  logo: {
-    width: 60,
-    height: 60,
-    marginBottom: 20,
-  },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
   cardShadow: {
-    borderRadius: 24,
-    // Sombra negra sola no se nota sobre el video oscuro de fondo — se suma un glow
-    // blanco tenue para separar la card visualmente (look glass sobre fondo oscuro).
-    shadowColor: '#000',
+    borderRadius: 26,
+    shadowColor: '#FF2D6F',
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.45,
-    shadowRadius: 30,
+    shadowOpacity: 0.28,
+    shadowRadius: 34,
     elevation: 12,
   },
-  cardGlow: {
-    borderRadius: 24,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-  },
+  cardGlow: { borderRadius: 26, marginTop: 24, shadowColor: '#fff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.06, shadowRadius: 20 },
   card: {
     width: width - 48,
-    borderRadius: 24,
+    borderRadius: 26,
     overflow: 'hidden',
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
+    padding: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  stepCounter: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-    fontWeight: '500',
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    borderRadius: 2,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: TOKENS.color.primary,
-    borderRadius: 2,
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    marginBottom: 4,
-  },
-  stepLabel: {
-    fontSize: 15,
-    color: TOKENS.color.sub,
-    marginBottom: 16,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    gap: 10,
-    marginBottom: 8,
-    minHeight: 52,
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: TOKENS.color.text,
-    paddingVertical: 8,
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#ef4444',
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-  buttonShadow: {
-    borderRadius: 14,
-    marginTop: 8,
-    marginBottom: 16,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  button: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 14,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  loginRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loginPrompt: { fontSize: 14, color: TOKENS.color.sub },
-  loginLink: {
-    fontSize: 14,
-    color: TOKENS.color.primary,
-    fontWeight: '600',
-  },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  stepCounter: { fontSize: 13, color: 'rgba(237,234,245,0.55)', fontFamily: 'JetBrainsMono_500Medium', letterSpacing: 1 },
+  progressTrack: { height: 4, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 2, marginBottom: 24, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 2, overflow: 'hidden' },
+  cardTitle: { fontSize: 22, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 6 },
+  stepLabel: { fontSize: 15, color: 'rgba(237,234,245,0.55)', marginBottom: 20 },
+  fieldGap: { marginBottom: 14 },
+  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
+  ctaButton: { marginTop: 10, marginBottom: 20 },
+  loginRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  loginPrompt: { fontSize: 14, color: 'rgba(237,234,245,0.55)' },
+  loginLink: { fontSize: 14, color: '#FF2D6F', fontWeight: '600' },
 });

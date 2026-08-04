@@ -1,3 +1,7 @@
+/**
+ * Rebrand "Señal Nocturna" — SearchPage: misma lógica, estado y navegación que
+ * el archivo original. Solo cambia el chrome: acento bordo → signal, sombras negras → glow rosa.
+ */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useSearch } from "@/contexts/SearchContext";
 import { TOKENS } from "@/core/design-system/tokens";
+const SIGNAL = TOKENS.color.signal;
 import { useThemeColors } from "@/stores/theme.store";
 import type { Category } from "@/interfaces/category";
 import type { Provider } from "@/interfaces/provider";
@@ -71,7 +76,7 @@ export const SearchPage = () => {
           onPress={() => router.push({ pathname: "/(tabs)/services/category/[id]", params: { id: item.data.id } })}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
-          <View style={[s.categoryAccent, { backgroundColor: TOKENS.color.primary }]} />
+          <View style={[s.categoryAccent, { backgroundColor: SIGNAL }]} />
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.name}</Text>
             {item.data.description ? (
@@ -95,8 +100,8 @@ export const SearchPage = () => {
           {item.data.avatar ? (
             <Image source={{ uri: item.data.avatar }} style={s.avatar} contentFit="cover" />
           ) : (
-            <View style={[s.avatarFallback, { backgroundColor: TOKENS.color.primary + "22" }]}>
-              <Text style={[s.avatarInitial, { color: TOKENS.color.primary }]}>{initial}</Text>
+            <View style={[s.avatarFallback, { backgroundColor: SIGNAL + "22" }]}>
+              <Text style={[s.avatarInitial, { color: SIGNAL }]}>{initial}</Text>
             </View>
           )}
           <View style={{ flex: 1, gap: 3 }}>
@@ -128,8 +133,8 @@ export const SearchPage = () => {
           onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.providerId ?? item.data.userId ?? "" } })}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
-          <View style={[s.serviceIcon, { backgroundColor: TOKENS.color.primary + "15" }]}>
-            <Ionicons name="briefcase-outline" size={20} color={TOKENS.color.primary} />
+          <View style={[s.serviceIcon, { backgroundColor: SIGNAL + "15" }]}>
+            <Ionicons name="briefcase-outline" size={20} color={SIGNAL} />
           </View>
           <View style={{ flex: 1, gap: 3 }}>
             <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.title}</Text>
@@ -143,7 +148,7 @@ export const SearchPage = () => {
                 </View>
               ) : null}
               {item.data.price ? (
-                <Text style={[s.priceText, { color: TOKENS.color.primary }]}>
+                <Text style={[s.priceText, { color: SIGNAL }]}>
                   Desde ${item.data.price}
                 </Text>
               ) : (
@@ -196,7 +201,7 @@ export const SearchPage = () => {
         {/* Loading */}
         {loading && (
           <View style={s.loaderWrap}>
-            <ActivityIndicator color={TOKENS.color.primary} />
+            <ActivityIndicator color={SIGNAL} />
           </View>
         )}
 
@@ -372,12 +377,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 99,
-    backgroundColor: TOKENS.color.primary + "15",
+    backgroundColor: SIGNAL + "15",
   },
   pillText: {
     fontSize: 11,
     fontWeight: "700",
-    color: TOKENS.color.primary,
+    color: SIGNAL,
   },
   priceText: {
     fontSize: 13,

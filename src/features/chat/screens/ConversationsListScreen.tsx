@@ -1,10 +1,14 @@
 /**
+ * Rebrand "Señal Nocturna" — ConversationsListScreen (Mensajes): misma lógica, estado y navegación que
+ * el archivo original. Mismo polling/refresh/orden — solo acento bordo → signal.
+ */
+/**
  * ConversationsListScreen — Lista de conversaciones activas.
  * Muestra todas las conversaciones del usuario con el último mensaje,
  * timestamp y badge de mensajes no leídos.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   View,
@@ -126,8 +130,14 @@ export default function ConversationsListScreen() {
   const setUnreadTotal = useChatStore((s) => s.setUnreadTotal);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const pollBackoffRef = useRef(0);
 
   const load = useCallback(async () => {
+    if (pollBackoffRef.current > Date.now()) {
+      setLoading(false);
+      return;
+    }
     try {
       const data = await fetchConversations();
       const sorted = data.sort((a, b) => {
@@ -148,8 +158,13 @@ export default function ConversationsListScreen() {
         }),
       );
       setUnreadTotal(data.reduce((acc, c) => acc + c.unreadCount, 0));
-    } catch (err) {
+      setLoadError(false);
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        pollBackoffRef.current = Date.now() + 60_000;
+      }
       console.error('Error al cargar conversaciones:', err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -179,7 +194,7 @@ export default function ConversationsListScreen() {
 
       {loading ? (
         <ActivityIndicator
-          color={TOKENS.color.primary}
+          color={TOKENS.color.signal}
           size="large"
           style={styles.loader}
         />
@@ -193,19 +208,28 @@ export default function ConversationsListScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <EmptyState
-              icon="chatbubbles-outline"
-              title="Sin mensajes todavía"
-              subtitle="Las conversaciones aparecen cuando cotizás un servicio o te contratan como prestador."
-              cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
-            />
+            loadError ? (
+              <EmptyState
+                icon="cloud-offline-outline"
+                title="No pudimos cargar tus mensajes"
+                subtitle="Hubo un problema de conexión. Probá de nuevo en unos segundos."
+                cta={{ label: 'Reintentar', onPress: load }}
+              />
+            ) : (
+              <EmptyState
+                icon="chatbubbles-outline"
+                title="Sin mensajes todavía"
+                subtitle="Las conversaciones aparecen cuando cotizás un servicio o te contratan como prestador."
+                cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
+              />
+            )
           }
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={TOKENS.color.primary}
-              colors={[TOKENS.color.primary]}
+              tintColor={TOKENS.color.signal}
+              colors={[TOKENS.color.signal]}
             />
           }
         />
@@ -231,7 +255,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   headerBadge: {
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -271,7 +295,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -308,7 +332,7 @@ const styles = StyleSheet.create({
   },
   itemOrder: {
     fontSize: 12,
-    color: TOKENS.color.primary,
+    color: TOKENS.color.signal,
     fontWeight: '500',
   },
   itemFooter: {
@@ -322,7 +346,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   unreadBadge: {
-    backgroundColor: TOKENS.color.primary,
+    backgroundColor: TOKENS.color.signal,
     borderRadius: 10,
     minWidth: 20,
     height: 20,

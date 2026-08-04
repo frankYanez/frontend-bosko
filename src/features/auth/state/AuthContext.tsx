@@ -24,14 +24,17 @@ import { tokenStorage } from '@/core/auth/tokenStorage';
 import {
   loginService,
   registerUserService,
+  verifyEmailService,
 } from '../services/auth';
 import api from '@/core/api/axiosinstance';
+import { getUserErrorMessage } from '@/lib/errors';
 import type {
   AuthContextType,
   AuthResponse,
   AuthState,
   AuthUser,
   Credentials,
+  RegisterResponse,
   RegisterUserPayload,
 } from '../types';
 
@@ -125,9 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return response;
     } catch (err: any) {
-      const raw = err?.response?.data?.message ?? 'Error al iniciar sesión';
-      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
-      setError(msg);
+      setError(getUserErrorMessage(err));
       throw err;
     } finally {
       setIsLoading(false);
@@ -135,35 +136,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ── Registro ───────────────────────────────────────────────────────────
+  // POST /auth/register solo crea la cuenta y envía el OTP de verificación.
+  // No devuelve tokens — el login real ocurre recién en verifyEmail().
   const registerUser = useCallback(
-    async (data: RegisterUserPayload): Promise<AuthResponse> => {
+    async (data: RegisterUserPayload): Promise<RegisterResponse> => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await registerUserService(data);
-
-        // Persistimos los tokens para que la verificación de email y el acceso
-        // posterior a las tabs no requieran volver a hacer login.
-        // El backend valida el email en endpoints protegidos si lo requiere.
-        await tokenStorage.save(
-          response.accessToken,
-          response.refreshToken,
-          data.email,
-        );
-
-        setAuthState({
-          token: response.accessToken,
-          refreshToken: response.refreshToken,
-          userEmail: data.email,
-          user: response.user ?? null,
-        });
-
-        return response;
+        return await registerUserService(data);
       } catch (err: any) {
-        const raw = err?.response?.data?.message ?? 'Error al registrar usuario';
-        const msg = Array.isArray(raw) ? raw.join(', ') : raw;
-        setError(msg);
+        setError(getUserErrorMessage(err));
         throw err;
       } finally {
         setIsLoading(false);
@@ -171,6 +154,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  // ── Verificación de email ─────────────────────────────────────────────
+  // Completa el registro: valida el OTP y devuelve los tokens de sesión.
+  const verifyEmail = useCallback(async (email: string, code: string): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await verifyEmailService(email, code);
+
+      await tokenStorage.save(response.accessToken, response.refreshToken, email);
+
+      setAuthState({
+        token: response.accessToken,
+        refreshToken: response.refreshToken,
+        userEmail: email,
+        user: response.user ?? null,
+      });
+    } catch (err: any) {
+      setError(getUserErrorMessage(err));
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
@@ -200,6 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         login,
         registerUser,
+        verifyEmail,
         logout,
         clearError,
       }}

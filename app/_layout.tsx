@@ -7,11 +7,11 @@ import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
-  SpaceGrotesk_400Regular,
-  SpaceGrotesk_500Medium,
-  SpaceGrotesk_600SemiBold,
-  SpaceGrotesk_700Bold,
-} from "@expo-google-fonts/space-grotesk";
+  Archivo_600SemiBold,
+  Archivo_700Bold,
+  Archivo_800ExtraBold,
+} from "@expo-google-fonts/archivo";
+import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/core/query/queryClient";
 import { AuthProvider } from "@/features/auth/state/AuthContext";
@@ -30,9 +30,7 @@ function useNotificationNavigation() {
       if (response) handleNotificationResponse(response);
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(
-      handleNotificationResponse,
-    );
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
 
     return () => responseListener.current?.remove();
   }, []);
@@ -85,10 +83,10 @@ function ThemedRoot() {
 
 export default function _layout() {
   const [fontsLoaded, fontError] = useFonts({
-    SpaceGrotesk_400Regular,
-    SpaceGrotesk_500Medium,
-    SpaceGrotesk_600SemiBold,
-    SpaceGrotesk_700Bold,
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+    JetBrainsMono_500Medium,
   });
 
   useEffect(() => {

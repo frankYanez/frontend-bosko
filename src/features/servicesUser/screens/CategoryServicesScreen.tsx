@@ -1,4 +1,8 @@
-﻿import React, { memo, useCallback, useEffect, useRef } from 'react';
+/**
+ * Rebrand "Señal Nocturna" — CategoryServicesScreen: misma lógica, estado y navegación que
+ * el archivo original. Mismo hero + lista infinita + skeleton shimmer que el original — stop bordo intermedio → signal, emoji de ícono/empty → Ionicons, precio a signal.
+ */
+import React, { memo, useCallback, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -21,6 +25,7 @@ import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { RadialBlob } from '@/core/components/RadialBlob';
 
 const { width: W } = Dimensions.get('window');
 
@@ -35,7 +40,7 @@ function useC() {
 const GRADIENTS: [string, string, string][] = [
   ['#0f0c29', '#302b63', '#24243e'],
   ['#134e5e', '#71b280', '#134e5e'],
-  [TOKENS.color.primaryDark, TOKENS.color.primary, '#c0002f'],
+  [TOKENS.color.primaryDark, TOKENS.color.primary, TOKENS.color.signal],
   ['#0d0d0d', '#2c3e50', '#4ca1af'],
   ['#1a1a2e', '#16213e', '#0f3460'],
   ['#2d1b69', '#553c9a', '#6d28d9'],
@@ -181,7 +186,7 @@ const ServiceCard = memo(function ServiceCard({
               <Ionicons
                 name={fav ? 'heart' : 'heart-outline'}
                 size={20}
-                color={fav ? '#EF4444' : c.border}
+                color={fav ? TOKENS.color.signal : c.border}
               />
             </Animated.View>
           </Pressable>
@@ -222,8 +227,18 @@ function Hero({
         style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
       />
       {/* Blobs */}
-      <View style={[s.blob, { width: 200, height: 200, top: -60, right: -40, opacity: 0.10 }]} />
-      <View style={[s.blob, { width: 120, height: 120, bottom: -30, right: 80, opacity: 0.07 }]} />
+      <RadialBlob
+        size={200}
+        color="rgb(255,255,255)"
+        opacity={0.3}
+        style={{ position: 'absolute', top: -60, right: -40 }}
+      />
+      <RadialBlob
+        size={120}
+        color="rgb(255,255,255)"
+        opacity={0.2}
+        style={{ position: 'absolute', bottom: -30, right: 80 }}
+      />
 
       {/* Back button */}
       <Pressable onPress={onBack} style={[s.backBtn, { backgroundColor: c.card }]}>
@@ -312,7 +327,7 @@ export default function CategoryServicesScreen() {
     <SkeletonList />
   ) : (
     <View style={s.empty}>
-      <Text style={s.emptyIcon}>🔍</Text>
+      <Ionicons name="search-outline" size={48} color={c.sub} style={{ marginBottom: 4 }} />
       <Text style={[s.emptyTitle, { color: c.text }]}>Próximamente hay más</Text>
       <Text style={[s.emptySub, { color: c.sub }]}>Estamos sumando especialistas en esta categoría.</Text>
     </View>
@@ -379,11 +394,6 @@ const s = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 12,
-  },
-  blob: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
   },
   backBtn: {
     width: 38,

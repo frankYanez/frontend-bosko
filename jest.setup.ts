@@ -1,5 +1,9 @@
 import "react-native-gesture-handler/jestSetup";
 
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+);
+
 definePropertyOnGlobal("TextEncoder", () => require("util").TextEncoder);
 
 definePropertyOnGlobal("TextDecoder", () => require("util").TextDecoder);
@@ -9,6 +13,24 @@ jest.mock("expo-image", () => {
   const { View } = require("react-native");
   return {
     Image: ({ children, ...props }: any) =>
+      React.createElement(View, props, children),
+  };
+});
+
+jest.mock("expo-blur", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  return {
+    BlurView: ({ children, ...props }: any) =>
+      React.createElement(View, props, children),
+  };
+});
+
+jest.mock("expo-linear-gradient", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  return {
+    LinearGradient: ({ children, ...props }: any) =>
       React.createElement(View, props, children),
   };
 });

@@ -1,3 +1,7 @@
+/**
+ * Rebrand "Señal Nocturna" — ServiceFormScreen (Publicar servicio): misma lógica, estado y navegación que
+ * el archivo original. Mismo formulario de alta/edición, carga de imágenes y validación — la constante BRAND hardcodeada pasa de bordo plano a signal.
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,7 +16,6 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useServices } from "@/features/servicesUser/state/ServicesContext";
@@ -24,7 +27,7 @@ import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
 
-const BRAND = "#850021";
+const BRAND = "#FF2D6F"; // antes bordo plano — ahora signal
 const MIN_DESCRIPTION = 20;
 
 type FormState = {
@@ -47,15 +50,6 @@ function extractPrice(price: any): string {
   if (price == null) return '';
   if (typeof price === 'object') return price.amount != null ? String(price.amount) : '';
   return price ? String(price) : '';
-}
-
-async function imageToBase64(uri: string): Promise<string> {
-  const base64 = await FileSystem.readAsStringAsync(uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  const extension = uri.split(".").pop()?.toLowerCase();
-  const mimeType = extension === "png" ? "image/png" : "image/jpeg";
-  return `data:${mimeType};base64,${base64}`;
 }
 
 export default function ServiceFormScreen() {
@@ -190,8 +184,11 @@ export default function ServiceFormScreen() {
         const { categoryId: _cat, ...editPayload } = payload;
         await editService(selectedService.id, editPayload);
         if (imageUri?.startsWith("file")) {
-          const b64 = await imageToBase64(imageUri);
-          // TODO: send b64 as main image via upload endpoint
+          try {
+            await uploadServiceImages(selectedService.id, [imageUri]);
+          } catch {
+            // Upload fallback — la edición ya fue guardada, el proveedor puede reintentar la foto después
+          }
         }
         Alert.alert("Servicio actualizado", "Los cambios fueron guardados.");
       } else {

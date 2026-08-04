@@ -4,10 +4,14 @@ import LogInView from "@/app/login/LogInView";
 import { router } from "expo-router";
 
 const mockLogin = jest.fn();
+const mockClearError = jest.fn();
 
-jest.mock("@/context/AuthContext", () => ({
+jest.mock("@/features/auth/state/AuthContext", () => ({
   useAuth: () => ({
     login: mockLogin,
+    isLoading: false,
+    error: null,
+    clearError: mockClearError,
   }),
 }));
 
@@ -34,7 +38,7 @@ describe("LogInView", () => {
     fireEvent.changeText(getByTestId("login-password"), "Password1!");
 
     await act(async () => {
-      fireEvent.press(getByText("Iniciar sesión"));
+      fireEvent.press(getByText("Ingresar"));
     });
 
     await waitFor(() =>
@@ -48,7 +52,12 @@ describe("LogInView", () => {
   });
 
   it("muestra mensajes de error cuando el backend falla", async () => {
-    mockLogin.mockRejectedValueOnce(new Error("Credenciales inválidas"));
+    mockLogin.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        data: { code: "INVALID_CREDENTIALS", message: "Invalid credentials", statusCode: 401 },
+      },
+    });
 
     const { getByTestId, getByText, findByText } = render(
       <LogInView toLogin={jest.fn()} />
@@ -58,16 +67,12 @@ describe("LogInView", () => {
     fireEvent.changeText(getByTestId("login-password"), "Password1!");
 
     await act(async () => {
-      fireEvent.press(getByText("Iniciar sesión"));
+      fireEvent.press(getByText("Ingresar"));
     });
 
     await waitFor(() => expect(mockLogin).toHaveBeenCalled());
 
-    expect(
-      await findByText(
-        "No se pudo iniciar sesión, usuario o contraseña incorrectos"
-      )
-    ).toBeTruthy();
+    expect(await findByText("Email o contraseña incorrectos")).toBeTruthy();
     expect(router.replace).not.toHaveBeenCalled();
   });
 });
