@@ -9,7 +9,6 @@ export default function ProfileLayout() {
       <Stack.Screen name="AddServices" />
       <Stack.Screen name="EditProfile" />
       <Stack.Screen name="ChangePassword" />
-      <Stack.Screen name="Notifications" />
       <Stack.Screen name="Payments" />
       <Stack.Screen name="kyc" />
       <Stack.Screen name="become-provider" />

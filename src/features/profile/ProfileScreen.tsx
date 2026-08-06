@@ -26,6 +26,7 @@ import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from '@/core/components/Toast';
+import { openNotifications } from '@/stores/notificationsUI.store';
 
 const { width: W } = Dimensions.get('window');
 
@@ -644,7 +645,7 @@ export const ProfileScreen: React.FC = () => {
               iconBg="#F0F4FF"
               iconColor="#6366F1"
               label="Notificaciones"
-              onPress={() => router.push('/(tabs)/profile/Notifications')}
+              onPress={openNotifications}
             />
             <View style={s.rowSep} />
             <SettingsRow

@@ -62,7 +62,7 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
   const goToService = () => {
     router.push({
       pathname: '/(tabs)/services/category/[id]',
-      params: { id: item.categoryId },
+      params: { id: item.categoryId, from: 'favorites' },
     });
   };
 

@@ -19,6 +19,8 @@ import { ServicesProvider } from "@/features/servicesUser/state/ServicesContext"
 import { ToastRoot } from "@/core/components/Toast";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
+import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
+import { openNotifications } from "@/stores/notificationsUI.store";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -48,7 +50,7 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
     } else if (data.type === 'review' && data.orderId) {
       router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
     } else {
-      router.push('/(tabs)/profile/Notifications' as any);
+      openNotifications();
     }
   } catch {}
 }
@@ -76,6 +78,7 @@ function ThemedRoot() {
       <ServicesProvider>
         <RootLayoutNav />
         <ToastRoot />
+        <NotificationsModalRoot />
       </ServicesProvider>
     </AppBackground>
   );

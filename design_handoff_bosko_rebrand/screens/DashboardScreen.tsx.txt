@@ -33,7 +33,6 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useServices } from '@/features/servicesUser/state/ServicesContext';
 import { useNotifications } from '@/features/notifications/state/NotificationsContext';
-import { openNotifications } from '@/stores/notificationsUI.store';
 import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -197,11 +196,11 @@ function ServiceCardInner({ item, scaleA }: { item: ServiceSummary; scaleA: Anim
   const pressIn = () => Animated.spring(scaleA, { toValue: 0.96, useNativeDriver: true }).start();
   const pressOut = () => Animated.spring(scaleA, { toValue: 1, useNativeDriver: true }).start();
   return (
-    <View style={[ds.serviceCardShadow, { backgroundColor: tc.card }]}>
+    <View style={ds.serviceCardShadow}>
       <Pressable
         onPressIn={pressIn}
         onPressOut={pressOut}
-        onPress={() => router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: item.providerId ?? item.id, from: 'home' } })}
+        onPress={() => router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: item.providerId ?? item.id } })}
         style={[ds.serviceCard, { backgroundColor: tc.card, borderWidth: 1, borderColor: tc.cardBorder }]}
       >
         <View>
@@ -359,7 +358,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        <Pressable style={s.notifBtn} onPress={openNotifications} hitSlop={8}>
+        <Pressable style={s.notifBtn} onPress={() => router.push('/(tabs)/profile/Notifications')} hitSlop={8}>
           <Ionicons name="notifications-outline" size={20} color={C.text} />
           {unreadCount > 0 && <View style={s.notifDot} />}
         </Pressable>
@@ -427,7 +426,7 @@ export default function DashboardScreen() {
         <Animated.View style={[s.section, sectionStyle(4)]}>
           <SectionHeader title="Servicios populares" onPress={() => router.push('/(tabs)/services')} />
           {featuredLoading ? (
-            <SkeletonGrid s={s} C={C} />
+            <SkeletonGrid s={s} />
           ) : featuredError ? (
             <ErrorBanner message="No se pudieron cargar los servicios" onRetry={loadFeatured} C={C} />
           ) : featuredServices.length > 0 ? (
@@ -435,7 +434,7 @@ export default function DashboardScreen() {
               {featuredServices.map((item, idx) => <ServiceCard key={item.id} item={item} delay={idx * 50} />)}
             </View>
           ) : (
-            <SkeletonGrid s={s} C={C} />
+            <SkeletonGrid s={s} />
           )}
         </Animated.View>
 
@@ -522,11 +521,11 @@ function CTABanner({ s }: { s: ReturnType<typeof makeStyles> }) {
   );
 }
 
-function SkeletonGrid({ s, C }: { s: ReturnType<typeof makeStyles>; C: CPalette }) {
+function SkeletonGrid({ s }: { s: ReturnType<typeof makeStyles> }) {
   return (
     <View style={s.servicesGrid}>
       {Array.from({ length: 4 }).map((_, i) => (
-        <View key={i} style={[s.serviceCardShadow, { width: (W - 48) / 2, backgroundColor: C.card }]}>
+        <View key={i} style={[s.serviceCardShadow, { width: (W - 48) / 2 }]}>
           <View style={[s.serviceCard, { backgroundColor: 'rgba(255,255,255,0.045)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)' }]}>
             <View style={[s.serviceThumb, { backgroundColor: 'rgba(255,255,255,0.06)' }]} />
             <View style={s.serviceInfo}>

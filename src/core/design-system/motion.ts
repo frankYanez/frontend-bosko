@@ -16,4 +16,7 @@ export const MOTION = {
   shimmer: { duration: 1600 },
   /** Corazón de favorito activo — 1 solo por lista, no todos a la vez. */
   heartPop: { duration: 1800 },
+  /** Fade in/out de FullScreenModal (entrada más rápida que la salida). */
+  modalFadeIn: { duration: 220 },
+  modalFadeOut: { duration: 180 },
 } as const;

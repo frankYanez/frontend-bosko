@@ -20,8 +20,7 @@ import { router } from 'expo-router';
 import { useNotifications } from '../state/NotificationsContext';
 import { Notification } from '../services/notifications.service';
 import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash, FullScreenModal } from '@/core/design-system';
-import { useNotificationsOpen, closeNotifications } from '@/stores/notificationsUI.store';
+import { useThemeColors, wash } from '@/core/design-system';
 
 const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
   order_accepted: { name: 'check-circle', color: '#065f46', bg: '#d1fae5' },
@@ -144,7 +143,6 @@ export default function NotificationsScreen() {
     if (!item.read) await markRead(item.id);
 
     const type = item.type.toLowerCase();
-    closeNotifications();
     if (item.data?.orderId) {
       router.push(`/orders/${item.data.orderId}`);
     } else if (type === 'new_message' && item.data?.conversationId) {
@@ -171,7 +169,7 @@ export default function NotificationsScreen() {
       style={s.bg}
     >
       <View style={s.header}>
-        <Pressable onPress={closeNotifications} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <View style={s.headerCenter}>
@@ -223,16 +221,6 @@ export default function NotificationsScreen() {
         }
       />
     </LinearGradient>
-  );
-}
-
-/** Montar UNA VEZ en app/_layout.tsx, fuera del Stack — junto a ToastRoot. */
-export function NotificationsModalRoot() {
-  const isOpen = useNotificationsOpen();
-  return (
-    <FullScreenModal visible={isOpen} onRequestClose={closeNotifications}>
-      <NotificationsScreen />
-    </FullScreenModal>
   );
 }
 

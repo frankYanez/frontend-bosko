@@ -14,3 +14,5 @@ export { NoticeBanner } from './NoticeBanner';
 export type { NoticeBannerProps, NoticeBannerVariant } from './NoticeBanner';
 export { Skeleton, SkeletonRow } from './Skeleton';
 export type { SkeletonProps } from './Skeleton';
+export { FullScreenModal } from './FullScreenModal';
+export type { FullScreenModalProps } from './FullScreenModal';

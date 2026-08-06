@@ -95,13 +95,7 @@ export default function ProviderProfileScreen() {
   const insets = useSafeAreaInsets();
   const c = useC();
   const router = useRouter();
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
-  const goBack = () => {
-    if (from === 'home') return router.replace('/(tabs)');
-    if (from === 'reels') return router.replace('/(tabs)/reels');
-    if (from === 'search') return router.replace('/search');
-    return router.back();
-  };
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [provider, setProvider] = useState<PublicProvider | null>(null);
   const [services, setServices] = useState<ServiceSummary[]>([]);
@@ -203,7 +197,7 @@ export default function ProviderProfileScreen() {
     return (
       <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <Pressable onPress={goBack} style={[s.backBtn, { backgroundColor: c.card }]}>
+        <Pressable onPress={() => router.back()} style={[s.backBtn, { backgroundColor: c.card }]}>
           <Ionicons name="arrow-back" size={22} color={c.text} />
         </Pressable>
         <Text style={[s.errorTitle, { color: c.text }]}>Perfil no encontrado</Text>
@@ -230,7 +224,7 @@ export default function ProviderProfileScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
 
       {/* Back button flotante */}
-      <Pressable onPress={goBack} style={[s.backBtn, s.backBtnFloat, { backgroundColor: c.card }]}>
+      <Pressable onPress={() => router.back()} style={[s.backBtn, s.backBtnFloat, { backgroundColor: c.card }]}>
         <Ionicons name="arrow-back" size={22} color={c.text} />
       </Pressable>
 
@@ -241,7 +235,7 @@ export default function ProviderProfileScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={[TOKENS.color.signal, TOKENS.color.signal, TOKENS.color.primaryDark]}
+          colors={[TOKENS.color.signal, TOKENS.color.signal, TOKENS.color.signalDark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.hero}

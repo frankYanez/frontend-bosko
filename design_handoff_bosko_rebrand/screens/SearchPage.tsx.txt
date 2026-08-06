@@ -73,7 +73,7 @@ export const SearchPage = () => {
     if (item.type === "category") {
       return (
         <Pressable
-          onPress={() => router.push({ pathname: "/(tabs)/services/category/[id]", params: { id: item.data.id, from: "search" } })}
+          onPress={() => router.push({ pathname: "/(tabs)/services/category/[id]", params: { id: item.data.id } })}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
           <View style={[s.categoryAccent, { backgroundColor: SIGNAL }]} />
@@ -94,7 +94,7 @@ export const SearchPage = () => {
       const initial = (item.data.name?.[0] ?? "?").toUpperCase();
       return (
         <Pressable
-          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.id as string, from: "search" } })}
+          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.id as string } })}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
           {item.data.avatar ? (
@@ -130,7 +130,7 @@ export const SearchPage = () => {
     if (item.type === "service") {
       return (
         <Pressable
-          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.providerId ?? item.data.userId ?? "", from: "search" } })}
+          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.providerId ?? item.data.userId ?? "" } })}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
           <View style={[s.serviceIcon, { backgroundColor: SIGNAL + "15" }]}>

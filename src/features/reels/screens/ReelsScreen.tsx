@@ -432,7 +432,7 @@ const ReelItem = React.memo(function ReelItem({
   const handleQuote = useCallback(() => {
     router.push({
       pathname: '/(tabs)/services/provider/[id]',
-      params: { id: reel.user.id },
+      params: { id: reel.user.id, from: 'reels' },
     });
   }, [reel.user.id]);
 

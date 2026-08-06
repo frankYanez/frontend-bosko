@@ -25,7 +25,6 @@ import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
-import { RadialBlob } from '@/core/components/RadialBlob';
 
 const { width: W } = Dimensions.get('window');
 
@@ -227,18 +226,8 @@ function Hero({
         style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
       />
       {/* Blobs */}
-      <RadialBlob
-        size={200}
-        color="rgb(255,255,255)"
-        opacity={0.3}
-        style={{ position: 'absolute', top: -60, right: -40 }}
-      />
-      <RadialBlob
-        size={120}
-        color="rgb(255,255,255)"
-        opacity={0.2}
-        style={{ position: 'absolute', bottom: -30, right: 80 }}
-      />
+      <View style={[s.blob, { width: 200, height: 200, top: -60, right: -40, opacity: 0.10 }]} />
+      <View style={[s.blob, { width: 120, height: 120, bottom: -30, right: 80, opacity: 0.07 }]} />
 
       {/* Back button */}
       <Pressable onPress={onBack} style={[s.backBtn, { backgroundColor: c.card }]}>
@@ -276,8 +265,6 @@ export default function CategoryServicesScreen() {
 
   const categoryId    = typeof params.id === 'string' ? params.id : undefined;
   const fromHome      = params.from === 'home';
-  const fromFavorites = params.from === 'favorites';
-  const fromSearch    = params.from === 'search';
   const category      = categories.find(c => c.id === categoryId);
   const catIndex      = categories.findIndex(c => c.id === categoryId);
   const services      = categoryId ? getServicesForCategory(categoryId) : [];
@@ -311,12 +298,7 @@ export default function CategoryServicesScreen() {
         <Hero
           category={category as any}
           gradientIndex={catIndex >= 0 ? catIndex : 2}
-          onBack={() => {
-            if (fromHome) return router.replace('/(tabs)');
-            if (fromFavorites) return router.replace('/(tabs)/profile/favorites');
-            if (fromSearch) return router.replace('/search');
-            return router.back();
-          }}
+          onBack={() => fromHome ? router.replace('/(tabs)') : router.back()}
         />
       </View>
       {!isLoading && services.length > 0 && (
@@ -401,6 +383,11 @@ const s = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 12,
+  },
+  blob: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
   },
   backBtn: {
     width: 38,
