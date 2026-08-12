@@ -20,6 +20,23 @@ export function useProfile() {
   });
 }
 
+/**
+ * Selector granular: true solo si el usuario ya es prestador activo (backend).
+ * Usar para mostrar/ocultar UI exclusiva de prestadores en vez de destructurar
+ * `profile?.isProvider` a mano en cada pantalla.
+ */
+export function useIsProvider(): boolean {
+  const { isAuthenticated } = useAuth();
+  const { data } = useQuery({
+    queryKey: QUERY_KEYS.profile,
+    queryFn: getCurrentUserProfile,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    select: (profile) => profile.isProvider === true,
+  });
+  return data ?? false;
+}
+
 export function useProfileStats() {
   const { isAuthenticated } = useAuth();
   return useQuery({

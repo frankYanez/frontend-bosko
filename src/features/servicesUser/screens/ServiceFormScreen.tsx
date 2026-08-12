@@ -26,6 +26,7 @@ import { fetchServiceById } from "../services/services";
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
+import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
 const BRAND = "#FF2D6F"; // antes bordo plano — ahora signal
 const MIN_DESCRIPTION = 20;
@@ -53,6 +54,7 @@ function extractPrice(price: any): string {
 }
 
 export default function ServiceFormScreen() {
+  useRequireProviderStatus('provider');
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();

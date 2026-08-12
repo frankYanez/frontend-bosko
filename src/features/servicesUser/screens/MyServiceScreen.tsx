@@ -16,6 +16,7 @@ import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { useThemeColors } from '@/stores/theme.store';
+import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
 const BRAND = '#850021';
 
@@ -76,6 +77,7 @@ function ServiceCard({
 }
 
 export default function MyServiceScreen() {
+  useRequireProviderStatus('provider');
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();

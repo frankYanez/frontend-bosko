@@ -1,0 +1,155 @@
+/**
+ * RoleSelectionModal — se muestra una única vez, la primera vez que el usuario
+ * llega al Home, preguntando si busca servicios o quiere ofrecerlos. Si elige
+ * "ofrecer servicios" lo manda a BecomeProviderScreen (que ya guía el KYC).
+ * El flag de "ya lo vi" vive en AsyncStorage — ver ROLE_MODAL_SEEN_KEY.
+ */
+
+import React, { useRef, useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FullScreenModal } from '@/core/design-system';
+import { TOKENS } from '@/core/design-system/tokens';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { BlurView } from '@/core/components/BlurView';
+
+export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
+
+interface Props {
+  visible: boolean;
+  onSelectClient: () => void;
+  onSelectProvider: () => void;
+}
+
+export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }: Props) {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
+  const cardAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      cardAnim.setValue(0);
+      Animated.spring(cardAnim, { toValue: 1, friction: 7, tension: 60, useNativeDriver: true }).start();
+    }
+  }, [visible]);
+
+  return (
+    <FullScreenModal visible={visible} onRequestClose={onSelectClient}>
+      <View style={styles.backdrop}>
+        <Animated.View
+          style={[
+            styles.cardWrap,
+            {
+              opacity: cardAnim,
+              transform: [{ scale: cardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }],
+            },
+          ]}
+        >
+          <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: tc.border }]}>
+            <View style={styles.iconWrap}>
+              <Ionicons name="hand-left" size={30} color={TOKENS.color.signal} />
+            </View>
+
+            <Text style={[styles.title, { color: tc.text }]}>¡Bienvenido a Bosko!</Text>
+            <Text style={[styles.subtitle, { color: tc.textSub }]}>
+              Contanos qué te trae por acá para armarte la mejor experiencia.
+            </Text>
+
+            <Pressable onPress={onSelectProvider} style={styles.optionShadow}>
+              <LinearGradient colors={[TOKENS.color.primaryDark, TOKENS.color.primary]} style={styles.optionCard}>
+                <View style={styles.optionIconWrap}>
+                  <Ionicons name="briefcase" size={22} color="#fff" />
+                </View>
+                <View style={styles.optionText}>
+                  <Text style={styles.optionTitle}>Quiero ofrecer servicios</Text>
+                  <Text style={styles.optionSub}>Publicá lo que sabés hacer y recibí clientes</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.85)" />
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              onPress={onSelectClient}
+              style={[styles.optionCardOutline, { borderColor: tc.border, backgroundColor: tc.surface2 }]}
+            >
+              <View style={[styles.optionIconWrap, { backgroundColor: 'rgba(255,45,111,0.12)' }]}>
+                <Ionicons name="search" size={22} color={TOKENS.color.signal} />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={[styles.optionTitle, { color: tc.text }]}>Busco un servicio</Text>
+                <Text style={[styles.optionSub, { color: tc.textSub }]}>Quiero contratar a un profesional</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={tc.textSub} />
+            </Pressable>
+          </BlurView>
+        </Animated.View>
+      </View>
+    </FullScreenModal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  cardWrap: { width: '100%' },
+  card: {
+    borderRadius: 26,
+    overflow: 'hidden',
+    padding: 26,
+    borderWidth: 1,
+    gap: 14,
+    alignItems: 'center',
+  },
+  iconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,45,111,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  title: { fontSize: 20, fontWeight: '800', textAlign: 'center' },
+  subtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 8 },
+  optionShadow: {
+    width: '100%',
+    borderRadius: 18,
+    shadowColor: TOKENS.color.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 18,
+    padding: 16,
+  },
+  optionCardOutline: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+  },
+  optionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionText: { flex: 1, gap: 2 },
+  optionTitle: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  optionSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
+});

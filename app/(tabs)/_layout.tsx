@@ -11,14 +11,13 @@ import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { useThemeColors } from '@/stores/theme.store';
 
 export default function TabsLayout() {
   const { authLoaded, isAuthenticated } = useAuth();
-  const { data: profile } = useProfile();
+  const isProvider = useIsProvider();
   const tc = useThemeColors();
-  const isProvider = profile?.isProvider === true;
 
   if (!authLoaded) return null;
 

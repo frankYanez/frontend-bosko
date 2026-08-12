@@ -28,9 +28,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { useServices } from '@/features/servicesUser/state/ServicesContext';
 import { useNotifications } from '@/features/notifications/state/NotificationsContext';
 import { openNotifications } from '@/stores/notificationsUI.store';
@@ -40,6 +42,7 @@ import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
 
 const { width: W } = Dimensions.get('window');
 
@@ -272,7 +275,7 @@ export default function DashboardScreen() {
   const { categories, categoriesStatus, fetchCategories, getServicesForCategory } = useServices();
 
   const { unreadCount } = useNotifications();
-  const isProvider = profile?.isProvider === true;
+  const isProvider = useIsProvider();
   const HERO_SLIDES = isProvider ? HERO_SLIDES_PROVIDER : HERO_SLIDES_CLIENT;
   const QUICK_ACTIONS = isProvider ? QUICK_ACTIONS_PROVIDER : QUICK_ACTIONS_CLIENT;
 
@@ -280,6 +283,26 @@ export default function DashboardScreen() {
   const [featuredServices, setFeaturedServices] = useState<ServiceSummary[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredError, setFeaturedError] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+
+  // Modal de bienvenida (cliente vs. prestador) — una sola vez, y no a alguien
+  // que ya es prestador activo (ya eligió hace rato).
+  useEffect(() => {
+    if (isProvider) return;
+    AsyncStorage.getItem(ROLE_MODAL_SEEN_KEY).then(seen => {
+      if (!seen) setShowRoleModal(true);
+    });
+  }, [isProvider]);
+
+  const dismissRoleModal = async () => {
+    setShowRoleModal(false);
+    await AsyncStorage.setItem(ROLE_MODAL_SEEN_KEY, 'true');
+  };
+
+  const handleSelectProvider = async () => {
+    await dismissRoleModal();
+    router.push('/(tabs)/profile/become-provider');
+  };
 
   const sections = useRef(Array.from({ length: 5 }, () => new Animated.Value(0))).current;
 
@@ -445,6 +468,12 @@ export default function DashboardScreen() {
           </Animated.View>
         )}
       </ScrollView>
+
+      <RoleSelectionModal
+        visible={showRoleModal}
+        onSelectClient={dismissRoleModal}
+        onSelectProvider={handleSelectProvider}
+      />
     </View>
   );
 }

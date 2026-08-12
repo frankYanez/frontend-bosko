@@ -27,6 +27,7 @@ import { replyToReview } from '@/features/reviews/services/review.service';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { Button, Text as AppText, useThemeColors, wash } from '@/core/design-system';
+import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
 interface ReviewItem {
   id: string;
@@ -38,6 +39,7 @@ interface ReviewItem {
 }
 
 export default function MyReviewsScreen() {
+  useRequireProviderStatus('provider');
   const tc = useThemeColors();
   const { profile } = useProfile();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);

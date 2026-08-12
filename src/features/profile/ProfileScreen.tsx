@@ -18,7 +18,7 @@ import { router } from 'expo-router';
 
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from './state/ProfileContext';
-import { useKYC } from '@/features/kyc/state/KYCContext';
+import { useProviderStatus } from './hooks/useProviderStatus';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
@@ -295,7 +295,7 @@ export const ProfileScreen: React.FC = () => {
   const s = useMemo(() => makeStyles(C), [C]);
   const { authState, logout } = useAuth();
   const { profile, isLoading, refreshProfile, updateProfile, toggleAvailability } = useProfile();
-  const { verification } = useKYC();
+  const { status: roleStatus, kycStatus } = useProviderStatus();
   const { count: favCount } = useFavorites();
 
   const [stats, setStats]               = useState<UserStats | null>(null);
@@ -355,8 +355,8 @@ export const ProfileScreen: React.FC = () => {
   };
 
   // Derived
-  const isProvider = profile?.isProvider === true;
-  const kycStatus  = verification?.status?.toLowerCase() ?? 'not_started';
+  const isProvider = roleStatus === 'provider';
+  const isPending  = roleStatus === 'pending';
   const kycCfg     = KYC_CONFIG[kycStatus];
   const fullName   = profile
     ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`
@@ -446,22 +446,24 @@ export const ProfileScreen: React.FC = () => {
             ) : null}
           </View>
 
-          {/* KYC badge solo para providers o en proceso */}
-          {isProvider && kycCfg ? (
+          {/* KYC badge: providers (con toggle de disponibilidad) y pending (solo estado) */}
+          {(isProvider || isPending) && kycCfg ? (
             <View style={s.badgeRow}>
               <Pressable
-                onPress={() => router.push('/(tabs)/profile/kyc')}
+                onPress={() => router.push(isPending ? '/(tabs)/profile/become-provider' : '/(tabs)/profile/kyc')}
                 style={[s.kycBadge, { backgroundColor: kycCfg.bg }]}
               >
                 <Ionicons name={kycCfg.icon} size={14} color={kycCfg.color} />
                 <Text style={[s.kycText, { color: kycCfg.color }]}>{kycCfg.label}</Text>
               </Pressable>
-              <AvailabilityToggle
-                s={s}
-                isAvailable={profile?.isAvailable ?? true}
-                onToggle={handleToggleAvailability}
-                toggling={availToggling}
-              />
+              {isProvider && (
+                <AvailabilityToggle
+                  s={s}
+                  isAvailable={profile?.isAvailable ?? true}
+                  onToggle={handleToggleAvailability}
+                  toggling={availToggling}
+                />
+              )}
             </View>
           ) : null}
 
@@ -554,8 +556,8 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </Animated.View>
 
-        {/* ── CTA "Quiero ser proveedor" (solo USER) ────────────────────── */}
-        {!isProvider && (
+        {/* ── CTA "Quiero ser proveedor" (solo cliente sin KYC arrancado) ── */}
+        {roleStatus === 'client' && (
           <Animated.View style={[s.section, sec(2)]}>
             <View style={s.providerCtaShadow}>
               <Pressable
@@ -579,6 +581,31 @@ export const ProfileScreen: React.FC = () => {
               </LinearGradient>
             </Pressable>
           </View>
+          </Animated.View>
+        )}
+
+        {/* ── Estado "en camino a ser proveedor" (KYC arrancado, sin aprobar) ── */}
+        {isPending && kycCfg && (
+          <Animated.View style={[s.section, sec(2)]}>
+            <Pressable
+              onPress={() => router.push('/(tabs)/profile/become-provider')}
+              style={[s.pendingCard, { backgroundColor: kycCfg.bg, borderColor: kycCfg.color + '30' }]}
+            >
+              <View style={[s.pendingIcon, { backgroundColor: kycCfg.color + '20' }]}>
+                <Ionicons name={kycCfg.icon} size={22} color={kycCfg.color} />
+              </View>
+              <View style={s.providerCtaText}>
+                <Text style={[s.pendingTitle, { color: kycCfg.color }]}>Estás camino a ser prestador</Text>
+                <Text style={[s.pendingSub, { color: C.sub }]}>
+                  {kycStatus === 'rejected' || kycStatus === 'declined' || kycStatus === 'failed'
+                    ? 'Hubo un problema con tu verificación — tocá para reintentar.'
+                    : kycStatus === 'expired'
+                      ? 'Tu verificación venció — tocá para reintentar.'
+                      : 'Estamos revisando tu verificación. Tocá para ver el progreso.'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={kycCfg.color} />
+            </Pressable>
           </Animated.View>
         )}
 
@@ -1138,6 +1165,31 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   providerCtaSub: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.72)',
+    lineHeight: 17,
+  },
+
+  // Estado "pending" (KYC arrancado, sin aprobar)
+  pendingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+  },
+  pendingIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  pendingSub: {
+    fontSize: 12,
     lineHeight: 17,
   },
 }); }

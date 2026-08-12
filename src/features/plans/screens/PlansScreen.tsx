@@ -24,6 +24,7 @@ import {
 import { TOKENS } from '@/core/design-system/tokens';
 import { getUserErrorMessage } from '@/lib/errors';
 import { useThemeColors, wash } from '@/core/design-system';
+import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
 function formatPrice(price: number, currency: string) {
   return new Intl.NumberFormat('es-AR', {
@@ -52,6 +53,7 @@ function AnimatedCard({ index, children }: { index: number; children: React.Reac
 }
 
 export default function PlansScreen() {
+  useRequireProviderStatus('provider');
   const tc = useThemeColors();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [myPlan, setMyPlan] = useState<MyPlan | null | undefined>(undefined);

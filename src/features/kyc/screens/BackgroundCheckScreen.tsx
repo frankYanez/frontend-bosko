@@ -26,6 +26,7 @@ import {
   getBackgroundCheckStatus,
   uploadBackgroundCheck,
 } from '../services/background-check.service';
+import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
 function makeC(tc: ReturnType<typeof useThemeColors>) {
   return {
@@ -53,6 +54,7 @@ function makeStatusConfig(C: ReturnType<typeof makeC>, tc: ReturnType<typeof use
 }
 
 export default function BackgroundCheckScreen() {
+  useRequireProviderStatus('pending');
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const isDark = useIsDark();
