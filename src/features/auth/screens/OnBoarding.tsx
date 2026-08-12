@@ -46,11 +46,9 @@ export default function OnBoarding() {
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
-    // TEMP DEV: forzado en false pa ver onboarding siempre. Revertir antes de shippear.
-    setOnboardingComplete(false);
-    // AsyncStorage.getItem("onboardingComplete")
-    //   .then((val) => setOnboardingComplete(val === "true"))
-    //   .catch(() => setOnboardingComplete(false));
+    AsyncStorage.getItem("onboardingComplete")
+      .then((val) => setOnboardingComplete(val === "true"))
+      .catch(() => setOnboardingComplete(false));
   }, []);
 
   const animateTextIn = () => {
@@ -130,7 +128,7 @@ export default function OnBoarding() {
         )}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 22 }]}>
         <BrandMark variant="lockup" size={30} color="#fff" />
         <Pressable onPress={complete} hitSlop={14}>
           <Text style={styles.skipText}>Saltar</Text>
@@ -143,7 +141,7 @@ export default function OnBoarding() {
           {
             backgroundColor: 'rgba(255,255,255,0.05)', // vidrio — antes tc.card sólido
             height: CARD_H + Math.max(insets.bottom, 16),
-            paddingBottom: Math.max(insets.bottom, 16) + 12,
+            paddingBottom: Math.max(insets.bottom, 16) + 24,
           },
         ]}
       >
@@ -205,11 +203,11 @@ const styles = StyleSheet.create({
   card: {
     position: "absolute", bottom: 0, left: 0, right: 0,
     borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    paddingHorizontal: 28, paddingTop: 16, gap: 14,
+    paddingHorizontal: 28, paddingTop: 24, gap: 18,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderBottomWidth: 0,
     shadowColor: "#000", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 4 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 6 },
   dotsRow: { flexDirection: "row", alignItems: "center", height: 18, gap: 5 },
   dot: { height: 7, borderRadius: 3.5, backgroundColor: "#FF2D6F" },
   title: { fontSize: 26, fontWeight: "800", color: "#EDEAF5", letterSpacing: -0.4, lineHeight: 32 },

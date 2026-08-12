@@ -20,16 +20,19 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
 import { Input } from '@/core/components/Input';
 import { Button } from '@/core/design-system';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 
 const { width } = Dimensions.get('window');
+const REMEMBERED_EMAIL_KEY = 'BOSKO_REMEMBERED_EMAIL';
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const { login, isLoading, error, clearError } = useAuth();
@@ -37,7 +40,26 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const slideAnim = useRef(new Animated.Value(30)).current;
   const glow = useRef(new Animated.Value(0.7)).current;
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [localError, setLocalError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const passwordRef = useRef<TextInput>(null);
+
   React.useEffect(() => {
+    // Evita mostrar un error que haya quedado pegado de otra pantalla
+    // (login, registro, verificación de email comparten el mismo `error` de AuthContext)
+    clearError();
+
+    // Si había un email recordado, lo precargamos y dejamos el checkbox tildado
+    AsyncStorage.getItem(REMEMBERED_EMAIL_KEY).then(saved => {
+      if (saved) {
+        setEmail(saved);
+        setRememberMe(true);
+      }
+    });
+
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, damping: 20, useNativeDriver: true }),
@@ -52,12 +74,6 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
     ).start();
   }, []);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [localError, setLocalError] = useState('');
-
-  const passwordRef = useRef<TextInput>(null);
-
   const handleLogin = async () => {
     Keyboard.dismiss();
     if (!email.trim() || !password.trim()) {
@@ -67,7 +83,10 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
     setLocalError('');
     clearError();
     try {
-      await login({ email: email.trim().toLowerCase(), password });
+      const trimmedEmail = email.trim().toLowerCase();
+      await login({ email: trimmedEmail, password });
+      if (rememberMe) await AsyncStorage.setItem(REMEMBERED_EMAIL_KEY, trimmedEmail);
+      else await AsyncStorage.removeItem(REMEMBERED_EMAIL_KEY);
       router.replace('/(tabs)');
     } catch (err) {
       setLocalError(getUserErrorMessage(err));
@@ -148,9 +167,20 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
 
                 {!!displayError && <Text style={styles.errorText}>{displayError}</Text>}
 
-                <Pressable onPress={() => router.push('/login/forgot-password')} style={styles.forgotContainer}>
-                  <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
-                </Pressable>
+                <View style={styles.optionsRow}>
+                  <Pressable onPress={() => setRememberMe(v => !v)} style={styles.rememberRow} hitSlop={8}>
+                    <Ionicons
+                      name={rememberMe ? 'checkbox' : 'square-outline'}
+                      size={19}
+                      color={rememberMe ? '#FF2D6F' : 'rgba(237,234,245,0.55)'}
+                    />
+                    <Text style={styles.rememberText}>Recuérdame</Text>
+                  </Pressable>
+
+                  <Pressable onPress={() => router.push('/login/forgot-password')} hitSlop={8}>
+                    <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+                  </Pressable>
+                </View>
 
                 <Button label="Ingresar" onPress={handleLogin} loading={isLoading} fullWidth style={styles.ctaButton} />
 
@@ -201,17 +231,26 @@ const styles = StyleSheet.create({
     width: width - 48,
     borderRadius: 26,
     overflow: 'hidden',
-    padding: 28,
+    padding: 30,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  cardTitle: { fontSize: 22, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 26 },
-  fieldGap: { marginBottom: 16 },
-  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 10, marginLeft: 4 },
-  forgotContainer: { alignSelf: 'flex-end', marginBottom: 24 },
+  cardTitle: { fontSize: 22, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 30 },
+  fieldGap: { marginBottom: 20 },
+  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 28,
+  },
+  rememberRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rememberText: { fontSize: 13, color: 'rgba(237,234,245,0.75)', fontWeight: '500' },
   forgotText: { fontSize: 13, color: '#FF2D6F', fontWeight: '500' },
-  ctaButton: { marginBottom: 20 },
+  ctaButton: { marginBottom: 24 },
   registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   registerPrompt: { fontSize: 14, color: 'rgba(237,234,245,0.55)' },
   registerLink: { fontSize: 14, color: '#FF2D6F', fontWeight: '600' },

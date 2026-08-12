@@ -2,6 +2,10 @@
  * ForgotPasswordScreen — Recuperación de contraseña.
  * Rebrand "Señal Nocturna" — misma lógica (POST /auth/forgot-password),
  * usa los componentes reales del design system (`Input`, `Button`, `AnimatedBackground`).
+ *
+ * Sin pantalla intermedia de "email enviado": si el correo está registrado
+ * pasamos directo a VerifyResetCodeScreen. El success final vive solo en
+ * ResetPasswordScreen, al terminar el flujo completo.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -17,10 +21,9 @@ import {
   Dimensions,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
 import { Input } from '@/core/components/Input';
-import { Button, TOKENS } from '@/core/design-system';
+import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import api from '@/core/api/axiosinstance';
@@ -32,30 +35,42 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
-  const successPop = useRef(new Animated.Value(0.4)).current;
+
+  // Entrada escalonada: icono → título → descripción → card
+  const heroAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const descAnim = useRef(new Animated.Value(0)).current;
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  // Salida antes de navegar al paso del código
+  const formExitAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.timing(translateY, { toValue: 0, duration: 500, useNativeDriver: true }),
     ]).start();
+
+    Animated.stagger(MOTION.fadeUpStagger, [
+      Animated.timing(heroAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+      Animated.timing(titleAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+      Animated.timing(descAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+      Animated.timing(cardAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  useEffect(() => {
-    if (success) {
-      successPop.setValue(0.4);
-      Animated.spring(successPop, { toValue: 1, friction: 5, tension: 60, useNativeDriver: true }).start();
-    }
-  }, [success]);
+  const fadeUpStyle = (anim: Animated.Value) => ({
+    opacity: anim,
+    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+  });
 
   const handleSend = async () => {
     Keyboard.dismiss();
 
+    const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email.trim())) {
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
       setError('Ingresá un email válido');
       return;
     }
@@ -64,13 +79,21 @@ export default function ForgotPasswordScreen() {
     setIsLoading(true);
 
     try {
-      await api.post('/auth/forgot-password', { email: email.trim().toLowerCase() });
-      setSuccess(true);
+      // Validamos que el email exista antes de avanzar al paso del código
+      await api.post('/auth/forgot-password', { email: trimmedEmail });
+      setIsLoading(false);
+
+      Animated.timing(formExitAnim, {
+        toValue: 0,
+        duration: MOTION.modalFadeOut.duration,
+        useNativeDriver: true,
+      }).start(() => {
+        router.push({ pathname: '/auth/verify-reset-code', params: { email: trimmedEmail } });
+      });
     } catch (err: any) {
-      // El backend retorna NOT_FOUND si el email no existe;
-      // no lo revelamos por seguridad, mostramos éxito de todas formas
-      setSuccess(true);
-    } finally {
+      const code = err?.response?.data?.code;
+      if (code === 'NOT_FOUND') setError('Ese email no está registrado.');
+      else setError('Error al enviar el código. Intentá de nuevo.');
       setIsLoading(false);
     }
   };
@@ -89,45 +112,17 @@ export default function ForgotPasswordScreen() {
               <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
             </Pressable>
 
-            {success ? (
-              <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
-                <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
-                  <BlurView intensity={30} tint="dark" style={styles.card}>
-                    <View style={styles.successContainer}>
-                      <Animated.View
-                        style={[
-                          styles.successIconCircle,
-                          { opacity: successPop, transform: [{ scale: successPop }] },
-                        ]}
-                      >
-                        <LinearGradient
-                          colors={[TOKENS.color.mint, '#00b382']}
-                          style={styles.successIconGradient}
-                        >
-                          <Ionicons name="checkmark" size={40} color="#fff" />
-                        </LinearGradient>
-                      </Animated.View>
-                      <Text style={styles.successTitle}>¡Email enviado!</Text>
-                      <Text style={styles.successText}>
-                        Si ese email está registrado, recibirás las instrucciones en minutos.
-                        Revisá también tu carpeta de spam.
-                      </Text>
-                      <Button label="Volver al inicio" onPress={() => router.back()} fullWidth />
-                    </View>
-                  </BlurView>
-                </View>
-              </View>
-            ) : (
-              <>
-                <View style={styles.heroIconCircle}>
-                  <Ionicons name="key-outline" size={36} color={TOKENS.color.signal} />
-                </View>
+            <Animated.View style={{ opacity: formExitAnim }}>
+              <Animated.View style={[styles.heroIconCircle, fadeUpStyle(heroAnim)]}>
+                <Ionicons name="key-outline" size={36} color={TOKENS.color.signal} />
+              </Animated.View>
 
-                <Text style={styles.title}>¿Olvidaste tu contraseña?</Text>
-                <Text style={styles.description}>
-                  Ingresá tu email y te enviamos un enlace para restablecerla.
-                </Text>
+              <Animated.Text style={[styles.title, fadeUpStyle(titleAnim)]}>¿Olvidaste tu contraseña?</Animated.Text>
+              <Animated.Text style={[styles.description, fadeUpStyle(descAnim)]}>
+                Ingresá tu email y te enviamos un código para restablecerla.
+              </Animated.Text>
 
+              <Animated.View style={fadeUpStyle(cardAnim)}>
                 <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
                   <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
                     <BlurView intensity={30} tint="dark" style={styles.card}>
@@ -150,12 +145,12 @@ export default function ForgotPasswordScreen() {
 
                       {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-                      <Button label="Enviar email" onPress={handleSend} loading={isLoading} fullWidth />
+                      <Button label="Enviar código" onPress={handleSend} loading={isLoading} fullWidth />
                     </BlurView>
                   </View>
                 </View>
-              </>
-            )}
+              </Animated.View>
+            </Animated.View>
           </Animated.View>
         </KeyboardAvoidingView>
       </View>
@@ -236,30 +231,4 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 20 },
   fieldGap: { marginBottom: 14 },
   errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
-  successContainer: { alignItems: 'center', gap: 14 },
-  successIconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    shadowColor: '#00E5A0',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  successIconGradient: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5' },
-  successText: {
-    fontSize: 14,
-    color: 'rgba(237,234,245,0.55)',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
 });

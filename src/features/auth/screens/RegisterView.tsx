@@ -67,6 +67,10 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
   const glow = useRef(new Animated.Value(0.7)).current;
 
   React.useEffect(() => {
+    // Evita mostrar un error que haya quedado pegado de otra pantalla
+    // (login, registro, verificación de email comparten el mismo `error` de AuthContext)
+    clearError();
+
     // Glow de fondo pulsante — mismo lenguaje que AnimatedSplashScreen, le da vida al gradiente estático
     Animated.loop(
       Animated.sequence([

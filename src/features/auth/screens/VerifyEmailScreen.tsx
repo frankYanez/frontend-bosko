@@ -31,7 +31,7 @@ const CODE_LENGTH = 6;
 
 export default function VerifyEmailScreen() {
   const { email = '' } = useLocalSearchParams<{ email: string }>();
-  const { verifyEmail } = useAuth();
+  const { verifyEmail, logout, clearError } = useAuth();
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
@@ -46,6 +46,9 @@ export default function VerifyEmailScreen() {
   const successPop = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
+    // Evita mostrar un error que haya quedado pegado del login o registro
+    clearError();
+
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 450, useNativeDriver: true }),
       Animated.timing(translateY, { toValue: 0, duration: 450, useNativeDriver: true }),
@@ -87,6 +90,10 @@ export default function VerifyEmailScreen() {
   };
 
   const handleVerify = async () => {
+    // Evita doble submit (doble tap) mandando el mismo código dos veces:
+    // el backend invalida el código en el primer uso, el segundo intento
+    // devuelve INVALID_VERIFICATION_CODE aunque la cuenta ya haya quedado verificada.
+    if (loading) return;
     if (code.length < CODE_LENGTH) {
       setError('Ingresá los 6 dígitos del código.');
       return;
@@ -98,7 +105,9 @@ export default function VerifyEmailScreen() {
       setSuccess(true);
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;
-      if (errorCode === 'BAD_REQUEST') {
+      if (errorCode === 'INVALID_VERIFICATION_CODE') {
+        setError('Código incorrecto o expirado. Verificá y volvé a intentar.');
+      } else if (errorCode === 'BAD_REQUEST') {
         const msg = err.response.data.message ?? '';
         if (msg.includes('already verified')) setError('Este email ya fue verificado.');
         else setError('Código incorrecto. Verificá y volvé a intentar.');
@@ -135,9 +144,18 @@ export default function VerifyEmailScreen() {
                   </Animated.View>
                   <Text style={styles.successTitle}>¡Email verificado!</Text>
                   <Text style={styles.successText}>
-                    Tu cuenta fue activada correctamente. Ya podés usar todas las funciones de Bosko.
+                    Tu cuenta fue activada correctamente. Ya podés iniciar sesión.
                   </Text>
-                  <Button label="Ir al inicio" onPress={() => router.replace('/(tabs)')} fullWidth />
+                  <Button
+                    label="Ir a iniciar sesión"
+                    onPress={async () => {
+                      // verifyEmail ya dejó una sesión iniciada — la cerramos
+                      // para que el usuario entre con sus credenciales.
+                      await logout();
+                      router.replace('/login');
+                    }}
+                    fullWidth
+                  />
                 </View>
               </BlurView>
             </View>
@@ -200,7 +218,7 @@ export default function VerifyEmailScreen() {
                 label="Verificar"
                 onPress={handleVerify}
                 loading={loading}
-                disabled={code.length < CODE_LENGTH}
+                disabled={code.length < CODE_LENGTH || loading}
                 fullWidth
               />
             </View>

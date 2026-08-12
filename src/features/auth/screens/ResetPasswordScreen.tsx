@@ -1,6 +1,6 @@
 /**
- * ResetPasswordScreen — Restablecer contraseña con token del email.
- * POST /auth/reset-password — body: { email, token, newPassword }
+ * ResetPasswordScreen — Restablecer contraseña con código OTP de 6 dígitos.
+ * POST /auth/reset-password — body: { email, code, newPassword }
  * Rebrand "Señal Nocturna" — usa los componentes reales del design system
  * (`Input`, `Button`), mismo chrome que el resto del flujo de auth.
  */
@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { BlurView } from '@/core/components/BlurView';
 import { Input } from '@/core/components/Input';
-import { Button, TOKENS } from '@/core/design-system';
+import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import api from '@/core/api/axiosinstance';
@@ -27,8 +27,8 @@ import api from '@/core/api/axiosinstance';
 const { width } = Dimensions.get('window');
 
 export default function ResetPasswordScreen() {
-  // email y token vienen como query params del deep link del email
-  const { email = '', token = '' } = useLocalSearchParams<{ email: string; token: string }>();
+  // email y code vienen del OTP screen
+  const { email = '', code = '' } = useLocalSearchParams<{ email: string; code: string }>();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,13 +37,34 @@ export default function ResetPasswordScreen() {
   const [success, setSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
+  const successFadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Entrada escalonada: icono → título → subtítulo → card
+  const heroAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const subtitleAnim = useRef(new Animated.Value(0)).current;
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  // Salida de la card de formulario antes de mostrar el éxito
+  const formExitAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 450, useNativeDriver: true }),
       Animated.timing(translateY, { toValue: 0, duration: 450, useNativeDriver: true }),
     ]).start();
+
+    Animated.stagger(MOTION.fadeUpStagger, [
+      Animated.timing(heroAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+      Animated.timing(titleAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+      Animated.timing(subtitleAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+      Animated.timing(cardAnim, { toValue: 1, duration: MOTION.fadeUp.duration, useNativeDriver: true }),
+    ]).start();
   }, []);
+
+  const fadeUpStyle = (anim: Animated.Value) => ({
+    opacity: anim,
+    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+  });
 
   const validate = (): string => {
     if (newPassword.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
@@ -58,12 +79,21 @@ export default function ResetPasswordScreen() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', { email, token, newPassword });
-      setSuccess(true);
+      await api.post('/auth/reset-password', { email, code, newPassword });
+      Animated.timing(formExitAnim, {
+        toValue: 0,
+        duration: MOTION.modalFadeOut.duration,
+        useNativeDriver: true,
+      }).start(() => {
+        setSuccess(true);
+        successFadeAnim.setValue(0);
+        Animated.timing(successFadeAnim, { toValue: 1, duration: MOTION.modalFadeIn.duration, useNativeDriver: true }).start();
+      });
     } catch (err: any) {
-      const code = err?.response?.data?.code;
-      if (code === 'NOT_FOUND')      setError('Usuario no encontrado.');
-      else if (code === 'BAD_REQUEST') setError(err.response.data.message ?? 'Token inválido o contraseña muy corta.');
+      const errCode = err?.response?.data?.code;
+      if (errCode === 'INVALID_VERIFICATION_CODE') setError('Código incorrecto o expirado. Volvé a solicitarlo.');
+      else if (errCode === 'NOT_FOUND')      setError('Usuario no encontrado.');
+      else if (errCode === 'BAD_REQUEST') setError('Código inválido, expirado o contraseña muy corta.');
       else setError('Error al restablecer. Intentá de nuevo.');
     } finally {
       setLoading(false);
@@ -74,7 +104,16 @@ export default function ResetPasswordScreen() {
     return (
       <View style={styles.background}>
         <View style={styles.successContainer}>
-          <Animated.View style={[styles.cardGlow, { backgroundColor: '#0A0910', opacity: fadeAnim }]}>
+          <Animated.View
+            style={[
+              styles.cardGlow,
+              {
+                backgroundColor: '#0A0910',
+                opacity: successFadeAnim,
+                transform: [{ scale: successFadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }],
+              },
+            ]}
+          >
           <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
             <BlurView intensity={30} tint="dark" style={[styles.card, styles.successCard]}>
               <View style={styles.successIconCircle}>
@@ -101,17 +140,18 @@ export default function ResetPasswordScreen() {
             <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
           </Pressable>
 
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
+          <Animated.View style={{ opacity: Animated.multiply(fadeAnim, formExitAnim), transform: [{ translateY }] }}>
             <View style={styles.titleRow}>
-              <View style={styles.heroIconCircle}>
+              <Animated.View style={[styles.heroIconCircle, fadeUpStyle(heroAnim)]}>
                 <Ionicons name="key-outline" size={32} color={TOKENS.color.signal} />
-              </View>
-              <Text style={styles.title}>Nueva contraseña</Text>
-              <Text style={styles.subtitle}>
+              </Animated.View>
+              <Animated.Text style={[styles.title, fadeUpStyle(titleAnim)]}>Nueva contraseña</Animated.Text>
+              <Animated.Text style={[styles.subtitle, fadeUpStyle(subtitleAnim)]}>
                 Elegí una contraseña segura de al menos 8 caracteres.
-              </Text>
+              </Animated.Text>
             </View>
 
+            <Animated.View style={fadeUpStyle(cardAnim)}>
             <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
             <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
               <BlurView intensity={30} tint="dark" style={styles.card}>
@@ -143,6 +183,7 @@ export default function ResetPasswordScreen() {
               </BlurView>
             </View>
             </View>
+            </Animated.View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
