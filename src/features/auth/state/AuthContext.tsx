@@ -23,6 +23,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import {
   loginService,
+  loginWithGoogleService,
   registerUserService,
   verifyEmailService,
 } from '../services/auth';
@@ -180,6 +181,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ── Login con Google ──────────────────────────────────────────────────
+  // Recibe el idToken de Firebase (ya autenticado con Google en el cliente,
+  // ver handleGoogleSignIn en LogInView) y lo intercambia por la sesión propia.
+  const loginWithGoogle = useCallback(async (firebaseIdToken: string): Promise<AuthResponse> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await loginWithGoogleService(firebaseIdToken);
+
+      await tokenStorage.save(response.accessToken, response.refreshToken, response.user?.email);
+
+      setAuthState({
+        token: response.accessToken,
+        refreshToken: response.refreshToken,
+        userEmail: response.user?.email ?? null,
+        user: response.user ?? null,
+      });
+
+      return response;
+    } catch (err: any) {
+      setError(getUserErrorMessage(err));
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
     const refreshToken = tokenStorage.getRefreshToken();
@@ -209,6 +238,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         registerUser,
         verifyEmail,
+        loginWithGoogle,
         logout,
         clearError,
       }}

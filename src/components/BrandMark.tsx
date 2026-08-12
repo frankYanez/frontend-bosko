@@ -47,12 +47,12 @@ export function BrandMark({ variant = 'lockup', size = 56, mono = false, color, 
   if (variant === 'mark') return Mark;
 
   const Word = (
-    <View style={{ gap: size * 0.08 }}>
-      <Text style={{ fontFamily: FONT_FAMILY.display, fontSize: size * 0.5, color: color ?? '#EDEAF5', textTransform: 'lowercase', letterSpacing: -0.5 }}>
+    <View style={{ gap: size * 0.08, alignItems: 'center' }}>
+      <Text style={{ fontFamily: FONT_FAMILY.display, fontSize: size * 0.5, color: color ?? '#EDEAF5', textTransform: 'lowercase', letterSpacing: -0.5, textAlign: 'center' }}>
         bosko
       </Text>
       {tagline && (
-        <Text style={{ fontFamily: FONT_FAMILY.mono, fontSize: 10, letterSpacing: 2.4, textTransform: 'uppercase', color: 'rgba(237,234,245,0.55)' }}>
+        <Text style={{ fontFamily: FONT_FAMILY.mono, fontSize: 10, letterSpacing: 2.4, textTransform: 'uppercase', color: 'rgba(237,234,245,0.55)', textAlign: 'center' }}>
           Servicios en red · ARG
         </Text>
       )}

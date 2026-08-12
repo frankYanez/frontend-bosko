@@ -19,6 +19,8 @@ import {
   Dimensions,
   Animated,
   Easing,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,14 +30,17 @@ import { Button } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
+import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
 import { getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
+import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 
 const { width } = Dimensions.get('window');
 const REMEMBERED_EMAIL_KEY = 'BOSKO_REMEMBERED_EMAIL';
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const { login, isLoading, error, clearError } = useAuth();
+  const { loading: googleLoading, signInWithGoogle } = useGoogleSignIn();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const glow = useRef(new Animated.Value(0.7)).current;
@@ -87,9 +92,29 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
       await login({ email: trimmedEmail, password });
       if (rememberMe) await AsyncStorage.setItem(REMEMBERED_EMAIL_KEY, trimmedEmail);
       else await AsyncStorage.removeItem(REMEMBERED_EMAIL_KEY);
-      router.replace('/(tabs)');
+
+      // Primer login después de verificar el email recién registrado → video de bienvenida, una sola vez
+      const showWelcomeVideo = await AsyncStorage.getItem(WELCOME_VIDEO_PENDING_KEY);
+      if (showWelcomeVideo) {
+        await AsyncStorage.removeItem(WELCOME_VIDEO_PENDING_KEY);
+        router.replace('/welcome-video');
+      } else {
+        router.replace('/(tabs)');
+      }
     } catch (err) {
       setLocalError(getUserErrorMessage(err));
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    Keyboard.dismiss();
+    setLocalError('');
+    clearError();
+    try {
+      const success = await signInWithGoogle();
+      if (success) router.replace('/(tabs)');
+    } catch (err: any) {
+      setLocalError(getUserErrorMessage(err) || 'No se pudo iniciar sesión con Google.');
     }
   };
 
@@ -123,6 +148,11 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
           style={styles.flex}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <BrandMark variant="mark" size={68} />
             <View style={{ height: 14 }} />
@@ -184,6 +214,27 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
 
                 <Button label="Ingresar" onPress={handleLogin} loading={isLoading} fullWidth style={styles.ctaButton} />
 
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>o</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <Pressable
+                  onPress={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed]}
+                >
+                  {googleLoading ? (
+                    <ActivityIndicator size="small" color="#EDEAF5" />
+                  ) : (
+                    <>
+                      <Ionicons name="logo-google" size={18} color="#EDEAF5" />
+                      <Text style={styles.googleButtonText}>Continuar con Google</Text>
+                    </>
+                  )}
+                </Pressable>
+
                 <View style={styles.registerRow}>
                   <Text style={styles.registerPrompt}>¿No tenés cuenta? </Text>
                   <Pressable onPress={toRegister}>
@@ -194,6 +245,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
             </View>
             </View>
           </Animated.View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </View>
     </TouchableWithoutFeedback>
@@ -211,7 +263,8 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   flex: { flex: 1 },
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
+  container: { alignItems: 'center' },
   cardShadow: {
     borderRadius: 26,
     shadowColor: '#FF2D6F',
@@ -250,7 +303,24 @@ const styles = StyleSheet.create({
   rememberRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rememberText: { fontSize: 13, color: 'rgba(237,234,245,0.75)', fontWeight: '500' },
   forgotText: { fontSize: 13, color: '#FF2D6F', fontWeight: '500' },
-  ctaButton: { marginBottom: 24 },
+  ctaButton: { marginBottom: 26 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
+  dividerText: { fontSize: 12, color: 'rgba(237,234,245,0.4)', fontWeight: '600' },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    minHeight: 54,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginBottom: 24,
+  },
+  googleButtonPressed: { opacity: 0.8 },
+  googleButtonText: { fontSize: 15, fontWeight: '600', color: '#EDEAF5' },
   registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   registerPrompt: { fontSize: 14, color: 'rgba(237,234,245,0.55)' },
   registerLink: { fontSize: 14, color: '#FF2D6F', fontWeight: '600' },

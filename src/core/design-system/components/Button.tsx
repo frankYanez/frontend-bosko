@@ -83,7 +83,11 @@ export function Button({
       shadowOffset: { width: 0, height: pressed ? 4 : 8 },
       shadowOpacity: pressed ? 0.55 : 0.4,
       shadowRadius: pressed ? 30 : 24,
-      elevation: pressed ? 8 : 6,
+      // Sin `elevation`: con newArchEnabled (Fabric) Android ya renderiza
+      // shadowColor/shadowOffset/shadowRadius igual que iOS. Combinarlo con
+      // elevation dibuja DOS sombras superpuestas — la silueta redondeada de
+      // la sombra offset (shadowOffset) se veía como "un recuadro corrido
+      // hacia abajo" además de la sombra nativa de elevation.
     };
     return (
       <View style={[glowStyle, fullWidth && { width: '100%' }]}>

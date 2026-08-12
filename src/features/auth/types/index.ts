@@ -66,6 +66,7 @@ export interface AuthContextType {
   login:                       (credentials: Credentials) => Promise<AuthResponse>;
   registerUser:                (data: RegisterUserPayload) => Promise<RegisterResponse>;
   verifyEmail:                 (email: string, code: string) => Promise<void>;
+  loginWithGoogle:             (firebaseIdToken: string) => Promise<AuthResponse>;
   logout:                      () => Promise<void>;
   clearError:                  () => void;
 }

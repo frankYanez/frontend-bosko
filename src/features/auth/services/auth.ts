@@ -25,3 +25,15 @@ export async function verifyEmailService(email: string, code: string): Promise<A
   return data;
 }
 
+/**
+ * Login/registro con Google. El backend todavía NO tiene este endpoint (no
+ * aparece en /api/docs-json al momento de escribir esto) — se asume el mismo
+ * contrato { accessToken, refreshToken, user } que el resto de /auth, recibiendo
+ * el idToken de Firebase (mismo patrón que verifyPhoneWithFirebase). Ajustar
+ * ruta/body/shape de la respuesta en cuanto el backend lo publique.
+ */
+export async function loginWithGoogleService(firebaseIdToken: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/google', { idToken: firebaseIdToken });
+  return data;
+}
+

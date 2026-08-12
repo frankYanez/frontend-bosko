@@ -19,12 +19,14 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from '@/core/components/BlurView';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { Button, TOKENS } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 
 const { width } = Dimensions.get('window');
 const CODE_LENGTH = 6;
@@ -102,6 +104,7 @@ export default function VerifyEmailScreen() {
     setLoading(true);
     try {
       await verifyEmail(email, code);
+      await AsyncStorage.setItem(WELCOME_VIDEO_PENDING_KEY, 'true');
       setSuccess(true);
     } catch (err: any) {
       const errorCode = err?.response?.data?.code;

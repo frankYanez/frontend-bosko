@@ -20,6 +20,8 @@ import {
   Animated,
   Alert,
   Easing,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
@@ -28,6 +30,8 @@ import { Button } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
+import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
+import { getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 
 const { width } = Dimensions.get('window');
@@ -57,6 +61,7 @@ const STEPS: Step[] = [
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
   const { registerUser, isLoading, error, clearError } = useAuth();
+  const { loading: googleLoading, signInWithGoogle } = useGoogleSignIn();
 
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({ firstName: '', lastName: '', email: '', password: '' });
@@ -140,6 +145,18 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    Keyboard.dismiss();
+    setFieldError('');
+    clearError();
+    try {
+      const success = await signInWithGoogle();
+      if (success) router.replace('/(tabs)');
+    } catch (err: any) {
+      setFieldError(getUserErrorMessage(err) || 'No se pudo continuar con Google.');
+    }
+  };
+
   const displayError = fieldError || error || '';
 
   return (
@@ -170,6 +187,11 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
           style={styles.flex}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           <View style={styles.container}>
             <BrandMark variant="mark" size={52} />
 
@@ -220,17 +242,41 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                 />
 
                 {step === 0 && (
-                  <View style={styles.loginRow}>
-                    <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
-                    <Pressable onPress={toRegister}>
-                      <Text style={styles.loginLink}>Ingresar</Text>
+                  <>
+                    <View style={styles.dividerRow}>
+                      <View style={styles.dividerLine} />
+                      <Text style={styles.dividerText}>o</Text>
+                      <View style={styles.dividerLine} />
+                    </View>
+
+                    <Pressable
+                      onPress={handleGoogleSignIn}
+                      disabled={googleLoading}
+                      style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed]}
+                    >
+                      {googleLoading ? (
+                        <ActivityIndicator size="small" color="#EDEAF5" />
+                      ) : (
+                        <>
+                          <Ionicons name="logo-google" size={18} color="#EDEAF5" />
+                          <Text style={styles.googleButtonText}>Registrarse con Google</Text>
+                        </>
+                      )}
                     </Pressable>
-                  </View>
+
+                    <View style={styles.loginRow}>
+                      <Text style={styles.loginPrompt}>¿Ya tenés cuenta? </Text>
+                      <Pressable onPress={toRegister}>
+                        <Text style={styles.loginLink}>Ingresar</Text>
+                      </Pressable>
+                    </View>
+                  </>
                 )}
               </BlurView>
             </View>
             </View>
           </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </View>
     </TouchableWithoutFeedback>
@@ -248,7 +294,8 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   flex: { flex: 1 },
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
+  container: { alignItems: 'center' },
   cardShadow: {
     borderRadius: 26,
     shadowColor: '#FF2D6F',
@@ -275,7 +322,24 @@ const styles = StyleSheet.create({
   stepLabel: { fontSize: 15, color: 'rgba(237,234,245,0.55)', marginBottom: 20 },
   fieldGap: { marginBottom: 14 },
   errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
-  ctaButton: { marginTop: 10, marginBottom: 20 },
+  ctaButton: { marginTop: 10, marginBottom: 26 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
+  dividerText: { fontSize: 12, color: 'rgba(237,234,245,0.4)', fontWeight: '600' },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    minHeight: 54,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginBottom: 20,
+  },
+  googleButtonPressed: { opacity: 0.8 },
+  googleButtonText: { fontSize: 15, fontWeight: '600', color: '#EDEAF5' },
   loginRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   loginPrompt: { fontSize: 14, color: 'rgba(237,234,245,0.55)' },
   loginLink: { fontSize: 14, color: '#FF2D6F', fontWeight: '600' },
