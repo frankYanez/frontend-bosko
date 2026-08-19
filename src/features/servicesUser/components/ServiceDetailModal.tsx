@@ -14,7 +14,7 @@ import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { ServiceSummary } from "@/types/services";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 import { TOKENS } from "@/core/design-system/tokens";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -94,7 +94,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                     />
                                 ) : (
                                     <LinearGradient
-                                        colors={[Colors.colorPrimary, Colors.colorPrimaryDark]}
+                                        colors={[PREMIUM.colorPrimary, PREMIUM.colorPrimaryDark]}
                                         style={styles.placeholderImage}
                                     >
                                         <Ionicons
@@ -167,7 +167,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                 }}
                             >
                                 <Text style={styles.hireButtonText}>Solicitar Servicio</Text>
-                                <Ionicons name="arrow-forward" size={20} color={Colors.premium.textPrimary} />
+                                <Ionicons name="arrow-forward" size={20} color={PREMIUM.textPrimary} />
                             </Pressable>
                         </View>
                     </BlurView>
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         height: "85%",
-        backgroundColor: Colors.premium.background,
+        backgroundColor: PREMIUM.background,
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         overflow: "hidden",
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     categoryChip: {
-        backgroundColor: Colors.colorPrimary,
+        backgroundColor: PREMIUM.colorPrimary,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
@@ -298,12 +298,12 @@ const styles = StyleSheet.create({
     },
     priceLabel: {
         fontSize: 16,
-        color: Colors.premium.textSecondary,
+        color: PREMIUM.textSecondary,
     },
     priceValue: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: Colors.colorPrimary,
+        color: PREMIUM.colorPrimary,
     },
     divider: {
         height: 1,
@@ -313,12 +313,12 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
         marginBottom: 12,
     },
     description: {
         fontSize: 15,
-        color: Colors.premium.textSecondary,
+        color: PREMIUM.textSecondary,
         lineHeight: 24,
     },
     detailRow: {
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 15,
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
     },
     footer: {
         position: 'absolute',
@@ -338,19 +338,19 @@ const styles = StyleSheet.create({
         right: 0,
         padding: 20,
         paddingBottom: 30,
-        backgroundColor: Colors.premium.background, // Fallback
+        backgroundColor: PREMIUM.background, // Fallback
         borderTopWidth: 1,
         borderTopColor: "rgba(255,255,255,0.1)",
     },
     hireButton: {
-        backgroundColor: Colors.colorPrimary,
+        backgroundColor: PREMIUM.colorPrimary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
         borderRadius: 16,
         gap: 8,
-        shadowColor: Colors.colorPrimary,
+        shadowColor: PREMIUM.colorPrimary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
         shadowRadius: 10,
@@ -359,6 +359,6 @@ const styles = StyleSheet.create({
     hireButtonText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
     },
 });

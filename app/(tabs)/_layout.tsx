@@ -13,6 +13,7 @@ import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { useThemeColors } from '@/stores/theme.store';
+import { ErrorBoundary } from '@/core/components/ErrorBoundary';
 
 export default function TabsLayout() {
   const { authLoaded, isAuthenticated } = useAuth();
@@ -28,24 +29,26 @@ export default function TabsLayout() {
       style={[styles.container, { backgroundColor: tc.bg }]}
       edges={['left', 'right']}
     >
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarHideOnKeyboard: true,
-        }}
-        tabBar={(props) => (
-          <CustomTabBar
-            {...props}
-          />
-        )}
-      >
-        <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
-        <Tabs.Screen name="services" options={{ title: 'Servicios' }} />
-        <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
-        <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
-        <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
-        <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />
-      </Tabs>
+      <ErrorBoundary>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarHideOnKeyboard: true,
+          }}
+          tabBar={(props) => (
+            <CustomTabBar
+              {...props}
+            />
+          )}
+        >
+          <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
+          <Tabs.Screen name="services" options={{ title: 'Servicios' }} />
+          <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
+          <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
+          <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
+          <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />
+        </Tabs>
+      </ErrorBoundary>
     </SafeAreaView>
   );
 }

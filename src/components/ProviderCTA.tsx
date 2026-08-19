@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-n
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import Colors from '@/core/design-system/Colors';
+import { PREMIUM } from '@/core/design-system';
 import { PremiumButton } from '@/src/components/PremiumButton';
 
 const { width } = Dimensions.get('window');
@@ -43,7 +43,7 @@ export const ProviderCTA = () => {
                 >
                     <View style={styles.headerRow}>
                         <View style={styles.iconCircle}>
-                            <MaterialCommunityIcons name="crown" size={32} color={Colors.premium.gold} />
+                            <MaterialCommunityIcons name="crown" size={32} color={PREMIUM.gold} />
                         </View>
                         <View style={styles.textBlock}>
                             <Text style={styles.mainText}>Únete a la Élite</Text>
@@ -53,17 +53,17 @@ export const ProviderCTA = () => {
 
                     <View style={styles.featuresRow}>
                         <View style={styles.featureItem}>
-                            <MaterialCommunityIcons name="cash-multiple" size={20} color={Colors.premium.gold} />
+                            <MaterialCommunityIcons name="cash-multiple" size={20} color={PREMIUM.gold} />
                             <Text style={styles.featureText}>Pagos Rápidos</Text>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.featureItem}>
-                            <MaterialCommunityIcons name="calendar-check" size={20} color={Colors.premium.gold} />
+                            <MaterialCommunityIcons name="calendar-check" size={20} color={PREMIUM.gold} />
                             <Text style={styles.featureText}>Tu Horario</Text>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.featureItem}>
-                            <MaterialCommunityIcons name="shield-check" size={20} color={Colors.premium.gold} />
+                            <MaterialCommunityIcons name="shield-check" size={20} color={PREMIUM.gold} />
                             <Text style={styles.featureText}>Seguro</Text>
                         </View>
                     </View>
@@ -73,7 +73,7 @@ export const ProviderCTA = () => {
                         iconRight="arrow-forward"
                         variant="primary"
                         onPress={() => { }}
-                        gradientColors={[Colors.premium.gold, '#B8860B']}
+                        gradientColors={[PREMIUM.gold, '#B8860B']}
                         textStyle={{ color: '#1a0505', fontSize: 16, fontWeight: 'bold' }}
                         style={styles.ctaButton}
                     />
@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Colors.premium.goldBorder,
-        ...Colors.premium.shadows.gold,
+        borderColor: PREMIUM.goldBorder,
+        ...PREMIUM.shadows.gold,
     },
     textBlock: {
         flex: 1,
@@ -131,12 +131,12 @@ const styles = StyleSheet.create({
     mainText: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
         marginBottom: 4,
     },
     subText: {
         fontSize: 14,
-        color: Colors.premium.textSecondary,
+        color: PREMIUM.textSecondary,
     },
     featuresRow: {
         flexDirection: 'row',
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: Colors.premium.borderSubtle,
+        borderColor: PREMIUM.borderSubtle,
     },
     featureItem: {
         flexDirection: 'row',
@@ -156,17 +156,17 @@ const styles = StyleSheet.create({
     },
     featureText: {
         fontSize: 12,
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
         fontWeight: '600',
     },
     divider: {
         width: 1,
         height: 20,
-        backgroundColor: Colors.premium.borderSubtle,
+        backgroundColor: PREMIUM.borderSubtle,
     },
     ctaButton: {
         borderRadius: 16,
-        ...Colors.premium.shadows.gold,
+        ...PREMIUM.shadows.gold,
     },
 
 });

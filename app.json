@@ -51,7 +51,8 @@
         "NSCameraUsageDescription": "Bosko necesita acceso a la cámara para que puedas subir fotos y videos de tus servicios.",
         "NSPhotoLibraryUsageDescription": "Bosko necesita acceso a tu galería para que puedas subir fotos y videos de tus servicios.",
         "NSPhotoLibraryAddUsageDescription": "Bosko necesita permiso para guardar fotos en tu galería.",
-        "NSMicrophoneUsageDescription": "Bosko necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz."
+        "NSMicrophoneUsageDescription": "Bosko necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz.",
+        "NSFaceIDUsageDescription": "Bosko usa Face ID para desbloquear la app de forma segura y rápida."
       }
     },
     "web": {
@@ -93,7 +94,8 @@
           "androidNfcEnabled": false
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "@sentry/react-native"
     ],
     "runtimeVersion": {
       "policy": "appVersion"

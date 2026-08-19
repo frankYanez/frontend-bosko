@@ -20,7 +20,7 @@ import {
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
 import { UpdateProfilePayload, uploadAvatar } from "@/features/servicesUser/services/profile";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 import { useProfile } from "../state/ProfileContext";
 
 interface EditProfileModalProps {
@@ -174,7 +174,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       <View style={styles.header}>
         <Text style={styles.title}>Editar Perfil</Text>
         <Pressable onPress={handleRequestClose} style={styles.closeButton}>
-          <MaterialIcons name="close" size={24} color={Colors.premium.textPrimary} />
+          <MaterialIcons name="close" size={24} color={PREMIUM.textPrimary} />
         </Pressable>
       </View>
 
@@ -211,10 +211,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               value={formData.firstName}
               onChangeText={(v) => handleChange("firstName", v)}
               style={styles.input}
-              textColor={Colors.premium.textPrimary}
-              theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
-              underlineColor={Colors.colorPrimary}
-              activeUnderlineColor={Colors.colorPrimary}
+              textColor={PREMIUM.textPrimary}
+              theme={{ colors: { onSurfaceVariant: PREMIUM.textSecondary } }}
+              underlineColor={PREMIUM.colorPrimary}
+              activeUnderlineColor={PREMIUM.colorPrimary}
               error={!!errors.firstName}
             />
             {errors.firstName && (
@@ -229,10 +229,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               value={formData.lastName}
               onChangeText={(v) => handleChange("lastName", v)}
               style={styles.input}
-              textColor={Colors.premium.textPrimary}
-              theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
-              underlineColor={Colors.colorPrimary}
-              activeUnderlineColor={Colors.colorPrimary}
+              textColor={PREMIUM.textPrimary}
+              theme={{ colors: { onSurfaceVariant: PREMIUM.textSecondary } }}
+              underlineColor={PREMIUM.colorPrimary}
+              activeUnderlineColor={PREMIUM.colorPrimary}
             />
           </View>
 
@@ -243,10 +243,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               value={formData.bio}
               onChangeText={(v) => handleChange("bio", v)}
               style={[styles.input, styles.bioInput]}
-              textColor={Colors.premium.textPrimary}
-              theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
-              underlineColor={Colors.colorPrimary}
-              activeUnderlineColor={Colors.colorPrimary}
+              textColor={PREMIUM.textPrimary}
+              theme={{ colors: { onSurfaceVariant: PREMIUM.textSecondary } }}
+              underlineColor={PREMIUM.colorPrimary}
+              activeUnderlineColor={PREMIUM.colorPrimary}
               multiline
               numberOfLines={4}
               maxLength={200}
@@ -260,15 +260,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         {/* ── Seguridad ─────────────────────────────────────────── */}
         <View style={styles.formSection}>
           <View style={styles.sectionHeader}>
-            <MaterialIcons name="security" size={20} color={Colors.colorPrimary} />
+            <MaterialIcons name="security" size={20} color={PREMIUM.colorPrimary} />
             <Text style={styles.sectionTitle}>Seguridad</Text>
           </View>
           <Pressable onPress={handleChangePassword} style={styles.passwordBtn}>
             <View style={styles.passwordBtnLeft}>
-              <Ionicons name="lock-closed-outline" size={20} color={Colors.colorPrimary} />
+              <Ionicons name="lock-closed-outline" size={20} color={PREMIUM.colorPrimary} />
               <Text style={styles.passwordBtnText}>Cambiar contraseña</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.premium.textSecondary} />
+            <Ionicons name="chevron-forward" size={18} color={PREMIUM.textSecondary} />
           </Pressable>
         </View>
 
@@ -296,12 +296,12 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: Colors.premium.background,
+    backgroundColor: PREMIUM.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
   handleIndicator: {
-    backgroundColor: Colors.premium.borderSubtle,
+    backgroundColor: PREMIUM.borderSubtle,
     width: 40,
   },
   header: {
@@ -310,12 +310,12 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: Colors.premium.borderSubtle,
+    borderBottomColor: PREMIUM.borderSubtle,
   },
-  title: { fontSize: 24, fontWeight: "bold", color: Colors.colorPrimary },
+  title: { fontSize: 24, fontWeight: "bold", color: PREMIUM.colorPrimary },
   closeButton: {
     padding: 8,
-    backgroundColor: Colors.premium.borderSubtle,
+    backgroundColor: PREMIUM.borderSubtle,
     borderRadius: 20,
   },
   content: { flex: 1, padding: 20 },
@@ -337,17 +337,17 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 45,
     borderWidth: 3,
-    borderColor: Colors.colorPrimary,
+    borderColor: PREMIUM.colorPrimary,
   },
   avatarFallback: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: Colors.colorPrimary,
+    backgroundColor: PREMIUM.colorPrimary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
-    borderColor: Colors.colorPrimary,
+    borderColor: PREMIUM.colorPrimary,
   },
   avatarInitial: {
     fontSize: 34,
@@ -361,15 +361,15 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.colorPrimary,
+    backgroundColor: PREMIUM.colorPrimary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: Colors.premium.background,
+    borderColor: PREMIUM.background,
   },
   avatarHint: {
     fontSize: 12,
-    color: Colors.premium.textSecondary,
+    color: PREMIUM.textSecondary,
   },
 
   // Form
@@ -381,17 +381,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    color: Colors.premium.textPrimary,
+    color: PREMIUM.textPrimary,
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 16,
   },
   inputGroup: { marginBottom: 16 },
-  input: { backgroundColor: Colors.premium.inputBackground, fontSize: 16 },
+  input: { backgroundColor: PREMIUM.inputBackground, fontSize: 16 },
   bioInput: { minHeight: 100 },
   charCount: {
     alignSelf: "flex-end",
-    color: Colors.premium.textTertiary,
+    color: PREMIUM.textTertiary,
     fontSize: 12,
     marginTop: 4,
   },
@@ -402,11 +402,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: Colors.premium.inputBackground,
+    backgroundColor: PREMIUM.inputBackground,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.premium.borderSubtle,
+    borderColor: PREMIUM.borderSubtle,
   },
   passwordBtnLeft: {
     flexDirection: "row",
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   passwordBtnText: {
     fontSize: 15,
     fontWeight: "600",
-    color: Colors.premium.textPrimary,
+    color: PREMIUM.textPrimary,
   },
 
   // Footer
@@ -425,27 +425,27 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.premium.borderSubtle,
+    borderTopColor: PREMIUM.borderSubtle,
     backgroundColor: "rgba(0,0,0,0.2)",
   },
   cancelButton: {
     flex: 1,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: Colors.premium.borderSubtle,
+    backgroundColor: PREMIUM.borderSubtle,
     alignItems: "center",
   },
-  cancelButtonText: { color: Colors.premium.textPrimary, fontWeight: "600" },
+  cancelButtonText: { color: PREMIUM.textPrimary, fontWeight: "600" },
   saveButton: {
     flex: 2,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: Colors.colorPrimary,
+    backgroundColor: PREMIUM.colorPrimary,
     alignItems: "center",
   },
   saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: {
-    color: Colors.premium.textPrimary,
+    color: PREMIUM.textPrimary,
     fontWeight: "bold",
     fontSize: 16,
   },

@@ -21,8 +21,12 @@ import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
 import { openNotifications } from "@/stores/notificationsUI.store";
+import { ErrorBoundary } from "@/core/components/ErrorBoundary";
+import { BiometricLockGate } from "@/core/components/BiometricLockGate";
+import { initSentry } from "@/core/monitoring/sentry";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+initSentry();
 
 function useNotificationNavigation() {
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
@@ -77,7 +81,9 @@ function ThemedRoot() {
   return (
     <AppBackground>
       <ServicesProvider>
-        <RootLayoutNav />
+        <BiometricLockGate>
+          <RootLayoutNav />
+        </BiometricLockGate>
         <ToastRoot />
         <NotificationsModalRoot />
       </ServicesProvider>
@@ -103,13 +109,15 @@ export default function _layout() {
 
   return (
     <GestureHandlerRootView style={styles.flex}>
-      <BottomSheetModalProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ThemedRoot />
-          </AuthProvider>
-        </QueryClientProvider>
-      </BottomSheetModalProvider>
+      <ErrorBoundary>
+        <BottomSheetModalProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ThemedRoot />
+            </AuthProvider>
+          </QueryClientProvider>
+        </BottomSheetModalProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

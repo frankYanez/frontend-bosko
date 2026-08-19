@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { TOKENS } from "@/core/design-system/tokens";
 import { PremiumButton } from "@/components/PremiumButton";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 
 export function PromoBanner() {
   return (
@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 18,
     padding: 16,
-    backgroundColor: Colors.colorPrimary,
-    ...Colors.premium.shadows.global,
+    backgroundColor: PREMIUM.colorPrimary,
+    ...PREMIUM.shadows.global,
   },
   title: { color: "#fff", fontSize: 18, fontWeight: "800" },
   desc: { color: "#FFE7EE", marginVertical: 6 },

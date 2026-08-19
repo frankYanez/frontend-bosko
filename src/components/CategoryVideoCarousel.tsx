@@ -13,7 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { Category } from "@/src/interfaces/category";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 
 const CARD_WIDTH = 160;
 const CARD_HEIGHT = 300;
@@ -132,11 +132,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: Colors.colorPrimary,
+    color: PREMIUM.colorPrimary,
   },
   subtitle: {
     fontSize: 12,
-    color: Colors.dark.text,
+    color: PREMIUM.textPrimary,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -147,14 +147,14 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 20,
-    backgroundColor: Colors.premium.card,
-    ...Colors.premium.shadows.global,
+    backgroundColor: PREMIUM.card,
+    ...PREMIUM.shadows.global,
   },
   pressable: {
     flex: 1,
     borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: Colors.premium.card,
+    backgroundColor: PREMIUM.card,
   },
   videoWrapper: {
     flex: 1,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   categoryName: {
-    color: Colors.white,
+    color: PREMIUM.white,
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   serviceCount: {
-    color: Colors.premium.gold,
+    color: PREMIUM.gold,
     fontSize: 12,
     fontWeight: "600",
   },

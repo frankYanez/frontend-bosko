@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 import { useProfile } from "@/features/profile/state/ProfileContext";
 
 export const PremiumBanner = () => {
@@ -16,7 +16,7 @@ export const PremiumBanner = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.colorPrimary, Colors.colorPrimary, "#2d0a0a"]}
+        colors={[PREMIUM.colorPrimary, PREMIUM.colorPrimary, "#2d0a0a"]}
         start={{ x: 1, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.gradient, { paddingTop: insets.top + 10 }]}
@@ -34,14 +34,14 @@ export const PremiumBanner = () => {
               <Ionicons
                 name="search-outline"
                 size={24}
-                color={Colors.premium.gold}
+                color={PREMIUM.gold}
               />
             </Pressable>
             <Pressable style={styles.iconButton}>
               <Ionicons
                 name="notifications-outline"
                 size={24}
-                color={Colors.premium.gold}
+                color={PREMIUM.gold}
               />
             </Pressable>
           </View>
@@ -50,7 +50,7 @@ export const PremiumBanner = () => {
 
       {/* Decorative bottom curve/fade */}
       <LinearGradient
-        colors={["transparent", Colors.premium.background]}
+        colors={["transparent", PREMIUM.background]}
         style={styles.bottomFade}
       />
     </View>
@@ -60,7 +60,7 @@ export const PremiumBanner = () => {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 20,
-    ...Colors.premium.shadows.global,
+    ...PREMIUM.shadows.global,
     height: 280,
   },
   gradient: {
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30, // Reduced padding bottom since no search bar
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    ...Colors.premium.shadows.global,
+    ...PREMIUM.shadows.global,
     height: 280,
   },
   headerContent: {
@@ -81,12 +81,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     fontWeight: "bold",
-    color: Colors.premium.textPrimary,
+    color: PREMIUM.textPrimary,
     letterSpacing: -0.5,
   },
   subGreeting: {
     fontSize: 16,
-    color: Colors.premium.textSecondary,
+    color: PREMIUM.textSecondary,
     marginTop: 4,
   },
   actionsRow: {
@@ -97,14 +97,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.premium.inputBackground,
+    backgroundColor: PREMIUM.inputBackground,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.premium.borderSubtle,
+    borderColor: PREMIUM.borderSubtle,
   },
   bottomFade: {
-    shadowColor: Colors.premium.background,
+    shadowColor: PREMIUM.background,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3,

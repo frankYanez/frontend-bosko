@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 type ButtonSize = "small" | "medium" | "large";
@@ -81,7 +81,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
         return {
           backgroundColor: "transparent",
           borderWidth: 1.5,
-          borderColor: Colors.premium.gold,
+          borderColor: PREMIUM.gold,
         };
       case "ghost":
         return {
@@ -89,9 +89,9 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
         };
       case "secondary":
         return {
-          backgroundColor: Colors.premium.card,
+          backgroundColor: PREMIUM.card,
           borderWidth: 1,
-          borderColor: Colors.premium.borderSubtle,
+          borderColor: PREMIUM.borderSubtle,
           ...styles.shadowMedium,
         };
       default: // primary
@@ -102,21 +102,21 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   };
 
   const getTextColor = () => {
-    if (disabled) return Colors.premium.textTertiary;
+    if (disabled) return PREMIUM.textTertiary;
     switch (variant) {
       case "outline":
       case "ghost":
-        return Colors.premium.gold;
+        return PREMIUM.gold;
       case "secondary":
-        return Colors.premium.textPrimary;
+        return PREMIUM.textPrimary;
       default:
-        return Colors.premium.textPrimary; // Text on gradient
+        return PREMIUM.textPrimary; // Text on gradient
     }
   };
 
   // Primary gradient colors
-  const defaultGradient: readonly [string, string, ...string[]] = [Colors.colorPrimary, "#5c0117"]; // Deep red/burgundy gradient from palette
-  // Alternative Gold Gradient if needed: [Colors.premium.gold, '#B8860B']
+  const defaultGradient: readonly [string, string, ...string[]] = [PREMIUM.colorPrimary, PREMIUM.colorPrimaryDark]; // Deep red/burgundy gradient from palette
+  // Alternative Gold Gradient if needed: [PREMIUM.gold, '#B8860B']
 
   // We render content inside a function to reuse it
   const renderContent = () => (
@@ -222,12 +222,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   disabledProperties: {
-    backgroundColor: Colors.premium.inputBackground,
+    backgroundColor: PREMIUM.inputBackground,
     borderColor: "transparent",
   },
   // Shadows
   shadowGold: {
-    shadowColor: Colors.colorPrimary,
+    shadowColor: PREMIUM.colorPrimary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,

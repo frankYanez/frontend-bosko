@@ -1,5 +1,6 @@
 // Superficie única del design system — import { TOKENS, SPACING, ... } from '@/core/design-system'
 export { TOKENS } from './tokens';
+export { PREMIUM } from './premium';
 export { PALETTE } from './palette';
 export type { PaletteColors } from './palette';
 export { SPACING } from './spacing';

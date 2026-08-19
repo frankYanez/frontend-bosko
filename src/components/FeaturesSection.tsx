@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/core/design-system/Colors';
+import { PREMIUM } from '@/core/design-system';
 
 
 const { width } = Dimensions.get('window');
@@ -41,9 +41,9 @@ function FeatureCard({ item, index }: { item: typeof features[0]; index: number 
 
     return (
         <Animated.View style={[styles.cardWrapper, { opacity, transform: [{ translateY }] }]}>
-            <LinearGradient colors={[Colors.premium.card, '#1a1a1a']} style={styles.card}>
+            <LinearGradient colors={[PREMIUM.card, '#1a1a1a']} style={styles.card}>
                 <View style={styles.iconContainer}>
-                    <MaterialIcons name={item.icon as any} size={28} color={Colors.premium.gold} />
+                    <MaterialIcons name={item.icon as any} size={28} color={PREMIUM.gold} />
                 </View>
                 <Text style={styles.title}>{item.title}</Text>
                 <Text style={styles.description}>{item.description}</Text>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
         marginBottom: 20,
         marginLeft: 4,
     },
@@ -82,13 +82,13 @@ const styles = StyleSheet.create({
     },
     cardWrapper: {
         borderRadius: 16,
-        ...Colors.premium.shadows.medium,
+        ...PREMIUM.shadows.medium,
     },
     card: {
         padding: 20,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: Colors.premium.borderSubtle,
+        borderColor: PREMIUM.borderSubtle,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 16,
@@ -97,22 +97,22 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: Colors.premium.inputBackground,
+        backgroundColor: PREMIUM.inputBackground,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: Colors.premium.goldBorder,
+        borderColor: PREMIUM.goldBorder,
     },
     title: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: Colors.premium.textPrimary,
+        color: PREMIUM.textPrimary,
         marginBottom: 4,
         flex: 1,
     },
     description: {
         fontSize: 14,
-        color: Colors.premium.textSecondary,
+        color: PREMIUM.textSecondary,
         flex: 1,
         lineHeight: 20,
     }

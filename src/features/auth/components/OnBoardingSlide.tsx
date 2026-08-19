@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import LottieView from "lottie-react-native";
-import Colors from "@/core/design-system/Colors";
+import { PREMIUM } from "@/core/design-system";
 
 interface OnBoardingSlideProps {
   item: {
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    color: Colors.colorPrimary,
+    color: PREMIUM.colorPrimary,
     marginBottom: 20,
     letterSpacing: 0.5,
   },
