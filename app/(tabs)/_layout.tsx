@@ -34,6 +34,11 @@ export default function TabsLayout() {
           screenOptions={{
             headerShown: false,
             tabBarHideOnKeyboard: true,
+            // CustomTabBar ya flota con position:'absolute' propio — sin esto,
+            // Navigation reserva su altura medida en cada escena y les resta
+            // ~91px de alto real. Reels usa `height: H` fijo para el paging
+            // y quedaba cortado por ese espacio reservado de más.
+            tabBarStyle: { position: 'absolute' },
           }}
           tabBar={(props) => (
             <CustomTabBar

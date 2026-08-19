@@ -3,6 +3,7 @@ import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnreadTotal } from '@/stores/chat.store';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -96,7 +97,14 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     if (!route) return;
     const focused = state.index === i;
     const ev = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (!focused && !ev.defaultPrevented) navigation.navigate(route.name, route.params);
+    if (ev.defaultPrevented) return;
+    if (!focused) {
+      navigation.navigate(route.name, route.params);
+    } else if (route.state?.key) {
+      // Tab ya enfocado: volver a la raíz de su stack anidado (ej: profile
+      // stuck en una subpantalla como become-provider) en vez de no-opear.
+      navigation.dispatch({ ...StackActions.popToTop(), target: route.state.key });
+    }
   }, [navigation, state]);
 
   const onLongPress = useCallback((i: number) => {
@@ -109,7 +117,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.shell, { bottom: Math.max(insets.bottom, 16) }]}
+      style={[styles.shell, { bottom: Math.max(insets.bottom, 16) + 12 }]}
     >
       {/* ── Bar shadow wrapper — elevation sin overflow (Android fix) ── */}
       <View

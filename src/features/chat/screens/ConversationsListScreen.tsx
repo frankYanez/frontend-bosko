@@ -24,6 +24,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { EmptyState } from '@/core/components/EmptyState';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchConversations, Conversation } from '../services/chat.service';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useChatStore, useConversationsList } from '@/stores/chat.store';
@@ -124,6 +125,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
 
 export default function ConversationsListScreen() {
   const tc = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { data: profile } = useProfile();
   const conversations = useConversationsList();
   const setConversations = useChatStore((s) => s.setConversations);
@@ -183,7 +185,7 @@ export default function ConversationsListScreen() {
   return (
     <View style={[styles.background, { backgroundColor: tc.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: tc.divider }]}>
+      <View style={[styles.header, { borderBottomColor: tc.divider, paddingTop: insets.top + 20 }]}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Mensajes</Text>
         {totalUnread > 0 && (
           <View style={styles.headerBadge}>
@@ -205,7 +207,7 @@ export default function ConversationsListScreen() {
           renderItem={({ item }) => (
             <ConversationItem item={item} myUserId={profile?.id} />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             loadError ? (
@@ -241,7 +243,6 @@ export default function ConversationsListScreen() {
 const styles = StyleSheet.create({
   background: { flex: 1 },
   header: {
-    paddingTop: 60,
     paddingBottom: 16,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -272,7 +273,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: 8,
     paddingHorizontal: 16,
-    paddingBottom: 100,
     flexGrow: 1,
     gap: 4,
   },

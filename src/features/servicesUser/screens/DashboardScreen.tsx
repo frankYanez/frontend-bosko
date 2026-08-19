@@ -591,7 +591,7 @@ const ds = StyleSheet.create({
 function makeStyles(C: CPalette) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
 
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 6 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 42, height: 42, borderRadius: 14, borderWidth: 2, borderColor: C.signal + '30' },
   avatarGrad: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
@@ -614,8 +614,8 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
 
   scroll: { paddingTop: 4 },
 
-  heroSlide: { width: '100%', height: 192, borderRadius: 26, overflow: 'hidden' },
-  heroGrad: { flex: 1, padding: 22, justifyContent: 'flex-end', overflow: 'hidden' },
+  heroSlide: { width: '100%', height: 224, borderRadius: 26, overflow: 'hidden' },
+  heroGrad: { flex: 1, padding: 24, justifyContent: 'flex-end', overflow: 'hidden' },
   heroBubble: { position: 'absolute', borderRadius: 999, backgroundColor: '#FFFFFF' },
   heroContent: { gap: 6 },
   heroIconWrap: { width: 38, height: 38, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },

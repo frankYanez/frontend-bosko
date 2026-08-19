@@ -7,12 +7,13 @@
 
 import React, { useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FullScreenModal } from '@/core/design-system';
 import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, useIsDark } from '@/stores/theme.store';
-import { BlurView } from '@/core/components/BlurView';
+import { GRADIENTS } from '@/core/design-system/gradients';
+import { useThemeColors } from '@/stores/theme.store';
 
 export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
 
@@ -24,7 +25,7 @@ interface Props {
 
 export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }: Props) {
   const tc = useThemeColors();
-  const isDark = useIsDark();
+  const insets = useSafeAreaInsets();
   const cardAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -36,7 +37,10 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
 
   return (
     <FullScreenModal visible={visible} onRequestClose={onSelectClient}>
-      <View style={styles.backdrop}>
+      <Pressable
+        style={[styles.backdrop, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
+        onPress={onSelectClient}
+      >
         <Animated.View
           style={[
             styles.cardWrap,
@@ -46,7 +50,12 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
             },
           ]}
         >
-          <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: tc.border }]}>
+          {/* onPress no-op: absorbe el toque para que no burbujee al backdrop y cierre el modal */}
+          <Pressable onPress={() => {}} style={[styles.card, { backgroundColor: tc.surface, borderColor: tc.border }]}>
+            <Pressable onPress={onSelectClient} hitSlop={8} style={[styles.closeButton, { backgroundColor: tc.surface2 }]}>
+              <Ionicons name="close" size={18} color={tc.textSub} />
+            </Pressable>
+
             <View style={styles.iconWrap}>
               <Ionicons name="hand-left" size={30} color={TOKENS.color.signal} />
             </View>
@@ -57,7 +66,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
             </Text>
 
             <Pressable onPress={onSelectProvider} style={styles.optionShadow}>
-              <LinearGradient colors={[TOKENS.color.primaryDark, TOKENS.color.primary]} style={styles.optionCard}>
+              <LinearGradient colors={GRADIENTS.brand} style={styles.optionCard}>
                 <View style={styles.optionIconWrap}>
                   <Ionicons name="briefcase" size={22} color="#fff" />
                 </View>
@@ -82,9 +91,9 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
               </View>
               <Ionicons name="chevron-forward" size={20} color={tc.textSub} />
             </Pressable>
-          </BlurView>
+          </Pressable>
         </Animated.View>
-      </View>
+      </Pressable>
     </FullScreenModal>
   );
 }
@@ -97,7 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  cardWrap: { width: '100%' },
+  cardWrap: { width: '100%', borderRadius: 26, ...TOKENS.shadow.button },
   card: {
     borderRadius: 26,
     overflow: 'hidden',
@@ -105,6 +114,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 14,
     alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 1,
+    padding: 6,
+    borderRadius: 16,
   },
   iconWrap: {
     width: 60,
@@ -120,10 +137,7 @@ const styles = StyleSheet.create({
   optionShadow: {
     width: '100%',
     borderRadius: 18,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    ...TOKENS.shadow.glow,
   },
   optionCard: {
     flexDirection: 'row',

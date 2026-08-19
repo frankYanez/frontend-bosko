@@ -20,6 +20,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -106,6 +107,7 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
 
 export default function OrdersListScreen() {
   const tc = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders } = useOrders();
   const [activeTab, setActiveTab] = useState<TabType>('client');
   const [refreshing, setRefreshing] = useState(false);
@@ -145,7 +147,7 @@ export default function OrdersListScreen() {
   return (
     <View style={[styles.background, { backgroundColor: tc.bg }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Mis órdenes</Text>
       </View>
 
@@ -188,7 +190,7 @@ export default function OrdersListScreen() {
               })}
             />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<OrdersEmptyState />}
           refreshControl={
@@ -208,7 +210,6 @@ export default function OrdersListScreen() {
 const styles = StyleSheet.create({
   background: { flex: 1 },
   header: {
-    paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
@@ -246,7 +247,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
     gap: 12,
     flexGrow: 1,
   },
