@@ -26,6 +26,12 @@ export interface OrderService {
   thumbnail?: string;
 }
 
+export interface OrderReview {
+  id: string;
+  rating: number;
+  comment: string;
+}
+
 export interface Order {
   id: string;
   clientId: string;
@@ -48,6 +54,8 @@ export interface Order {
   client?: OrderUser;
   provider?: OrderUser;
   service?: OrderService;
+  /** Reseña ya dejada por el cliente para esta orden, si existe (populado en GET /orders/:id) */
+  review?: OrderReview | null;
   // Datos populados (lista — "la otra parte")
   otherParty?: OrderUser;
   role?: string;

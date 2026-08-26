@@ -45,9 +45,26 @@ export interface CreateReelPayload {
   music?: string;
 }
 
+export interface UpdateReelPayload {
+  description?: string;
+  tags?: string[];
+}
+
 /** GET /reels?page=1&limit=10 */
 export async function getReelsFeed(page = 1, limit = 10): Promise<Reel[]> {
   const res = await api.get<Reel[]>('/reels', { params: { page, limit } });
+  return res.data;
+}
+
+/** GET /reels/me — reels propios del usuario autenticado */
+export async function getMyReels(): Promise<Reel[]> {
+  const res = await api.get<Reel[]>('/reels/me');
+  return res.data;
+}
+
+/** PATCH /reels/:id */
+export async function updateReel(reelId: string, payload: UpdateReelPayload): Promise<Reel> {
+  const res = await api.patch<Reel>(`/reels/${reelId}`, payload);
   return res.data;
 }
 

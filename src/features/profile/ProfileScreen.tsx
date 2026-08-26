@@ -45,9 +45,10 @@ type CPalette = ReturnType<typeof makeC>;
 function makeC(tc: ReturnType<typeof useThemeColors>) {
   return {
     ...SEMANTIC,
-    bg:     tc.bg,
-    card:   tc.card,
-    text:   tc.text,
+    bg:      tc.bg,
+    card:    tc.card,
+    surface: tc.surface,
+    text:    tc.text,
     sub:    tc.textSub,
     border: tc.border,
     accent: tc.accent,
@@ -243,50 +244,6 @@ function SettingsGroup({ title, children }: { title: string; children: React.Rea
   );
 }
 
-// ── Availability toggle ───────────────────────────────────────────────────────
-function AvailabilityToggle({
-  s,
-  isAvailable,
-  onToggle,
-  toggling,
-}: {
-  s: ReturnType<typeof makeStyles>;
-  isAvailable: boolean;
-  onToggle: () => void;
-  toggling: boolean;
-}) {
-  const slideAnim = useRef(new Animated.Value(isAvailable ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: isAvailable ? 1 : 0,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 100,
-    }).start();
-  }, [isAvailable]);
-
-  const thumbColor = isAvailable ? SEMANTIC.green : SEMANTIC.amber;
-  const bgColor    = isAvailable ? '#DCFCE7' : '#FFF8E1';
-  const label      = isAvailable ? 'Disponible' : 'Ocupado';
-  const dotX       = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [3, 27] });
-
-  return (
-    <Pressable
-      onPress={onToggle}
-      disabled={toggling}
-      style={[s.availRow, { opacity: toggling ? 0.6 : 1 }]}
-    >
-      <View style={[s.availTrack, { backgroundColor: bgColor }]}>
-        <Animated.View
-          style={[s.availThumb, { backgroundColor: thumbColor, transform: [{ translateX: dotX }] }]}
-        />
-      </View>
-      <Text style={[s.availLabel, { color: thumbColor }]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 // ── Main screen ───────────────────────────────────────────────────────────────
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -295,14 +252,13 @@ export const ProfileScreen: React.FC = () => {
   const C = useMemo(() => makeC(themeColors), [themeColors]);
   const s = useMemo(() => makeStyles(C), [C]);
   const { authState, logout } = useAuth();
-  const { profile, isLoading, refreshProfile, updateProfile, toggleAvailability } = useProfile();
+  const { profile, isLoading, refreshProfile, updateProfile } = useProfile();
   const { status: roleStatus, kycStatus, isLoading: roleLoading } = useProviderStatus();
   const { count: favCount } = useFavorites();
 
   const [stats, setStats]               = useState<UserStats | null>(null);
   const [editVisible, setEditVisible]   = useState(false);
   const [refreshing, setRefreshing]     = useState(false);
-  const [availToggling, setAvailToggling] = useState(false);
 
   // Entrance animations for 5 sections
   const sections = useRef(Array.from({ length: 5 }, () => new Animated.Value(0))).current;
@@ -348,12 +304,6 @@ export const ProfileScreen: React.FC = () => {
       toast.error('No se pudo guardar', 'Intenta de nuevo');
       throw err;
     }
-  };
-
-  const handleToggleAvailability = async () => {
-    setAvailToggling(true);
-    await toggleAvailability().catch(() => {});
-    setAvailToggling(false);
   };
 
   const handleLogout = async () => {
@@ -465,7 +415,7 @@ export const ProfileScreen: React.FC = () => {
           </View>
 
           {/* KYC badge: providers (con toggle de disponibilidad) y pending (solo estado) */}
-          {(isProvider || isPending) && kycCfg ? (
+          {(isProvider || isPending) && kycCfg && kycStatus !== 'approved' ? (
             <View style={s.badgeRow}>
               <Pressable
                 onPress={() => router.push(isPending ? '/(tabs)/profile/become-provider' : '/(tabs)/profile/kyc')}
@@ -474,14 +424,6 @@ export const ProfileScreen: React.FC = () => {
                 <Ionicons name={kycCfg.icon} size={14} color={kycCfg.color} />
                 <Text style={[s.kycText, { color: kycCfg.color }]}>{kycCfg.label}</Text>
               </Pressable>
-              {isProvider && (
-                <AvailabilityToggle
-                  s={s}
-                  isAvailable={profile?.isAvailable ?? true}
-                  onToggle={handleToggleAvailability}
-                  toggling={availToggling}
-                />
-              )}
             </View>
           ) : null}
 
@@ -549,6 +491,14 @@ export const ProfileScreen: React.FC = () => {
                   iconColor={C.amber}
                   onPress={() => router.push('/(tabs)/profile/my-reviews')}
                   delay={120}
+                />
+                <QuickCard
+                  icon="film-outline"
+                  label="Mis reels"
+                  color={C.accent}
+                  iconColor={C.primary}
+                  onPress={() => router.push('/(tabs)/profile/my-reels')}
+                  delay={180}
                 />
               </>
             ) : (
@@ -976,7 +926,7 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   statsCard: {
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: C.card,
+    backgroundColor: C.surface,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',

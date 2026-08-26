@@ -17,9 +17,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import { createReview } from '@/features/reviews/services/review.service';
+import { useCreateReview } from '@/hooks/mutations/useReviewMutations';
+import { extractApiError, getUserErrorMessage } from '@/lib/errors';
 import { TOKENS } from '@/core/design-system/tokens';
 import { Button } from '@/core/design-system';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
@@ -29,16 +31,18 @@ const LABELS = ['Pésimo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
 export default function ReviewScreen() {
   const tc = useThemeColors();
   const isDark = useIsDark();
+  const insets = useSafeAreaInsets();
   const { orderId, providerName, serviceName } = useLocalSearchParams<{
     orderId: string;
     providerName?: string;
     serviceName?: string;
   }>();
 
+  const { mutateAsync: createReview, isPending: submitting } = useCreateReview();
+
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const displayRating = hoverRating || rating;
 
@@ -48,23 +52,27 @@ export default function ReviewScreen() {
       return;
     }
 
-    setSubmitting(true);
     try {
       await createReview({ orderId: orderId!, rating, comment: comment.trim() });
       Alert.alert('¡Gracias!', 'Tu reseña ayuda a la comunidad.', [
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
       ]);
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'No se pudo enviar la reseña');
-    } finally {
-      setSubmitting(false);
+    } catch (err) {
+      const { code } = extractApiError(err);
+      if (code === 'ALREADY_REVIEWED') {
+        Alert.alert('Ya calificaste esta orden', getUserErrorMessage(err), [
+          { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
+        ]);
+        return;
+      }
+      Alert.alert('Error', getUserErrorMessage(err));
     }
   };
 
   return (
-    <View style={[styles.bg, { backgroundColor: tc.bg }]}>
+    <View style={[styles.bg, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -194,8 +202,7 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 8,
     alignItems: 'center',
   },
   header: {

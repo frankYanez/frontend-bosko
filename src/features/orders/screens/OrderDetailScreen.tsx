@@ -8,7 +8,7 @@
  * Acciones: aceptar, rechazar, iniciar, completar, cancelar, disputar.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   View,
@@ -25,11 +25,13 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
+import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import { useProfile } from '@/features/profile/state/ProfileContext';
-import { Order, OrderStatus } from '../types/orders.types';
+import { OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
 
@@ -106,12 +108,12 @@ function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
 
 export default function OrderDetailScreen() {
   const tc = useThemeColors();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
-  const { getOrder, acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
+  const { acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
   const { profile } = useProfile();
 
-  const [order, setOrder] = useState<Order | undefined>();
-  const [loading, setLoading] = useState(true);
+  const { data: order, isLoading: loading, refetch: refetchOrder } = useOrder(params.id);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Modal de motivo (reemplaza Alert.prompt que no funciona en Android)
@@ -131,15 +133,6 @@ export default function OrderDetailScreen() {
       Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true })
     )).start();
   }, []);
-
-  const loadOrder = useCallback(async () => {
-    if (!params.id) return;
-    const data = await getOrder(params.id);
-    setOrder(data);
-    setLoading(false);
-  }, [getOrder, params.id]);
-
-  useEffect(() => { loadOrder(); }, [loadOrder]);
 
   // Determinar si el usuario autenticado es el cliente o el proveedor
   const isClient   = profile?.id === order?.clientId;
@@ -161,7 +154,7 @@ export default function OrderDetailScreen() {
     setActionLoading(label);
     try {
       await action();
-      await loadOrder(); // Refresca los datos
+      await refetchOrder(); // Refresca los datos
     } catch (err: any) {
       const msg = err?.response?.data?.message || `Error al ${label.toLowerCase()}`;
       Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
@@ -184,7 +177,7 @@ export default function OrderDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
+      <View style={[styles.background, styles.centered, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
         <ActivityIndicator color={TOKENS.color.signal} size="large" />
       </View>
     );
@@ -192,7 +185,7 @@ export default function OrderDetailScreen() {
 
   if (!order) {
     return (
-      <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
+      <View style={[styles.background, styles.centered, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
         <Text style={[styles.notFoundText, { color: tc.textSub }]}>No se encontró la orden</Text>
         <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} style={styles.backLink}>
           <Text style={styles.backLinkText}>← Volver</Text>
@@ -206,14 +199,14 @@ export default function OrderDetailScreen() {
   });
 
   return (
-    <View style={[styles.background, { backgroundColor: tc.bg }]}>
+    <View style={[styles.background, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={loading}
-            onRefresh={loadOrder}
+            onRefresh={refetchOrder}
             tintColor={TOKENS.color.signal}
           />
         }
@@ -380,8 +373,8 @@ export default function OrderDetailScreen() {
             />
           )}
 
-          {/* CLIENTE: calificar si completado */}
-          {isClient && order.status === 'completed' && (
+          {/* CLIENTE: calificar si completado y todavía no calificó */}
+          {isClient && order.status === 'completed' && !order.review && (
             <ActionButton
               label="Calificar servicio"
               icon="star"
@@ -396,6 +389,16 @@ export default function OrderDetailScreen() {
                 },
               })}
             />
+          )}
+
+          {/* CLIENTE: ya calificó esta orden */}
+          {isClient && order.status === 'completed' && order.review && (
+            <View style={[styles.reviewedBanner, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
+              <MaterialIcons name="star" size={18} color="#FFD700" />
+              <Text style={[styles.reviewedBannerText, { color: tc.textSub }]}>
+                Ya calificaste este servicio ({order.review.rating}/5)
+              </Text>
+            </View>
           )}
 
           {/* CLIENTE o PROVEEDOR: puede disputar si in_progress; solo cliente si completed */}
@@ -500,8 +503,7 @@ const styles = StyleSheet.create({
   background: { flex: 1 },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: {
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 8,
     paddingHorizontal: 20,
     gap: 14,
   },
@@ -656,6 +658,18 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   cancelledText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reviewedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+  },
+  reviewedBannerText: {
     fontSize: 14,
     fontWeight: '600',
   },

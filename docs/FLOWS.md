@@ -119,7 +119,8 @@ Real-time vía socket.io con poll de respaldo cada 10s si el socket está descon
 | Ruta | Screen | Qué hace |
 |---|---|---|
 | `(tabs)/reels` | `ReelsScreen` | Feed de reels de proveedores |
-| — | `ReelUploadScreen` | Subida de reel (rol provider) |
+| `(tabs)/profile/my-reels` | `MyReelsScreen` | Grilla de reels propios (rol provider) — likes/comentarios, editar descripción/tags, eliminar |
+| — | `ReelUploadScreen` | Subida de reel (rol provider) — sin ruta asignada, no alcanzable desde ningún flujo actual |
 
 ---
 

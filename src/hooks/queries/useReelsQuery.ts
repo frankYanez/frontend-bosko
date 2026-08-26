@@ -7,10 +7,14 @@ import {
   getReelComments,
   deleteReelComment,
   reportReel,
+  getMyReels,
+  updateReel,
   type CreateReelPayload,
+  type UpdateReelPayload,
 } from '@/features/reels/services/reels.service';
 
 const REELS_KEY = ['reels'] as const;
+const MY_REELS_KEY = ['reels', 'me'] as const;
 const reelCommentsKey = (reelId: string) => ['reels', reelId, 'comments'] as const;
 
 export function useReelsFeed() {
@@ -70,6 +74,26 @@ export function useDeleteReel() {
     mutationFn: (reelId: string) => deleteReel(reelId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: REELS_KEY });
+      qc.invalidateQueries({ queryKey: MY_REELS_KEY });
+    },
+  });
+}
+
+export function useMyReels() {
+  return useQuery({
+    queryKey: MY_REELS_KEY,
+    queryFn: getMyReels,
+  });
+}
+
+export function useUpdateReel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ reelId, payload }: { reelId: string; payload: UpdateReelPayload }) =>
+      updateReel(reelId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: REELS_KEY });
+      qc.invalidateQueries({ queryKey: MY_REELS_KEY });
     },
   });
 }

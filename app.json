@@ -95,7 +95,8 @@
         }
       ],
       "expo-asset",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-navigation-bar"
     ],
     "runtimeVersion": {
       "policy": "appVersion"

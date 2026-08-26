@@ -208,7 +208,7 @@ function CommentsSheet({
         {/* Backdrop */}
         <Pressable style={[StyleSheet.absoluteFill, s.commentsBackdrop]} onPress={onClose} />
 
-        <View style={[s.commentsSheet, { paddingBottom: insets.bottom + 8, backgroundColor: tc.card }]}>
+        <View style={[s.commentsSheet, { paddingBottom: insets.bottom + 44, backgroundColor: tc.surface }]}>
           {/* Handle */}
           <View style={[s.commentsHandle, { backgroundColor: tc.border }]} />
           <Text style={[s.commentsTitle, { color: tc.text }]}>Comentarios</Text>
@@ -530,6 +530,7 @@ const ReelItem = React.memo(function ReelItem({
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             nativeControls={false}
+            surfaceType="textureView"
           />
         </Pressable>
       )}
