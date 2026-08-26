@@ -44,6 +44,7 @@ import {
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import {
   fetchConversationByOrder,
   fetchMessages,
@@ -768,7 +769,7 @@ export default function ChatScreen() {
     >
       {/* Header */}
       <BlurView intensity={25} tint="light" style={[styles.header, { borderBottomColor: tc.divider }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/chat')} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <View style={styles.headerInfo}>

@@ -14,22 +14,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useFavorites } from '../state/FavoritesContext';
 import { EmptyState } from '@/core/components/EmptyState';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  bg:      '#F7F7FA',
-  card:    '#FFFFFF',
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  border:  '#EDEDF0',
-  amber:   '#F59E0B',
-  red:     '#EF4444',
+  amber: TOKENS.color.warning,
+  red:   TOKENS.color.error,
 };
 
 function formatRate(rate?: ServiceSummary['rate']) {
@@ -76,7 +71,7 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
         {item.thumbnail ? (
           <Image source={{ uri: item.thumbnail }} style={s.thumb} contentFit="cover" />
         ) : (
-          <LinearGradient colors={[C.dark, C.primary]} style={s.thumbFallback}>
+          <LinearGradient colors={GRADIENTS.brand} style={s.thumbFallback}>
             <Ionicons name="construct" size={22} color="#fff" />
           </LinearGradient>
         )}
@@ -99,14 +94,14 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
           </View>
 
           {formatRate(item.rate) && (
-            <Text style={s.price}>Desde {formatRate(item.rate)}</Text>
+            <Text style={[s.price, { color: TOKENS.color.signal }]}>Desde {formatRate(item.rate)}</Text>
           )}
         </View>
 
         {/* Actions */}
         <View style={s.actions}>
           <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-            <Pressable onPress={handleRemove} hitSlop={8} style={s.heartBtn}>
+            <Pressable onPress={handleRemove} hitSlop={8} style={[s.heartBtn, { backgroundColor: TOKENS.status.cancelled.bg }]}>
               <Ionicons name="heart" size={20} color={C.red} />
             </Pressable>
           </Animated.View>
@@ -133,13 +128,13 @@ export function FavoritesScreen() {
 
       {/* Header */}
       <View style={[s.header, { backgroundColor: tc.bg }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color={tc.text} />
         </Pressable>
         <View style={s.headerCenter}>
           <Text style={[s.headerTitle, { color: tc.text }]}>Favoritos</Text>
           {count > 0 && (
-            <View style={s.countBadge}>
+            <View style={[s.countBadge, { backgroundColor: C.red }]}>
               <Text style={s.countText}>{count}</Text>
             </View>
           )}
@@ -166,7 +161,7 @@ export function FavoritesScreen() {
             subtitle="Guardá los servicios que te gusten tocando el corazón para encontrarlos rápido."
             cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
             iconColor={C.red}
-            iconBg="#FEF2F2"
+            iconBg={TOKENS.status.cancelled.bg}
           />
         }
       />
@@ -175,7 +170,7 @@ export function FavoritesScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
+  root: { flex: 1 },
 
   header: {
     flexDirection: 'row',
@@ -183,13 +178,11 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: C.bg,
   },
   backBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle:  { fontSize: 17, fontWeight: '700', color: C.text },
+  headerTitle:  { fontSize: 17, fontWeight: '700' },
   countBadge: {
-    backgroundColor: C.red,
     borderRadius: 99, minWidth: 20, height: 20,
     alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 5,
@@ -202,7 +195,6 @@ const s = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.card,
     borderRadius: 16,
     padding: 12,
     gap: 12,
@@ -221,18 +213,17 @@ const s = StyleSheet.create({
   },
 
   info:          { flex: 1, gap: 3 },
-  serviceTitle:  { fontSize: 14, fontWeight: '700', color: C.text },
-  providerName:  { fontSize: 12, color: C.sub },
+  serviceTitle:  { fontSize: 14, fontWeight: '700' },
+  providerName:  { fontSize: 12 },
   metaRow:       { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ratingChip:    { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  ratingText:    { fontSize: 12, fontWeight: '600', color: C.text },
-  location:      { fontSize: 12, color: C.sub, flex: 1 },
-  price:         { fontSize: 13, fontWeight: '700', color: C.primary, marginTop: 2 },
+  ratingText:    { fontSize: 12, fontWeight: '600' },
+  location:      { fontSize: 12, flex: 1 },
+  price:         { fontSize: 13, fontWeight: '700', marginTop: 2 },
 
   actions: { alignItems: 'center', gap: 8 },
   heartBtn: {
     width: 34, height: 34, borderRadius: 10,
-    backgroundColor: '#FEF2F2',
     alignItems: 'center', justifyContent: 'center',
   },
 });

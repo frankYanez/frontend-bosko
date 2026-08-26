@@ -13,10 +13,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import * as ImagePicker from 'expo-image-picker';
 import { useKYC } from '../state/KYCContext';
 import { DocumentType } from '../types/kyc.types';
-import { TOKENS, wash, useThemeColors } from '@/core/design-system';
+import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'DNI', label: 'DNI (Argentina)' },
@@ -59,19 +60,25 @@ function PhotoSlot({
 }) {
   return (
     <Pressable
-      style={({ pressed }) => [s.photoSlot, { borderColor: tc.border, backgroundColor: tc.surface2 }, pressed && s.photoSlotPressed]}
+      style={({ pressed }) => [
+        s.photoSlot,
+        photo
+          ? { borderColor: 'rgba(0,229,160,0.4)', backgroundColor: 'rgba(0,229,160,0.05)' }
+          : { borderColor: tc.border, backgroundColor: tc.surface2 },
+        pressed && s.photoSlotPressed,
+      ]}
       onPress={onPress}
     >
       {photo ? (
         <>
           <Image source={{ uri: photo.uri }} style={s.photoPreview} />
           <View style={[s.photoCheck, { backgroundColor: tc.surface }]}>
-            <MaterialIcons name="check-circle" size={28} color="#16a34a" />
+            <MaterialIcons name="check-circle" size={28} color={TOKENS.status.done.fg} />
           </View>
         </>
       ) : (
         <View style={s.photoEmpty}>
-          <MaterialIcons name={icon} size={32} color="rgba(133,0,33,0.3)" />
+          <MaterialIcons name={icon} size={32} color={tc.textMuted} />
           <Text style={[s.photoLabel, { color: tc.text }]}>{label}</Text>
           <Text style={[s.photoHint, { color: tc.textSub }]}>{hint}</Text>
         </View>
@@ -127,16 +134,11 @@ export default function KYCDocumentScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={wash(tc)}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={s.background}
-    >
+    <View style={[s.background, { backgroundColor: tc.bg }]}>
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/profile/kyc')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
           <Text style={[s.headerTitle, { color: tc.text }]}>Subir documentos</Text>
@@ -154,7 +156,7 @@ export default function KYCDocumentScreen() {
                   style={[
                     s.docTypeButton,
                     { borderColor: tc.border, backgroundColor: tc.surface2 },
-                    docType === dt.value && s.docTypeButtonActive,
+                    docType === dt.value && [s.docTypeButtonActive, { backgroundColor: tc.accent }],
                   ]}
                   onPress={() => setDocType(dt.value)}
                 >
@@ -211,9 +213,9 @@ export default function KYCDocumentScreen() {
         </FadeSlide>
 
         {!!error && (
-          <View style={s.errorBanner}>
-            <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-            <Text style={s.errorText}>{error}</Text>
+          <View style={[s.errorBanner, { backgroundColor: TOKENS.status.cancelled.bg }]}>
+            <MaterialIcons name="error-outline" size={16} color={TOKENS.status.cancelled.fg} />
+            <Text style={[s.errorText, { color: TOKENS.status.cancelled.fg }]}>{error}</Text>
           </View>
         )}
 
@@ -230,8 +232,8 @@ export default function KYCDocumentScreen() {
             >
             <LinearGradient
               colors={canSubmit
-                ? [TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']
-                : ['#ccc', '#bbb']
+                ? GRADIENTS.brand
+                : [tc.surface2, tc.border] as const
               }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -256,7 +258,7 @@ export default function KYCDocumentScreen() {
           </View>
         </FadeSlide>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -300,11 +302,10 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
   docTypeButtonActive: {
-    borderColor: TOKENS.color.primary,
-    backgroundColor: 'rgba(133,0,33,0.08)',
+    borderColor: TOKENS.color.signal,
   },
   docTypeText: { fontSize: 13, fontWeight: '500', color: TOKENS.color.sub },
-  docTypeTextActive: { color: TOKENS.color.primary, fontWeight: '700' },
+  docTypeTextActive: { color: TOKENS.color.signal, fontWeight: '700' },
   photosRow: { flexDirection: 'row', gap: 12 },
   photoSlot: {
     flex: 1,
@@ -343,11 +344,7 @@ const s = StyleSheet.create({
   },
   submitButtonShadow: {
     borderRadius: 14,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    ...TOKENS.shadow.glow,
   },
   submitButtonShadowDisabled: { shadowOpacity: 0, elevation: 0 },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },

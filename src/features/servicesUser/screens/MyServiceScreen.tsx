@@ -10,15 +10,20 @@ import {
   View,
   Pressable,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
+import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
+import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
 import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
-const BRAND = '#850021';
+const SIGNAL = TOKENS.color.signal;
 
 function formatPrice(price?: number | null | any): string {
   const n = typeof price === 'object' && price !== null ? price?.amount : price;
@@ -137,16 +142,18 @@ export default function MyServiceScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
       {/* Header con back */}
       <View style={styles.headerRow}>
-        <Pressable style={[styles.backBtn, { backgroundColor: tc.surface }]} onPress={() => router.back()} hitSlop={10}>
+        <Pressable style={[styles.backBtn, { backgroundColor: tc.surface }]} onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={10}>
           <Text style={[styles.backIcon, { color: tc.text }]}>‹</Text>
         </Pressable>
         <Text style={[styles.header, { color: tc.text }]}>Mis servicios</Text>
         <Pressable
-          style={styles.addBtn}
           onPress={() => router.push('/service-form')}
           hitSlop={8}
         >
-          <Text style={styles.addBtnText}>+ Publicar</Text>
+          <LinearGradient colors={GRADIENTS.brand} style={styles.addBtn}>
+            <Ionicons name="add" size={15} color="#fff" />
+            <Text style={styles.addBtnText}>Publicar</Text>
+          </LinearGradient>
         </Pressable>
       </View>
       <Text style={[styles.planMessage, { color: tc.textSub }]}>{planMessage}</Text>
@@ -219,10 +226,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   addBtn: {
-    backgroundColor: BRAND,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
+    ...TOKENS.shadow.glow,
   },
   addBtnText: {
     color: '#fff',
@@ -255,7 +265,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   primaryButton: {
-    backgroundColor: BRAND,
+    backgroundColor: SIGNAL,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -308,7 +318,7 @@ const styles = StyleSheet.create({
   },
   cardCategory: {
     fontSize: 13,
-    color: BRAND,
+    color: SIGNAL,
     fontWeight: "600",
     textTransform: "uppercase",
   },
@@ -328,10 +338,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: BRAND,
+    borderColor: SIGNAL,
   },
   editButtonText: {
-    color: BRAND,
+    color: SIGNAL,
     fontWeight: "600",
   },
   deleteButton: {
@@ -339,10 +349,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#DC2626",
+    borderColor: TOKENS.status.cancelled.fg,
   },
   deleteButtonText: {
-    color: "#DC2626",
+    color: TOKENS.status.cancelled.fg,
     fontWeight: "600",
   },
 });

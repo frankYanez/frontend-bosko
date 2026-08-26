@@ -11,10 +11,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
 import { KYCStatus } from '../types/kyc.types';
-import { TOKENS, wash, useThemeColors } from '@/core/design-system';
+import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type StatusUIConfig = {
   title: string;
@@ -28,57 +30,57 @@ const STATUS_UI: Record<KYCStatus, StatusUIConfig> = {
   not_started: {
     title: 'Verificación no iniciada',
     description: 'Para publicar servicios y crear órdenes necesitás verificar tu identidad.',
-    color: TOKENS.color.primary,
-    bg: 'rgba(133,0,33,0.08)',
+    color: TOKENS.color.signal,
+    bg: 'rgba(255,45,111,0.12)',
     icon: 'shield',
   },
   in_progress: {
     title: 'En revisión',
     description: 'Tu documentación está siendo revisada. Te notificamos cuando esté listo.',
-    color: '#2563eb',
-    bg: 'rgba(37,99,235,0.08)',
+    color: TOKENS.status.progress.fg,
+    bg: TOKENS.status.progress.bg,
     icon: 'hourglass-empty',
   },
   pending: {
     title: 'En revisión',
     description: 'Tu documentación está siendo revisada. Te notificamos cuando esté listo.',
-    color: '#2563eb',
-    bg: 'rgba(37,99,235,0.08)',
+    color: TOKENS.status.progress.fg,
+    bg: TOKENS.status.progress.bg,
     icon: 'hourglass-empty',
   },
   approved: {
     title: '¡Verificado!',
     description: 'Tu identidad fue verificada exitosamente. Podés publicar servicios y crear órdenes.',
-    color: '#16a34a',
-    bg: 'rgba(22,163,74,0.08)',
+    color: TOKENS.status.done.fg,
+    bg: TOKENS.status.done.bg,
     icon: 'verified',
   },
   rejected: {
     title: 'Verificación rechazada',
     description: 'Hubo un problema con tus documentos. Podés volver a intentarlo.',
-    color: '#dc2626',
-    bg: 'rgba(220,38,38,0.08)',
+    color: TOKENS.status.cancelled.fg,
+    bg: TOKENS.status.cancelled.bg,
     icon: 'cancel',
   },
   declined: {
     title: 'Verificación rechazada',
     description: 'Hubo un problema con tus documentos. Podés volver a intentarlo.',
-    color: '#dc2626',
-    bg: 'rgba(220,38,38,0.08)',
+    color: TOKENS.status.cancelled.fg,
+    bg: TOKENS.status.cancelled.bg,
     icon: 'cancel',
   },
   failed: {
     title: 'Error en verificación',
     description: 'Hubo un error técnico. Podés volver a intentarlo.',
-    color: '#dc2626',
-    bg: 'rgba(220,38,38,0.08)',
+    color: TOKENS.status.cancelled.fg,
+    bg: TOKENS.status.cancelled.bg,
     icon: 'error-outline',
   },
   expired: {
     title: 'Verificación vencida',
     description: 'Tu verificación expiró. Necesitás iniciar el proceso nuevamente.',
-    color: '#d97706',
-    bg: 'rgba(217,119,6,0.08)',
+    color: TOKENS.status.pending.fg,
+    bg: TOKENS.status.pending.bg,
     icon: 'timer-off',
   },
 };
@@ -131,16 +133,12 @@ export default function KYCStatusScreen() {
   const ui = STATUS_UI[status] ?? STATUS_UI['not_started'];
 
   return (
-    <LinearGradient
-      colors={wash(tc)}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={s.background}
-    >
+    <View style={[s.background, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="app" />
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
           <Text style={[s.headerTitle, { color: tc.text }]}>Verificación de identidad</Text>
@@ -206,20 +204,13 @@ export default function KYCStatusScreen() {
                 onPress={() => router.push('/(tabs)/profile/kyc/intro')}
               >
                 <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  colors={GRADIENTS.brand}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.buttonGradient}
                 >
-                  <LinearGradient
-                    colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={s.buttonGradient}
-                  >
-                    <Text style={s.primaryButtonText}>Iniciar verificación</Text>
-                    <MaterialIcons name="arrow-forward" size={18} color="#fff" />
-                  </LinearGradient>
+                  <Text style={s.primaryButtonText}>Iniciar verificación</Text>
+                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
                 </LinearGradient>
               </Pressable>
             </View>
@@ -232,7 +223,7 @@ export default function KYCStatusScreen() {
                 onPress={() => router.push('/(tabs)/profile/kyc/intro')}
               >
                 <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  colors={GRADIENTS.brand}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.buttonGradient}
@@ -251,20 +242,13 @@ export default function KYCStatusScreen() {
                 onPress={() => router.push('/(tabs)/profile/kyc/intro')}
               >
                 <LinearGradient
-                  colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+                  colors={GRADIENTS.brand}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.buttonGradient}
                 >
-                  <LinearGradient
-                    colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={s.buttonGradient}
-                  >
-                    <Text style={s.primaryButtonText}>Reintentar verificación</Text>
-                    <MaterialIcons name="refresh" size={18} color="#fff" />
-                  </LinearGradient>
+                  <Text style={s.primaryButtonText}>Reintentar verificación</Text>
+                  <MaterialIcons name="refresh" size={18} color="#fff" />
                 </LinearGradient>
               </Pressable>
             </View>
@@ -272,16 +256,16 @@ export default function KYCStatusScreen() {
 
           {status === 'approved' && (
             <Pressable
-              style={({ pressed }) => [s.successButton, pressed && s.buttonPressed]}
+              style={({ pressed }) => [s.successButton, { backgroundColor: TOKENS.status.done.bg, borderColor: TOKENS.status.done.fg }, pressed && s.buttonPressed]}
               onPress={() => router.push('/(tabs)/profile')}
             >
-              <MaterialIcons name="home" size={18} color="#16a34a" />
-              <Text style={s.successButtonText}>Ir a mi perfil</Text>
+              <MaterialIcons name="home" size={18} color={TOKENS.status.done.fg} />
+              <Text style={[s.successButtonText, { color: TOKENS.status.done.fg }]}>Ir a mi perfil</Text>
             </Pressable>
           )}
         </MotiView>
-      </ScrollView >
-    </LinearGradient >
+      </ScrollView>
+    </View>
   );
 }
 
@@ -360,11 +344,7 @@ const s = StyleSheet.create({
   },
   primaryButtonShadow: {
     borderRadius: 14,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    ...TOKENS.shadow.glow,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

@@ -224,7 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearError = useCallback(() => setError(null), []);
 
-  // `isAuthenticated` es un booleano derivado, más cómodo para las guardas
+  // `isAuthenticated` es un booleano derivado, más cómodo para las guardas.
   const isAuthenticated = !!authState.token;
 
   return (

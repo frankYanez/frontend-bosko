@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Button, GRADIENTS, TOKENS } from '@/core/design-system';
+import { safeBack } from '@/core/navigation/safeBack';
 
 const SECTIONS = [
   {
@@ -32,7 +33,7 @@ export default function TermsAndConditionsScreen() {
   return (
     <View style={styles.background}>
       <LinearGradient colors={GRADIENTS.brandDeep} style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+        <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color="#fff" />
         </Pressable>
         <View style={styles.headerText}>

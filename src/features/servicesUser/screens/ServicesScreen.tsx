@@ -21,31 +21,18 @@ import { router } from 'expo-router';
 import { useServices } from '../state/ServicesContext';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
-import { RadialBlob } from '@/core/components/RadialBlob';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { FeaturedCard } from '../components/FeaturedCard';
 
 const { width: W } = Dimensions.get('window');
 const CARD_GAP   = 12;
 const H_PAD      = 16;
 const HALF_W     = (W - H_PAD * 2 - CARD_GAP) / 2;
 
-// ── Curated gradients per category index ─────────────────────────────────────
-const GRADIENTS: [string, string, string][] = [
-  ['#0f0c29', '#302b63', '#24243e'],   // 0  deep violet
-  ['#134e5e', '#71b280', '#134e5e'],   // 1  teal forest
-  [TOKENS.color.primaryDark, TOKENS.color.primary, TOKENS.color.signal],   // 2  bosko red/signal
-  ['#0d0d0d', '#2c3e50', '#4ca1af'],   // 3  midnight steel
-  ['#1a1a2e', '#16213e', '#0f3460'],   // 4  deep navy
-  ['#2d1b69', '#553c9a', '#6d28d9'],   // 5  purple
-  ['#065f46', '#047857', '#059669'],   // 6  emerald
-  ['#7c2d12', '#c2410c', '#ea580c'],   // 7  burnt orange
-  ['#831843', '#9d174d', '#be185d'],   // 8  pink
-  ['#78350f', '#b45309', '#d97706'],   // 9  amber
-];
-
-function getGradient(index: number, accent?: string): [string, string, string] {
-  return GRADIENTS[index % GRADIENTS.length];
+function resolveCategoryIcon(icon?: string): React.ComponentProps<typeof Ionicons>['name'] {
+  if (!icon || /\p{Extended_Pictographic}/u.test(icon)) return 'construct-outline';
+  return icon as React.ComponentProps<typeof Ionicons>['name'];
 }
 
 // ── Shimmer skeleton ──────────────────────────────────────────────────────────
@@ -105,157 +92,33 @@ const sk = StyleSheet.create({
   row:  { flexDirection: 'row', gap: CARD_GAP },
 });
 
-// ── Category card (featured = full-width) ────────────────────────────────────
+// ── Category card — misma FeaturedCard editorial que "servicios populares"
+// en el Dashboard (panel de marca + ícono como marca de agua, sin thumbnail
+// propio porque Category no trae imagen — ver icon/video en @/types/services).
 function CategoryCard({
   category,
-  index,
   featured,
   delay,
 }: {
   category: Category;
-  index: number;
   featured?: boolean;
   delay: number;
 }) {
-  const gradient = getGradient(index, category.accent);
-
-  // Entrance: perspective flip-in (rotateY 40° → 0°) + scale
-  const flipAnim  = useRef(new Animated.Value(0)).current;
-  // Press depth: rotateX + scale
-  const pressDepth = useRef(new Animated.Value(0)).current;
-  const pressScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.spring(flipAnim, {
-      toValue: 1,
-      delay,
-      tension: 55,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  const pressIn = () => {
-    Animated.parallel([
-      Animated.spring(pressDepth, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
-      Animated.spring(pressScale, { toValue: 0.96, useNativeDriver: true, tension: 200, friction: 10 }),
-    ]).start();
-  };
-
-  const pressOut = () => {
-    Animated.parallel([
-      Animated.spring(pressDepth, { toValue: 0, useNativeDriver: true, tension: 200, friction: 10 }),
-      Animated.spring(pressScale, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }),
-    ]).start();
-  };
-
-  const cardW   = featured ? W - H_PAD * 2 : HALF_W;
-  const cardH   = featured ? 220 : 165;
-
   return (
-    <Animated.View
-      style={{
-        width: cardW,
-        height: cardH,
-        opacity: flipAnim,
-        transform: [
-          { perspective: 1000 },
-          {
-            rotateY: flipAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['40deg', '0deg'],
-            }),
-          },
-          {
-            scale: flipAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.88, 1],
-            }),
-          },
-        ],
-      }}
-    >
-      <Pressable
-        onPressIn={pressIn}
-        onPressOut={pressOut}
-        onPress={() =>
-          router.push({
-            pathname: '/(tabs)/services/category/[id]',
-            params: { id: category.id },
-          })
-        }
-        style={{ flex: 1 }}
-      >
-        <Animated.View
-          style={[
-            s.card,
-            {
-              flex: 1,
-              transform: [
-                { perspective: 800 },
-                {
-                  rotateX: pressDepth.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '6deg'],
-                  }),
-                },
-                { scale: pressScale },
-              ],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[StyleSheet.absoluteFill, { borderRadius: featured ? 24 : 20 }]}
-          />
-
-          {/* Decorative blobs */}
-          <RadialBlob
-            size={cardW * 0.8}
-            color="rgb(255,255,255)"
-            opacity={0.35}
-            style={{ position: 'absolute', top: -cardW * 0.3, right: -cardW * 0.2 }}
-          />
-          <RadialBlob
-            size={cardW * 0.4}
-            color="rgb(255,255,255)"
-            opacity={0.22}
-            style={{ position: 'absolute', bottom: -20, right: cardW * 0.3 }}
-          />
-
-          {/* Service count badge */}
-          {(category.servicesCount ?? 0) > 0 && (
-            <View style={s.countBadge}>
-              <Text style={s.countText}>{category.servicesCount} servicios</Text>
-            </View>
-          )}
-
-          {/* Icon */}
-          <View style={[s.iconBg, featured && { width: 68, height: 68, borderRadius: 20 }]}>
-            <Text style={[s.icon, featured && { fontSize: 34 }]}>{category.icon ?? '🔧'}</Text>
-          </View>
-
-          {/* Text */}
-          <View style={s.cardText}>
-            <Text style={[s.cardName, featured && { fontSize: 22 }]} numberOfLines={1}>
-              {category.name}
-            </Text>
-            {category.description ? (
-              <Text style={[s.cardDesc, featured && { fontSize: 13 }]} numberOfLines={featured ? 2 : 1}>
-                {category.description}
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Arrow */}
-          <View style={s.arrowWrap}>
-            <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.8)" />
-          </View>
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
+    <FeaturedCard
+      style={{ width: featured ? W - H_PAD * 2 : HALF_W }}
+      title={category.name}
+      icon={resolveCategoryIcon(category.icon)}
+      metaLabel={category.servicesCount != null ? `${category.servicesCount} PROS` : 'VER SERVICIOS'}
+      ctaLabel="Ver servicios"
+      onPress={() =>
+        router.push({
+          pathname: '/(tabs)/services/category/[id]',
+          params: { id: category.id },
+        })
+      }
+      delay={delay}
+    />
   );
 }
 
@@ -350,7 +213,6 @@ export default function ServicesScreen() {
             {featured && (
               <CategoryCard
                 category={featured}
-                index={0}
                 featured
                 delay={0}
               />
@@ -365,7 +227,6 @@ export default function ServicesScreen() {
                     <CategoryCard
                       key={cat.id}
                       category={cat}
-                      index={globalIdx}
                       delay={globalIdx * 55}
                     />
                   );

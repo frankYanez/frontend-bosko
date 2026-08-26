@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import {
   fetchPlans,
   fetchMyPlan,
@@ -22,6 +23,7 @@ import {
   MyPlan,
 } from '@/features/plans/services/plan.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
 import { useThemeColors, wash } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
@@ -138,7 +140,7 @@ export default function PlansScreen() {
     >
       {/* Header */}
       <View style={[s.header, { backgroundColor: tc.surface, borderBottomColor: tc.cardBorder }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.card }]}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.card }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <Text style={[s.headerTitle, { color: tc.text }]}>Planes</Text>
@@ -147,7 +149,7 @@ export default function PlansScreen() {
 
       {loading ? (
         <View style={s.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.primary} size="large" />
+          <ActivityIndicator color={TOKENS.color.signal} size="large" />
         </View>
       ) : (
         <ScrollView
@@ -157,7 +159,7 @@ export default function PlansScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={[TOKENS.color.primary]}
+              colors={[TOKENS.color.signal]}
             />
           }
         >
@@ -165,7 +167,7 @@ export default function PlansScreen() {
           {isSubscribed && myPlan && (
             <Animated.View style={[s.currentPlanBanner, { opacity: bannerOpacity, transform: [{ scale: bannerScale }] }]}>
               <LinearGradient
-                colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
+                colors={GRADIENTS.brandDeep}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={s.currentPlanGrad}
@@ -188,7 +190,7 @@ export default function PlansScreen() {
           {/* Free plan note */}
           {!isSubscribed && (
             <View style={[s.freeNote, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-              <MaterialIcons name="info" size={18} color={TOKENS.color.primary} />
+              <MaterialIcons name="info" size={18} color={TOKENS.color.signal} />
               <Text style={[s.freeNoteText, { color: tc.text }]}>
                 Estás en el plan Free. Actualizá para acceder a más beneficios.
               </Text>
@@ -235,7 +237,7 @@ export default function PlansScreen() {
                           <MaterialIcons
                             name="check-circle"
                             size={18}
-                            color={isPopular ? '#FFD700' : '#16a34a'}
+                            color={isPopular ? '#FFD700' : TOKENS.color.mint}
                           />
                           <Text style={[s.featureText, { color: tc.text }]}>{feature}</Text>
                         </View>
@@ -243,13 +245,13 @@ export default function PlansScreen() {
                     </View>
 
                     {isCurrent ? (
-                      <View style={s.currentBadge}>
-                        <MaterialIcons name="check" size={16} color="#fff" />
-                        <Text style={s.currentBadgeText}>Plan actual</Text>
+                      <View style={[s.currentBadge, { backgroundColor: TOKENS.status.done.bg }]}>
+                        <MaterialIcons name="check" size={16} color={TOKENS.status.done.fg} />
+                        <Text style={[s.currentBadgeText, { color: TOKENS.status.done.fg }]}>Plan actual</Text>
                       </View>
                     ) : (
                       <LinearGradient
-                        colors={isPopular ? ['#FFD700', '#FFA500'] : [TOKENS.color.primary, TOKENS.color.primaryDark]}
+                        colors={isPopular ? ['#FFD700', '#FFA500'] : GRADIENTS.brand}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={s.subscribeBtn}
@@ -353,8 +355,8 @@ const s = StyleSheet.create({
     borderRadius: 24,
   },
   planInnerPopular: {
-    borderColor: 'rgba(133,0,33,0.2)',
-    backgroundColor: '#FFFAF9',
+    borderColor: 'rgba(255,45,111,0.35)',
+    borderWidth: 1.5,
   },
   popularBadge: {
     alignSelf: 'flex-start',
@@ -366,10 +368,10 @@ const s = StyleSheet.create({
   popularText: { fontSize: 12, fontWeight: '800', color: TOKENS.color.primaryDark },
   planHeader: { gap: 8 },
   planName: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
-  planNamePopular: { color: TOKENS.color.primary },
+  planNamePopular: { color: TOKENS.color.signal },
   planPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   planPriceAmount: { fontSize: 32, fontWeight: '800', color: TOKENS.color.text },
-  planPricePopular: { color: TOKENS.color.primary },
+  planPricePopular: { color: TOKENS.color.signal },
   planPriceInterval: { fontSize: 14, color: TOKENS.color.sub },
   planDescription: { fontSize: 14, color: TOKENS.color.sub, lineHeight: 20 },
   featuresList: { gap: 10 },

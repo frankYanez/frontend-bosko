@@ -19,6 +19,7 @@ import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -158,7 +159,7 @@ export default function OrderStatusScreen() {
         <View style={styles.center}>
           <MaterialIcons name="search-off" size={48} color={tc.textSub} />
           <Text style={[styles.notFound, { color: tc.textSub }]}>Orden no encontrada</Text>
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/orders')}>
             <Text style={styles.backLink}>← Volver</Text>
           </Pressable>
         </View>
@@ -187,7 +188,7 @@ export default function OrderStatusScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: tc.text }]}>Seguimiento</Text>

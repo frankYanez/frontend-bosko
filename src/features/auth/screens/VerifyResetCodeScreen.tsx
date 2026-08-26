@@ -23,6 +23,7 @@ import {
 import { BlurView } from '@/core/components/BlurView';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import api from '@/core/api/axiosinstance';
@@ -138,7 +139,7 @@ export default function VerifyResetCodeScreen() {
       <AnimatedBackground variant="minimal" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
           </Pressable>
 

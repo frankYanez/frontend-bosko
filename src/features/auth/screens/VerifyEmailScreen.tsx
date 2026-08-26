@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from '@/core/components/BlurView';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { Button, TOKENS } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -172,7 +173,7 @@ export default function VerifyEmailScreen() {
     <View style={styles.background}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
           </Pressable>
 

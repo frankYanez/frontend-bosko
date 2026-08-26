@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
 import { TOKENS, wash, useThemeColors } from '@/core/design-system';
 
@@ -69,7 +70,7 @@ export default function KYCRejectedScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/profile/kyc')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
           <Text style={[s.headerTitle, { color: tc.text }]}>Verificación rechazada</Text>

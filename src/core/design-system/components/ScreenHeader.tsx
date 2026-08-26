@@ -3,6 +3,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Text } from './Text';
+import { safeBack } from '../../navigation/safeBack';
 
 export interface ScreenHeaderProps {
   title: string;
@@ -20,7 +21,7 @@ export interface ScreenHeaderProps {
 export function ScreenHeader({ title, onBack, right }: ScreenHeaderProps) {
   return (
     <View style={styles.row}>
-      <Pressable onPress={onBack ?? (() => router.back())} hitSlop={12} style={styles.side}>
+      <Pressable onPress={onBack ?? (() => safeBack(router, '/(tabs)'))} hitSlop={12} style={styles.side}>
         <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
       </Pressable>
       <Text variant="title" color="#EDEAF5" style={styles.title} numberOfLines={1}>

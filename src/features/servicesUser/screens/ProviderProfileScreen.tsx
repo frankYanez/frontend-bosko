@@ -15,14 +15,16 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 import api from '@/core/api/axiosinstance';
+import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
 
 interface ReviewItem {
@@ -100,13 +102,15 @@ export default function ProviderProfileScreen() {
     if (from === 'home') return router.replace('/(tabs)');
     if (from === 'reels') return router.replace('/(tabs)/reels');
     if (from === 'search') return router.replace('/search');
-    return router.back();
+    return safeBack(router, '/(tabs)/services');
   };
 
   const [provider, setProvider] = useState<PublicProvider | null>(null);
   const [services, setServices] = useState<ServiceSummary[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadKey, setLoadKey] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceSummary | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -118,6 +122,7 @@ export default function ProviderProfileScreen() {
 
     const load = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const [profileRes, servicesRes, reviewsRes] = await Promise.all([
           api.get<PublicProvider>(`/users/${id}/public`),
@@ -178,6 +183,7 @@ export default function ProviderProfileScreen() {
         Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
       } catch (err) {
         console.error('Error loading provider profile:', err);
+        if (mounted) setLoadError(true);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -185,7 +191,7 @@ export default function ProviderProfileScreen() {
 
     load();
     return () => { mounted = false; };
-  }, [id]);
+  }, [id, loadKey]);
 
   const fullName = provider ? [provider.firstName, provider.lastName].filter(Boolean).join(' ') : '';
   const initials = provider ? (provider.firstName[0] ?? '') + (provider.lastName?.[0] ?? '') : '';
@@ -206,8 +212,17 @@ export default function ProviderProfileScreen() {
         <Pressable onPress={goBack} style={[s.backBtn, { backgroundColor: c.card }]}>
           <Ionicons name="arrow-back" size={22} color={c.text} />
         </Pressable>
-        <Text style={[s.errorTitle, { color: c.text }]}>Perfil no encontrado</Text>
-        <Text style={[s.errorSub, { color: c.sub }]}>Volvé y elegí otro profesional.</Text>
+        <Text style={[s.errorTitle, { color: c.text }]}>
+          {loadError ? 'No se pudo cargar el perfil' : 'Perfil no encontrado'}
+        </Text>
+        <Text style={[s.errorSub, { color: c.sub }]}>
+          {loadError ? 'Revisá tu conexión e intentá de nuevo.' : 'Volvé y elegí otro profesional.'}
+        </Text>
+        {loadError && (
+          <Pressable onPress={() => setLoadKey(k => k + 1)} style={[s.retryBtn, { backgroundColor: TOKENS.color.primary }]}>
+            <Text style={s.retryBtnText}>Reintentar</Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -241,7 +256,7 @@ export default function ProviderProfileScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={[TOKENS.color.signal, TOKENS.color.signal, TOKENS.color.primaryDark]}
+          colors={GRADIENTS.brandDeep}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.hero}
@@ -262,7 +277,7 @@ export default function ProviderProfileScreen() {
               <View style={s.nameRow}>
                 <Text style={s.heroName}>{fullName}</Text>
                 {provider.isVerified && (
-                  <MaterialIcons name="verified" size={18} color="#60A5FA" />
+                  <Ionicons name="checkmark-circle" size={18} color={TOKENS.color.mint} />
                 )}
               </View>
 
@@ -287,30 +302,30 @@ export default function ProviderProfileScreen() {
         </LinearGradient>
 
         {/* ── Verificación ── */}
-        <View style={[s.section, { backgroundColor: c.card }]}>
+        <View style={[s.section, { backgroundColor: c.card, borderColor: c.border }]}>
           <Text style={[s.sectionTitle, { color: c.text }]}>Verificación</Text>
           <View style={s.badgeRow}>
-            <View style={[s.badge, provider.kycApproved ? s.badgeOk : s.badgePending]}>
+            <View style={[s.badge, provider.kycApproved ? { backgroundColor: TOKENS.status.done.bg } : { backgroundColor: c.surface2 }]}>
               <Ionicons
                 name={provider.kycApproved ? 'shield-checkmark' : 'shield-outline'}
                 size={15}
-                color={provider.kycApproved ? '#16A34A' : c.sub}
+                color={provider.kycApproved ? TOKENS.status.done.fg : c.sub}
               />
-              <Text style={[s.badgeText, provider.kycApproved ? s.badgeTextOk : [s.badgeTextPending, { color: c.sub }]]}>
+              <Text style={[s.badgeText, { color: provider.kycApproved ? TOKENS.status.done.fg : c.sub }]}>
                 {provider.kycApproved ? 'Identidad verificada' : 'Sin verificar'}
               </Text>
             </View>
 
             {provider.isVerified && (
-              <View style={[s.badge, s.badgeOk]}>
-                <Ionicons name="checkmark-circle" size={15} color="#16A34A" />
-                <Text style={[s.badgeText, s.badgeTextOk]}>Profesional aprobado</Text>
+              <View style={[s.badge, { backgroundColor: TOKENS.status.done.bg }]}>
+                <Ionicons name="checkmark-circle" size={15} color={TOKENS.status.done.fg} />
+                <Text style={[s.badgeText, { color: TOKENS.status.done.fg }]}>Profesional aprobado</Text>
               </View>
             )}
 
-            <View style={[s.badge, s.badgeInfo]}>
-              <Ionicons name="star" size={15} color={c.amber} />
-              <Text style={[s.badgeText, s.badgeTextInfo]}>
+            <View style={[s.badge, { backgroundColor: 'rgba(255,215,0,0.12)' }]}>
+              <Ionicons name="star" size={15} color="#FFD700" />
+              <Text style={[s.badgeText, { color: '#FFD700' }]}>
                 {provider.reviewsCount > 0
                   ? `${Number(provider.rating ?? 0).toFixed(1)} · ${provider.reviewsCount} reseñas`
                   : 'Sin reseñas aún'}
@@ -321,7 +336,7 @@ export default function ProviderProfileScreen() {
 
         {/* ── Bio ── */}
         {provider.bio ? (
-          <View style={[s.section, { backgroundColor: c.card }]}>
+          <View style={[s.section, { backgroundColor: c.card, borderColor: c.border }]}>
             <Text style={[s.sectionTitle, { color: c.text }]}>Sobre el profesional</Text>
             <Text style={[s.bioText, { color: c.sub }]}>{provider.bio}</Text>
           </View>
@@ -329,7 +344,7 @@ export default function ProviderProfileScreen() {
 
         {/* ── Servicios ── */}
         {services.length > 0 && (
-          <View style={[s.section, { backgroundColor: c.card }]}>
+          <View style={[s.section, { backgroundColor: c.card, borderColor: c.border }]}>
             <Text style={[s.sectionTitle, { color: c.text }]}>
               Servicios
               <Text style={[s.sectionCount, { color: c.sub }]}> ({services.length})</Text>
@@ -348,7 +363,7 @@ export default function ProviderProfileScreen() {
         )}
 
         {services.length === 0 && (
-          <View style={[s.section, s.emptyServices, { backgroundColor: c.card }]}>
+          <View style={[s.section, s.emptyServices, { backgroundColor: c.card, borderColor: c.border }]}>
             <Ionicons name="construct-outline" size={36} color={c.border} />
             <Text style={[s.emptySub, { color: c.sub }]}>Este profesional aún no publicó servicios.</Text>
           </View>
@@ -356,7 +371,7 @@ export default function ProviderProfileScreen() {
 
         {/* ── Reseñas ── */}
         {reviews.length > 0 && (
-          <View style={[s.section, { backgroundColor: c.card }]}>
+          <View style={[s.section, { backgroundColor: c.card, borderColor: c.border }]}>
             <Text style={[s.sectionTitle, { color: c.text }]}>
               Reseñas
               <Text style={[s.sectionCount, { color: c.sub }]}> ({provider?.reviewsCount ?? reviews.length})</Text>
@@ -401,9 +416,11 @@ export default function ProviderProfileScreen() {
       {/* ── Footer CTA ── */}
       {services.length > 0 && (
         <View style={[s.footer, { backgroundColor: c.card, borderTopColor: c.border, paddingBottom: insets.bottom + 12 }]}>
-          <Pressable style={s.ctaBtn} onPress={handleRequest}>
-            <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
-            <Text style={s.ctaBtnText}>Solicitar servicio</Text>
+          <Pressable onPress={handleRequest}>
+            <LinearGradient colors={GRADIENTS.brand} style={s.ctaBtn}>
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+              <Text style={s.ctaBtnText}>Solicitar servicio</Text>
+            </LinearGradient>
           </Pressable>
         </View>
       )}
@@ -476,8 +493,9 @@ const s = StyleSheet.create({
   },
   ctaBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: TOKENS.color.signal, borderRadius: 16,
+    borderRadius: 16,
     paddingVertical: 15,
+    ...TOKENS.shadow.glow,
   },
   ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
@@ -485,8 +503,7 @@ const s = StyleSheet.create({
   section: {
     marginHorizontal: 16, borderRadius: 20,
     padding: 18, gap: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06, shadowRadius: 10, elevation: 3,
+    borderWidth: 1,
   },
   sectionTitle: { fontSize: 16, fontWeight: '700' },
   sectionCount: { fontWeight: '400' },
@@ -498,13 +515,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
   },
-  badgeOk: { backgroundColor: '#DCFCE7' },
-  badgePending: { backgroundColor: '#F3F4F6' },
-  badgeInfo: { backgroundColor: '#FEF9C3' },
   badgeText: { fontSize: 12, fontWeight: '600' },
-  badgeTextOk: { color: '#16A34A' },
-  badgeTextPending: { color: '#6B7280' },
-  badgeTextInfo: { color: '#A16207' },
 
   // Service row
   serviceRow: {
@@ -541,4 +552,6 @@ const s = StyleSheet.create({
   emptySub: { fontSize: 14, textAlign: 'center' },
   errorTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
   errorSub: { fontSize: 14, marginTop: 6 },
+  retryBtn: { marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
+  retryBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

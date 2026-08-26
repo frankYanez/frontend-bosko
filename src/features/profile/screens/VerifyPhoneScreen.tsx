@@ -22,9 +22,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { verifyPhoneWithFirebase } from '@/features/servicesUser/services/profile';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors, useIsDark, wash } from '@/core/design-system';
 
 type Step = 'phone' | 'code';
@@ -78,7 +80,7 @@ export default function VerifyPhoneScreen() {
       await verifyPhoneWithFirebase(idToken);
       await refreshProfile();
       Alert.alert('¡Listo!', 'Tu teléfono fue verificado correctamente.', [
-        { text: 'OK', onPress: () => router.back() },
+        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err: any) {
       if (err?.code === 'auth/invalid-verification-code') {
@@ -111,7 +113,7 @@ export default function VerifyPhoneScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+            <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
               <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
             <Text style={[styles.headerTitle, { color: tc.text }]}>Verificar teléfono</Text>
@@ -121,11 +123,11 @@ export default function VerifyPhoneScreen() {
           <View style={styles.container}>
             <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={[styles.card, { borderColor: tc.cardBorder }]}>
               {/* Ícono */}
-              <View style={styles.iconWrap}>
+              <View style={[styles.iconWrap, { backgroundColor: tc.accent }]}>
                 <MaterialIcons
                   name={step === 'phone' ? 'phone' : 'sms'}
                   size={32}
-                  color={TOKENS.color.primary}
+                  color={TOKENS.color.signal}
                 />
               </View>
 
@@ -171,14 +173,14 @@ export default function VerifyPhoneScreen() {
                 </View>
               )}
 
-              <View style={styles.btnShadow}>
+              <View style={[styles.btnShadow, TOKENS.shadow.glow]}>
                 <Pressable
                   style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
                   onPress={step === 'phone' ? handleSendCode : handleVerifyCode}
                   disabled={loading}
                 >
                   <LinearGradient
-                    colors={[TOKENS.color.primary, '#a0032a']}
+                    colors={GRADIENTS.brand}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.btnGradient}
@@ -316,7 +318,7 @@ const styles = StyleSheet.create({
   resendBtn: { paddingVertical: 4 },
   resendText: {
     fontSize: 14,
-    color: TOKENS.color.primary,
+    color: TOKENS.color.signal,
     fontWeight: '500',
   },
 });

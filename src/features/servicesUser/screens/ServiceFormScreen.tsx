@@ -16,7 +16,9 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service, ServicePayload } from "@/features/servicesUser/services/service";
@@ -24,11 +26,12 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories } from "@/contexts/CategoriesContext";
 import { fetchServiceById } from "../services/services";
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
 import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
-const BRAND = "#FF2D6F"; // antes bordo plano — ahora signal
+const BRAND = TOKENS.color.signal;
 const MIN_DESCRIPTION = 20;
 
 type FormState = {
@@ -214,7 +217,7 @@ export default function ServiceFormScreen() {
         }
         Alert.alert("¡Publicado!", "Tu servicio ya está disponible.");
       }
-      router.back();
+      safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
       if ((err as any)?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
         Alert.alert("Plan Bosko", "Actualizá a plan Plus para publicar más servicios.");
@@ -229,15 +232,15 @@ export default function ServiceFormScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: tc.bg }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()} hitSlop={10}>
+      <LinearGradient colors={GRADIENTS.brandDeep} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Pressable style={styles.backBtn} onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={10}>
           <Text style={styles.backIcon}>‹</Text>
         </Pressable>
         <Text style={styles.headerTitle}>
           {isEditing ? "Editar servicio" : "Publicar servicio"}
         </Text>
         <View style={{ width: 36 }} />
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scroll}
@@ -413,23 +416,25 @@ export default function ServiceFormScreen() {
         </View>
 
         {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorBox, { backgroundColor: TOKENS.status.cancelled.bg, borderColor: TOKENS.status.cancelled.fg }]}>
+            <Text style={[styles.errorText, { color: TOKENS.status.cancelled.fg }]}>{error}</Text>
           </View>
         ) : null}
 
         <Pressable
-          style={[styles.submitBtn, (submitting || categoriesLoading) && styles.submitBtnDisabled]}
           onPress={handleSubmit}
           disabled={submitting || categoriesLoading}
+          style={(submitting || categoriesLoading) && styles.submitBtnDisabled}
         >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitBtnText}>
-              {isEditing ? "Guardar cambios" : "Publicar servicio"}
-            </Text>
-          )}
+          <LinearGradient colors={GRADIENTS.brand} style={styles.submitBtn}>
+            {submitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitBtnText}>
+                {isEditing ? "Guardar cambios" : "Publicar servicio"}
+              </Text>
+            )}
+          </LinearGradient>
         </Pressable>
       </ScrollView>
     </View>
@@ -444,7 +449,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: BRAND,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
@@ -617,7 +621,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#DC2626",
+    backgroundColor: TOKENS.status.cancelled.fg,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -11,9 +11,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
-import { TOKENS, wash, useThemeColors } from '@/core/design-system';
+import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const STEPS = [
   {
@@ -56,16 +58,12 @@ export default function KYCIntroScreen() {
   const tc = useThemeColors();
 
   return (
-    <LinearGradient
-      colors={wash(tc)}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={s.background}
-    >
+    <View style={[s.background, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/profile/kyc')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
           <Text style={[s.headerTitle, { color: tc.text }]}>Verificación</Text>
@@ -75,7 +73,7 @@ export default function KYCIntroScreen() {
         {/* Hero */}
         <FadeSlide delay={100}>
           <View style={[s.heroIcon, { backgroundColor: tc.accent }]}>
-            <MaterialIcons name="verified-user" size={56} color={TOKENS.color.primary} />
+            <MaterialIcons name="verified-user" size={56} color={TOKENS.color.signal} />
           </View>
           <Text style={[s.heroTitle, { color: tc.text }]}>Verificá tu identidad</Text>
           <Text style={[s.heroSubtitle, { color: tc.textSub }]}>
@@ -93,7 +91,7 @@ export default function KYCIntroScreen() {
                   <Text style={s.stepNumberText}>{idx + 1}</Text>
                 </View>
                 <View style={[s.stepIcon, { backgroundColor: tc.accent }]}>
-                  <MaterialIcons name={step.icon as any} size={20} color={TOKENS.color.primary} />
+                  <MaterialIcons name={step.icon as any} size={20} color={TOKENS.color.signal} />
                 </View>
                 <View style={s.stepText}>
                   <Text style={[s.stepTitle, { color: tc.text }]}>{step.title}</Text>
@@ -106,8 +104,8 @@ export default function KYCIntroScreen() {
 
         {/* Privacy banner */}
         <FadeSlide delay={300}>
-          <View style={s.privacyBanner}>
-            <MaterialIcons name="security" size={18} color="#16a34a" />
+          <View style={[s.privacyBanner, { backgroundColor: TOKENS.status.done.bg, borderColor: 'rgba(0,229,160,0.25)' }]}>
+            <MaterialIcons name="security" size={18} color={TOKENS.status.done.fg} />
             <Text style={[s.privacyText, { color: tc.textSub }]}>
               Tus datos se encriptan y nunca se comparten con terceros.
               Solo se usan para verificar tu identidad.
@@ -117,9 +115,9 @@ export default function KYCIntroScreen() {
 
         {/* Error */}
         {!!error && (
-          <View style={{ backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-            <MaterialIcons name="error-outline" size={18} color="#dc2626" />
-            <Text style={{ flex: 1, fontSize: 13, color: '#dc2626', lineHeight: 18 }}>{error}</Text>
+          <View style={{ backgroundColor: TOKENS.status.cancelled.bg, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+            <MaterialIcons name="error-outline" size={18} color={TOKENS.status.cancelled.fg} />
+            <Text style={{ flex: 1, fontSize: 13, color: TOKENS.status.cancelled.fg, lineHeight: 18 }}>{error}</Text>
           </View>
         )}
 
@@ -137,7 +135,7 @@ export default function KYCIntroScreen() {
               disabled={loading}
             >
             <LinearGradient
-              colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark]}
+              colors={GRADIENTS.brand}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={s.buttonGradient}
@@ -154,14 +152,14 @@ export default function KYCIntroScreen() {
           </View>
 
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => safeBack(router, '/(tabs)/profile/kyc')}
             style={({ pressed }) => [s.secondaryButton, pressed && s.buttonPressed]}
           >
             <Text style={[s.secondaryButtonText, { color: tc.textSub }]}>Lo haré más tarde</Text>
           </Pressable>
         </MotiView>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -245,11 +243,7 @@ const s = StyleSheet.create({
   },
   primaryButtonShadow: {
     borderRadius: 14,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    ...TOKENS.shadow.glow,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   buttonGradient: {

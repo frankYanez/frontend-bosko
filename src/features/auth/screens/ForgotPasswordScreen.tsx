@@ -26,6 +26,7 @@ import { Input } from '@/core/components/Input';
 import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import api from '@/core/api/axiosinstance';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -108,7 +109,7 @@ export default function ForgotPasswordScreen() {
           style={styles.flex}
         >
           <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY }] }]}>
-            <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={12}>
+            <Pressable onPress={() => safeBack(router, '/login')} style={styles.backButton} hitSlop={12}>
               <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
             </Pressable>
 

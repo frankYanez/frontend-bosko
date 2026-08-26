@@ -21,8 +21,10 @@ import {
   BackgroundCheckState,
 } from '../services/background-check.service';
 import type { KYCStatus } from '../types/kyc.types';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, GRADIENTS, FONT_FAMILY } from '@/core/design-system';
 import { useThemeColors } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { safeBack } from '@/core/navigation/safeBack';
 
 function makeC(tc: ReturnType<typeof useThemeColors>) {
   return {
@@ -34,14 +36,15 @@ function makeC(tc: ReturnType<typeof useThemeColors>) {
     sub:     tc.textSub,
     border:  tc.border,
     surface2: tc.surface2,
-    green:   '#16A34A',
-    greenBg: 'rgba(22,163,74,0.12)',
-    blue:    '#2563EB',
-    blueBg:  'rgba(37,99,235,0.12)',
-    amber:   '#D97706',
-    amberBg: 'rgba(217,119,6,0.12)',
-    red:     '#DC2626',
-    redBg:   'rgba(220,38,38,0.12)',
+    accent:  tc.accent,
+    green:   TOKENS.status.done.fg,
+    greenBg: TOKENS.status.done.bg,
+    blue:    TOKENS.status.progress.fg,
+    blueBg:  TOKENS.status.progress.bg,
+    amber:   TOKENS.status.pending.fg,
+    amberBg: TOKENS.status.pending.bg,
+    red:     TOKENS.status.cancelled.fg,
+    redBg:   TOKENS.status.cancelled.bg,
   };
 }
 
@@ -61,10 +64,10 @@ interface Step {
 
 function stepColor(state: StepState, C: C) {
   switch (state) {
-    case 'done':        return { icon: C.green,   bg: C.greenBg, border: '#BBF7D0' };
-    case 'in_progress': return { icon: C.blue,    bg: C.blueBg,  border: '#BFDBFE' };
-    case 'pending':     return { icon: C.amber,   bg: C.amberBg, border: '#FDE68A' };
-    case 'error':       return { icon: C.red,     bg: C.redBg,   border: '#FECACA' };
+    case 'done':        return { icon: C.green,   bg: C.greenBg, border: 'rgba(0,229,160,0.3)' };
+    case 'in_progress': return { icon: C.blue,    bg: C.blueBg,  border: 'rgba(176,124,255,0.3)' };
+    case 'pending':     return { icon: C.amber,   bg: C.amberBg, border: 'rgba(255,176,32,0.3)' };
+    case 'error':       return { icon: C.red,     bg: C.redBg,   border: 'rgba(255,77,77,0.3)' };
     case 'locked':      return { icon: C.sub,     bg: C.surface2, border: C.border };
   }
 }
@@ -117,9 +120,9 @@ function StepCard({ step, index, anim, C, s }: { step: Step; index: number; anim
             onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
             onPress={step.action}
           >
-            <Animated.View style={[s.stepBtn, { transform: [{ scale }] }]}>
+            <Animated.View style={[s.stepBtn, TOKENS.shadow.glow, { backgroundColor: C.card, transform: [{ scale }] }]}>
               <LinearGradient
-                colors={[C.dark, C.primary]}
+                colors={GRADIENTS.brand}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={s.stepBtnGrad}
@@ -144,8 +147,8 @@ function StepCard({ step, index, anim, C, s }: { step: Step; index: number; anim
 
 function ProviderActiveCard({ C, s }: { C: C; s: ReturnType<typeof makeStyles> }) {
   return (
-    <View style={s.activeCard}>
-      <LinearGradient colors={[C.dark, C.primary, '#c0002f']} style={s.activeGrad}>
+    <View style={[s.activeCard, TOKENS.shadow.glow]}>
+      <LinearGradient colors={GRADIENTS.brandDeep} style={s.activeGrad}>
         <View style={s.activeIconWrap}>
           <Ionicons name="briefcase" size={28} color="#fff" />
         </View>
@@ -338,10 +341,15 @@ export function BecomeProviderScreen() {
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
+      <AnimatedBackground variant="minimal" />
 
-      {/* ── Header con gradiente ──────────────────────────────────────────── */}
-      <LinearGradient colors={[C.dark, C.primary]} style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
+      {/* ── Header con gradiente de marca ──────────────────────────────────── */}
+      <LinearGradient colors={GRADIENTS.brandDeep} style={s.header}>
+        <Pressable
+          onPress={() => safeBack(router, '/(tabs)/profile')}
+          hitSlop={12}
+          style={s.backBtn}
+        >
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </Pressable>
         <Text style={s.headerTitle}>Convertirte en prestador</Text>
@@ -403,7 +411,7 @@ export function BecomeProviderScreen() {
                 ].map((b, i) => (
                   <View key={i} style={s.benefitRow}>
                     <View style={s.benefitIcon}>
-                      <Ionicons name={b.icon} size={16} color={C.primary} />
+                      <Ionicons name={b.icon} size={16} color={TOKENS.color.signal} />
                     </View>
                     <Text style={s.benefitText}>{b.text}</Text>
                   </View>
@@ -429,7 +437,7 @@ const makeStyles = (C: C) => StyleSheet.create({
     paddingVertical: 14,
   },
   backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#fff', fontFamily: FONT_FAMILY.heading },
 
   scroll: { paddingHorizontal: 16, paddingTop: 20, gap: 20 },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
@@ -442,7 +450,7 @@ const makeStyles = (C: C) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center', justifyContent: 'center',
   },
-  activeTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
+  activeTitle: { fontSize: 18, fontWeight: '800', color: '#fff', fontFamily: FONT_FAMILY.heading },
   activeSub:   { fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 18 },
 
   // Progress
@@ -456,7 +464,7 @@ const makeStyles = (C: C) => StyleSheet.create({
   },
   progressFill: {
     height: '100%', borderRadius: 3,
-    backgroundColor: C.primary,
+    backgroundColor: TOKENS.color.signal,
   },
 
   // Steps
@@ -483,7 +491,7 @@ const makeStyles = (C: C) => StyleSheet.create({
   },
   stepContent: { flex: 1, gap: 6 },
   stepHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  stepTitle:   { fontSize: 15, fontWeight: '700', color: C.text, flex: 1 },
+  stepTitle:   { fontSize: 15, fontWeight: '700', color: C.text, flex: 1, fontFamily: FONT_FAMILY.heading },
   stepTitleLocked: { color: C.sub },
   stepBadge:   { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
   stepBadgeText: { fontSize: 11, fontWeight: '700' },
@@ -514,11 +522,11 @@ const makeStyles = (C: C) => StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  benefitsTitle: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 2 },
+  benefitsTitle: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 2, fontFamily: FONT_FAMILY.heading },
   benefitRow:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
   benefitIcon: {
     width: 34, height: 34, borderRadius: 10,
-    backgroundColor: '#FFF0F3', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center',
   },
   benefitText: { fontSize: 13, color: C.sub, flex: 1, lineHeight: 18 },
 });

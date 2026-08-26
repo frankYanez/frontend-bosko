@@ -26,6 +26,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { Order, OrderStatus } from '../types/orders.types';
@@ -193,7 +194,7 @@ export default function OrderDetailScreen() {
     return (
       <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
         <Text style={[styles.notFoundText, { color: tc.textSub }]}>No se encontró la orden</Text>
-        <Pressable onPress={() => router.back()} style={styles.backLink}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} style={styles.backLink}>
           <Text style={styles.backLinkText}>← Volver</Text>
         </Pressable>
       </View>
@@ -220,7 +221,7 @@ export default function OrderDetailScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => safeBack(router, '/(tabs)/orders')}
             hitSlop={12}
             style={[styles.backButton, { backgroundColor: tc.card, borderWidth: 1, borderColor: tc.cardBorder }]}
           >

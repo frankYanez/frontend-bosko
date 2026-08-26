@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
 import { usePayments } from '@/features/payments/state/PaymentContext';
 import type { Order } from '../types/orders.types';
@@ -118,7 +119,7 @@ export function CheckoutScreen() {
     return (
       <View style={[s.root, s.centered, { paddingTop: insets.top, backgroundColor: C.bg }]}>
         <Text style={[s.errorText, { color: C.sub }]}>No se encontró la orden</Text>
-        <Pressable onPress={() => router.back()} style={s.backLink}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} style={s.backLink}>
           <Text style={[s.backLinkText, { color: TOKENS.color.primary }]}>← Volver</Text>
         </Pressable>
       </View>
@@ -139,7 +140,7 @@ export function CheckoutScreen() {
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={[s.header, { backgroundColor: C.bg }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} hitSlop={12} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.text} />
         </Pressable>
         <Text style={[s.headerTitle, { color: C.text }]}>Confirmar pago</Text>

@@ -22,11 +22,13 @@ import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import api from '@/core/api/axiosinstance';
 import { replyToReview } from '@/features/reviews/services/review.service';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
-import { Button, Text as AppText, useThemeColors, wash } from '@/core/design-system';
+import { GRADIENTS } from '@/core/design-system/gradients';
+import { Button, Text as AppText, useThemeColors, useIsDark, wash } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
 
 interface ReviewItem {
@@ -41,6 +43,7 @@ interface ReviewItem {
 export default function MyReviewsScreen() {
   useRequireProviderStatus('provider');
   const tc = useThemeColors();
+  const isDark = useIsDark();
   const { profile } = useProfile();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +99,7 @@ export default function MyReviewsScreen() {
             key={s}
             name={s <= rating ? 'star' : 'star-outline'}
             size={16}
-            color={s <= rating ? '#FFD700' : 'rgba(0,0,0,0.12)'}
+            color={s <= rating ? '#FFD700' : tc.textMuted}
           />
         ))}
       </View>
@@ -110,8 +113,8 @@ export default function MyReviewsScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.bg}
     >
-      <BlurView intensity={25} tint="light" style={[styles.header, { borderBottomColor: tc.cardBorder }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.card }]}>
+      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.cardBorder }]}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.card }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <AppText variant="h3" color={tc.text}>Mis Reseñas</AppText>
@@ -120,7 +123,7 @@ export default function MyReviewsScreen() {
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.primary} size="large" />
+          <ActivityIndicator color={TOKENS.color.signal} size="large" />
         </View>
       ) : (
         <FlatList
@@ -129,11 +132,11 @@ export default function MyReviewsScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[TOKENS.color.primary]} />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[TOKENS.color.signal]} />
           }
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <MaterialIcons name="star-outline" size={64} color="rgba(133,0,33,0.15)" />
+              <MaterialIcons name="star-outline" size={64} color={tc.textMuted} />
               <AppText variant="title" color={tc.text}>Sin reseñas todavía</AppText>
               <AppText variant="body" color={tc.textSub} center style={{ paddingHorizontal: 40 }}>
                 Cuando los clientes te califiquen, aparecerán acá.
@@ -146,13 +149,13 @@ export default function MyReviewsScreen() {
               animate={{ opacity: 1, translateY: 0 }}
               transition={{ type: 'timing', duration: 300, delay: index * 50 }}
             >
-              <BlurView intensity={25} tint="light" style={[styles.reviewCard, { borderColor: tc.cardBorder }]}>
+              <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.reviewCard, { borderColor: tc.cardBorder }]}>
                 <View style={styles.reviewHeader}>
-                  <View style={styles.reviewerAvatar}>
+                  <LinearGradient colors={GRADIENTS.brand} style={styles.reviewerAvatar}>
                     <AppText variant="subtitle" color="#fff">
                       {(item.reviewer?.firstName || '?').charAt(0).toUpperCase()}
                     </AppText>
-                  </View>
+                  </LinearGradient>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.reviewerName, { color: tc.text }]}>
                       {item.reviewer?.firstName} {item.reviewer?.lastName || ''}
@@ -168,10 +171,10 @@ export default function MyReviewsScreen() {
 
                 {/* Provider reply */}
                 {item.reply ? (
-                  <View style={styles.replyBox}>
+                  <View style={[styles.replyBox, { backgroundColor: tc.accent }]}>
                     <View style={styles.replyHeader}>
-                      <MaterialIcons name="reply" size={14} color={TOKENS.color.primary} />
-                      <AppText variant="caption" weight="700" color={TOKENS.color.primary}>Tu respuesta</AppText>
+                      <MaterialIcons name="reply" size={14} color={TOKENS.color.signal} />
+                      <AppText variant="caption" weight="700" color={TOKENS.color.signal}>Tu respuesta</AppText>
                     </View>
                     <AppText variant="bodySmall" color={tc.text}>{item.reply}</AppText>
                   </View>
@@ -209,11 +212,11 @@ export default function MyReviewsScreen() {
                   </KeyboardAvoidingView>
                 ) : (
                   <Pressable
-                    style={styles.replyBtn}
+                    style={[styles.replyBtn, { backgroundColor: tc.accent }]}
                     onPress={() => { setReplyingTo(item.id); setReplyText(''); }}
                   >
-                    <MaterialIcons name="reply" size={16} color={TOKENS.color.primary} />
-                    <AppText variant="label" color={TOKENS.color.primary}>Responder</AppText>
+                    <MaterialIcons name="reply" size={16} color={TOKENS.color.signal} />
+                    <AppText variant="label" color={TOKENS.color.signal}>Responder</AppText>
                   </Pressable>
                 )}
               </BlurView>
@@ -264,7 +267,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: TOKENS.color.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -272,7 +274,6 @@ const styles = StyleSheet.create({
   reviewDate: { fontSize: 11, color: 'rgba(107,107,107,0.5)' },
   // Reply
   replyBox: {
-    backgroundColor: 'rgba(133,0,33,0.05)',
     borderRadius: 12,
     padding: 12,
     gap: 6,
@@ -286,7 +287,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(133,0,33,0.06)',
   },
   replyInput: {
     backgroundColor: 'rgba(255,255,255,0.7)',

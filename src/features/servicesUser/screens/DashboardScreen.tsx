@@ -43,6 +43,8 @@ import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
+import { FeaturedCard } from '@/features/servicesUser/components/FeaturedCard';
+import { GRADIENTS } from '@/core/design-system';
 
 const { width: W } = Dimensions.get('window');
 
@@ -134,9 +136,17 @@ function SectionHeader({ title, onPress }: { title: string; onPress?: () => void
   );
 }
 
-function CategoryPill({
-  name, icon, accent, onPress, delay,
-}: { name: string; icon: string; accent: string; onPress: () => void; delay: number }) {
+function resolveCategoryIcon(icon?: string): React.ComponentProps<typeof Ionicons>['name'] {
+  // Fallback de ícono: antes emoji '🔧' hardcodeado — ahora Ionicons, coherente
+  // con el resto del sistema (nunca emoji como icono de UI).
+  if (!icon || /\p{Extended_Pictographic}/u.test(icon)) return 'construct-outline';
+  return icon as React.ComponentProps<typeof Ionicons>['name'];
+}
+
+function CategoryTile({
+  name, icon, count, featured, onPress, delay,
+}: { name: string; icon: string; count?: number; featured?: boolean; onPress: () => void; delay: number }) {
+  const tc = useThemeColors();
   const anim = useRef(new Animated.Value(0)).current;
   const scaleA = useRef(new Animated.Value(1)).current;
 
@@ -144,90 +154,57 @@ function CategoryPill({
     Animated.timing(anim, { toValue: 1, duration: 350, delay, useNativeDriver: true }).start();
   }, []);
 
-  const pressIn = () => Animated.spring(scaleA, { toValue: 0.93, useNativeDriver: true }).start();
+  const pressIn = () => Animated.spring(scaleA, { toValue: 0.95, useNativeDriver: true }).start();
   const pressOut = () => Animated.spring(scaleA, { toValue: 1, useNativeDriver: true }).start();
-
-  // Fallback de ícono: antes emoji '🔧' hardcodeado — ahora Ionicons, coherente
-  // con el resto del sistema (nunca emoji como icono de UI).
-  const isEmoji = /\p{Extended_Pictographic}/u.test(icon);
+  const iconName = resolveCategoryIcon(icon);
 
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }, { scale: scaleA }] }}>
-      <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={[ds.pill, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
-        {isEmoji
-          ? <Ionicons name="construct-outline" size={15} color={accent} />
-          : <Ionicons name={icon as any} size={15} color={accent} />}
-        <PillText name={name} />
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function PillText({ name }: { name: string }) {
-  const tc = useThemeColors();
-  return <Text style={[ds.pillText, { color: tc.text }]}>{name}</Text>;
-}
-
-function ServiceCard({ item, delay }: { item: ServiceSummary; delay: number }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const scaleA = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.timing(anim, { toValue: 1, duration: 380, delay, useNativeDriver: true }).start();
-  }, []);
-
-  return (
-    <Animated.View style={{ opacity: anim, transform: [{ scale: scaleA }], width: (W - 48) / 2 }}>
-      <ServiceCardInner item={item} scaleA={scaleA} />
-    </Animated.View>
-  );
-}
-
-function ServiceCardInner({ item, scaleA }: { item: ServiceSummary; scaleA: Animated.Value }) {
-  const tc = useThemeColors();
-  const { isFavorite, toggle } = useFavorites();
-  const fav = isFavorite(item.id);
-  const heartScale = useRef(new Animated.Value(1)).current;
-
-  const handleFavorite = () => {
-    Animated.sequence([
-      Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true }),
-      Animated.spring(heartScale, { toValue: 1, useNativeDriver: true }),
-    ]).start();
-    toggle(item);
-  };
-
-  const pressIn = () => Animated.spring(scaleA, { toValue: 0.96, useNativeDriver: true }).start();
-  const pressOut = () => Animated.spring(scaleA, { toValue: 1, useNativeDriver: true }).start();
-  return (
-    <View style={[ds.serviceCardShadow, { backgroundColor: tc.card }]}>
+    <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }, { scale: scaleA }], width: '31%' }}>
       <Pressable
         onPressIn={pressIn}
         onPressOut={pressOut}
-        onPress={() => router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: item.providerId ?? item.id, from: 'home' } })}
-        style={[ds.serviceCard, { backgroundColor: tc.card, borderWidth: 1, borderColor: tc.cardBorder }]}
+        onPress={onPress}
+        style={[
+          ds.categoryTile,
+          featured
+            ? { backgroundColor: tc.card, borderColor: 'rgba(255,45,111,0.45)' }
+            : { backgroundColor: tc.surface2, borderColor: tc.border },
+        ]}
       >
-        <View>
-          {(item.thumbnail || item.images?.[0]) ? (
-            <Image source={{ uri: item.thumbnail ?? item.images![0] }} style={ds.serviceThumb} contentFit="cover" />
-          ) : (
-            <LinearGradient colors={['rgba(255,45,111,0.3)', 'rgba(133,0,33,0.16)']} style={ds.serviceThumb} />
-          )}
-          <Pressable onPress={handleFavorite} hitSlop={8} style={ds.heartBtn}>
-            <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-              <Ionicons name={fav ? 'heart' : 'heart-outline'} size={15} color={fav ? TOKENS.color.signal : 'rgba(255,255,255,0.9)'} />
-            </Animated.View>
-          </Pressable>
-        </View>
-        <View style={ds.serviceInfo}>
-          <Text style={[ds.serviceTitle, { color: tc.text }]} numberOfLines={2}>{item.title ?? item.name}</Text>
-          <Text style={ds.serviceMeta}>
-            {item.averageRating ? Number(item.averageRating).toFixed(1) : '—'} ★ / {item.reviewsCount ?? 0}
-          </Text>
-          <Text style={[ds.servicePrice, { color: TOKENS.color.signal }]}>Cotizar por chat</Text>
-        </View>
+        {featured ? (
+          <LinearGradient colors={GRADIENTS.brand} style={[ds.categoryIconWrap, ds.categoryIconGlow]}>
+            <Ionicons name={iconName} size={18} color="#fff" />
+          </LinearGradient>
+        ) : (
+          <View style={[ds.categoryIconWrap, { backgroundColor: tc.accent }]}>
+            <Ionicons name={iconName} size={18} color={TOKENS.color.signal} />
+          </View>
+        )}
+        <Text style={[ds.categoryTileName, { color: tc.text }]} numberOfLines={1}>{name}</Text>
+        {count != null && (
+          <Text style={[ds.categoryTileCount, { color: featured ? TOKENS.color.signal : tc.textMuted }]}>{count}</Text>
+        )}
       </Pressable>
-    </View>
+    </Animated.View>
+  );
+}
+
+function FeaturedServiceCard({ item, categoryIcon, delay }: { item: ServiceSummary; categoryIcon?: string; delay: number }) {
+  const { isFavorite, toggle } = useFavorites();
+
+  return (
+    <FeaturedCard
+      style={{ width: (W - 48) / 2 }}
+      title={item.title || item.name}
+      imageUri={item.thumbnail ?? item.images?.[0]}
+      icon={resolveCategoryIcon(categoryIcon)}
+      metaLabel={`${item.averageRating ? Number(item.averageRating).toFixed(1) : '—'} ★ / ${item.reviewsCount ?? 0}`}
+      ctaLabel="Cotizar por chat"
+      isFavorite={isFavorite(item.id)}
+      onToggleFavorite={() => toggle(item)}
+      onPress={() => router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: item.providerId ?? item.id, from: 'home' } })}
+      delay={delay}
+    />
   );
 }
 
@@ -399,7 +376,34 @@ export default function DashboardScreen() {
       </Animated.View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 90 }]}>
-        <Animated.View style={sectionStyle(1)}>
+        <Animated.View style={[s.section, sectionStyle(1)]}>
+          <SectionHeader title="Categorías" onPress={() => router.push('/(tabs)/services')} />
+          {categoriesStatus.loading && !categories.length ? (
+            <View style={s.categoryGrid}>
+              {[0, 1, 2, 3, 4, 5].map(i => (
+                <View key={i} style={[s.categoryTileSkeleton, { backgroundColor: C.surface2 }]} />
+              ))}
+            </View>
+          ) : categoriesStatus.error && !categories.length ? (
+            <ErrorBanner message="No se pudieron cargar las categorías" onRetry={() => fetchCategories().catch(() => {})} C={C} />
+          ) : (
+            <View style={s.categoryGrid}>
+              {categories.slice(0, 6).map((cat, idx) => (
+                <CategoryTile
+                  key={cat.id}
+                  name={cat.name}
+                  icon={cat.icon ?? ''}
+                  count={cat.servicesCount}
+                  featured={idx === 0}
+                  onPress={() => handleCategoryPress(cat.id)}
+                  delay={idx * 40}
+                />
+              ))}
+            </View>
+          )}
+        </Animated.View>
+
+        <Animated.View style={sectionStyle(2)}>
           <FlatList
             ref={heroRef}
             data={HERO_SLIDES}
@@ -422,29 +426,12 @@ export default function DashboardScreen() {
           </View>
         </Animated.View>
 
-        <Animated.View style={[s.section, sectionStyle(2)]}>
+        <Animated.View style={[s.section, sectionStyle(3)]}>
           <View style={s.qaRow}>
             {QUICK_ACTIONS.map((a, idx) => (
               <QuickActionBtn key={a.id} icon={a.icon} label={a.label} iconColor={a.iconColor} onPress={() => handleQuickAction(a.id)} delay={idx * 60} />
             ))}
           </View>
-        </Animated.View>
-
-        <Animated.View style={[s.section, sectionStyle(3)]}>
-          <SectionHeader title="Categorías" onPress={() => router.push('/(tabs)/services')} />
-          {categoriesStatus.loading && !categories.length ? (
-            <View style={s.pillSkeleton}>
-              {[80, 110, 90, 100, 75].map((w, i) => <View key={i} style={[s.pillSkeletonItem, { width: w }]} />)}
-            </View>
-          ) : categoriesStatus.error && !categories.length ? (
-            <ErrorBanner message="No se pudieron cargar las categorías" onRetry={() => fetchCategories().catch(() => {})} C={C} />
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.pillRow}>
-              {categories.map((cat, idx) => (
-                <CategoryPill key={cat.id} name={cat.name} icon={cat.icon || 'construct-outline'} accent={cat.accent ?? TOKENS.color.signal} onPress={() => handleCategoryPress(cat.id)} delay={idx * 40} />
-              ))}
-            </ScrollView>
-          )}
         </Animated.View>
 
         <Animated.View style={[s.section, sectionStyle(4)]}>
@@ -455,7 +442,14 @@ export default function DashboardScreen() {
             <ErrorBanner message="No se pudieron cargar los servicios" onRetry={loadFeatured} C={C} />
           ) : featuredServices.length > 0 ? (
             <View style={s.servicesGrid}>
-              {featuredServices.map((item, idx) => <ServiceCard key={item.id} item={item} delay={idx * 50} />)}
+              {featuredServices.map((item, idx) => (
+                <FeaturedServiceCard
+                  key={item.id}
+                  item={item}
+                  categoryIcon={categories.find(c => c.id === item.categoryId)?.icon}
+                  delay={idx * 50}
+                />
+              ))}
             </View>
           ) : (
             <SkeletonGrid s={s} C={C} />
@@ -573,16 +567,11 @@ const ds = StyleSheet.create({
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
   sectionTitle: { fontSize: 17, fontWeight: '700', fontFamily: 'Archivo_700Bold', letterSpacing: -0.2 },
   sectionLink: { fontSize: 13, fontWeight: '500' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 99, borderWidth: 1 },
-  pillText: { fontSize: 13, fontWeight: '600' },
-  serviceCardShadow: { borderRadius: 22, shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 18, elevation: 4 },
-  serviceCard: { borderRadius: 22, overflow: 'hidden' },
-  serviceThumb: { width: '100%', height: 110, alignItems: 'center', justifyContent: 'center' },
-  serviceInfo: { padding: 11, gap: 5 },
-  serviceTitle: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
-  serviceMeta: { fontSize: 11, fontFamily: 'JetBrainsMono_500Medium', letterSpacing: 1, color: '#00E5A0' },
-  servicePrice: { fontSize: 13, fontWeight: '700', marginTop: 2 },
-  heartBtn: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 14, width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  categoryTile: { flex: 1, borderRadius: 18, borderWidth: 1.5, padding: 13, paddingHorizontal: 10, gap: 9 },
+  categoryIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  categoryIconGlow: { shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 4 },
+  categoryTileName: { fontSize: 12, fontWeight: '700', fontFamily: 'Archivo_700Bold', lineHeight: 15 },
+  categoryTileCount: { fontSize: 11, fontFamily: 'JetBrainsMono_500Medium', fontWeight: '700' },
   qaBtn: { alignItems: 'center', gap: 7 },
   qaIcon: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   qaLabel: { fontSize: 11.5, fontWeight: '500' },
@@ -639,18 +628,14 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   qaIcon: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   qaLabel: { fontSize: 11.5, fontWeight: '500', color: C.text },
 
-  pillRow: { gap: 8, paddingRight: 4 },
-  pillSkeleton: { flexDirection: 'row', gap: 8 },
-  pillSkeletonItem: { height: 38, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.06)' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 99, borderWidth: 1 },
+  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
+  categoryTileSkeleton: { width: '31%', height: 92, borderRadius: 18 },
 
   servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   serviceCardShadow: { borderRadius: 22, shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 18, elevation: 4 },
   serviceCard: { borderRadius: 22, overflow: 'hidden' },
   serviceThumb: { width: '100%', height: 110, alignItems: 'center', justifyContent: 'center' },
   serviceInfo: { padding: 11, gap: 5 },
-  serviceTitle: { fontSize: 13, fontWeight: '600', color: C.text, lineHeight: 18 },
-  servicePrice: { fontSize: 13, fontWeight: '700', color: C.signal, marginTop: 2 },
 
   ctaBanner: { borderRadius: 26, padding: 22, overflow: 'hidden', minHeight: 120 },
   ctaLeft: { flex: 1, gap: 4, zIndex: 1 },

@@ -23,6 +23,7 @@ import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
@@ -86,7 +87,7 @@ export default function QuoteRequestScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
+            <Pressable onPress={() => safeBack(router, '/(tabs)/services')} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
               <MaterialIcons name="arrow-back" size={24} color={tc.text} />
             </Pressable>
             <Text style={[styles.headerTitle, { color: tc.text }]}>Solicitar servicio</Text>

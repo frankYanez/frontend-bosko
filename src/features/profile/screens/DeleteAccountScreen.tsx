@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import api from '@/core/api/axiosinstance';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -122,7 +123,7 @@ export default function DeleteAccountScreen() {
         {/* Header */}
         <View style={s.header}>
           <Pressable
-            onPress={() => step === 2 ? (setStep(1), setPassword(''), setError('')) : router.back()}
+            onPress={() => step === 2 ? (setStep(1), setPassword(''), setError('')) : safeBack(router, '/(tabs)/profile')}
             hitSlop={12}
             style={[s.backBtn, { backgroundColor: tc.surface }]}
           >
@@ -143,8 +144,8 @@ export default function DeleteAccountScreen() {
 
         {/* Warning icon */}
         <Animated.View style={[s.warningIconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
-          <View style={s.warningCircle}>
-            <MaterialIcons name={step === 1 ? 'warning' : 'lock'} size={48} color="#dc2626" />
+          <View style={[s.warningCircle, { backgroundColor: TOKENS.status.cancelled.bg, borderColor: 'rgba(255,77,77,0.35)' }]}>
+            <MaterialIcons name={step === 1 ? 'warning' : 'lock'} size={48} color={TOKENS.color.error} />
           </View>
           <Text style={s.warningTitle}>{step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}</Text>
           <Text style={[s.warningSubtitle, { color: tc.textSub }]}>
@@ -178,7 +179,7 @@ export default function DeleteAccountScreen() {
                   {' '}para continuar:
                 </Text>
                 <TextInput
-                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, canProceed && s.confirmInputValid]}
+                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, canProceed && { borderColor: TOKENS.color.error, backgroundColor: TOKENS.status.cancelled.bg }]}
                   value={confirmText}
                   onChangeText={setConfirmText}
                   placeholder={CONFIRM_WORD}
@@ -221,7 +222,7 @@ export default function DeleteAccountScreen() {
               <Text style={[s.confirmLabel, { color: tc.textSub }]}>Ingresá tu contraseña actual:</Text>
               <View style={s.passwordRow}>
                 <TextInput
-                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, s.passwordInput, password.length >= 6 && s.confirmInputValid]}
+                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, s.passwordInput, password.length >= 6 && { borderColor: TOKENS.color.error, backgroundColor: TOKENS.status.cancelled.bg }]}
                   value={password}
                   onChangeText={setPassword}
                   placeholder="••••••••"
@@ -231,7 +232,7 @@ export default function DeleteAccountScreen() {
                   autoCorrect={false}
                   autoFocus
                 />
-                <Pressable onPress={() => setShowPassword(v => !v)} style={[s.eyeBtn, { borderColor: tc.border, backgroundColor: tc.surface }]} hitSlop={8}>
+                <Pressable onPress={() => setShowPassword(v => !v)} style={[s.eyeBtn, { borderColor: tc.border, backgroundColor: tc.surface2 }]} hitSlop={8}>
                   <MaterialIcons
                     name={showPassword ? 'visibility-off' : 'visibility'}
                     size={20}
@@ -286,7 +287,7 @@ export default function DeleteAccountScreen() {
           </View>
         )}
 
-        <Pressable onPress={() => router.back()} style={s.cancelRow}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} style={s.cancelRow}>
           <Text style={[s.cancelText, { color: tc.textSub }]}>Cancelar, mantener mi cuenta</Text>
         </Pressable>
       </ScrollView>
@@ -400,7 +401,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fee2e2',
+    backgroundColor: TOKENS.status.cancelled.bg,
     borderRadius: 12,
     padding: 12,
   },

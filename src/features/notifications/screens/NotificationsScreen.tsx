@@ -14,26 +14,26 @@ import {
   Animated,
   Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useNotifications } from '../state/NotificationsContext';
 import { Notification } from '../services/notifications.service';
 import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash, FullScreenModal } from '@/core/design-system';
+import { useThemeColors, FullScreenModal } from '@/core/design-system';
 import { useNotificationsOpen, closeNotifications } from '@/stores/notificationsUI.store';
 
 const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
-  order_accepted: { name: 'check-circle', color: '#065f46', bg: '#d1fae5' },
-  order_rejected: { name: 'cancel', color: '#dc2626', bg: '#fee2e2' },
-  order_started: { name: 'play-circle', color: '#1e40af', bg: '#dbeafe' },
-  order_completed: { name: 'done-all', color: '#065f46', bg: '#d1fae5' },
-  order_cancelled: { name: 'block', color: '#92400e', bg: '#fef3c7' },
-  payment_received: { name: 'attach-money', color: '#065f46', bg: '#d1fae5' },
-  kyc_approved: { name: 'verified-user', color: TOKENS.color.signal, bg: 'rgba(133,0,33,0.1)' },
-  kyc_rejected: { name: 'gpp-bad', color: '#dc2626', bg: '#fee2e2' },
-  message: { name: 'chat-bubble', color: '#1e40af', bg: '#dbeafe' },
-  default: { name: 'notifications', color: TOKENS.color.sub, bg: 'rgba(100,100,120,0.1)' },
+  order_accepted: { name: 'check-circle', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
+  order_rejected: { name: 'cancel', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
+  order_started: { name: 'play-circle', color: TOKENS.status.progress.fg, bg: TOKENS.status.progress.bg },
+  order_completed: { name: 'done-all', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
+  order_cancelled: { name: 'block', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
+  payment_received: { name: 'attach-money', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
+  kyc_approved: { name: 'verified-user', color: TOKENS.color.signal, bg: 'rgba(255,45,111,0.14)' },
+  kyc_rejected: { name: 'gpp-bad', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
+  message: { name: 'chat-bubble', color: TOKENS.status.progress.fg, bg: TOKENS.status.progress.bg },
+  default: { name: 'notifications', color: '#9CA3AF', bg: 'rgba(156,163,175,0.14)' },
 };
 
 function timeAgo(iso: string): string {
@@ -164,12 +164,8 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={['#07060C', '#1a000d', '#0d0008']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={s.bg}
-    >
+    <View style={[s.bg, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       <View style={s.header}>
         <Pressable onPress={closeNotifications} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
@@ -222,7 +218,7 @@ export default function NotificationsScreen() {
           />
         }
       />
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -237,7 +233,7 @@ export function NotificationsModalRoot() {
 }
 
 const s = StyleSheet.create({
-  bg: { flex: 1 },
+  bg: { flex: 1, backgroundColor: '#0A0910' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

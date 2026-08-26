@@ -16,21 +16,25 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { adminReview } from '@/features/kyc/services/background-check.service';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 
 const C = {
   primary: TOKENS.color.primary,
   dark:    TOKENS.color.primaryDark,
+  signal:  TOKENS.color.signal,
   bg:      '#F7F7FA',
   card:    '#FFFFFF',
   text:    '#1A1A1A',
   sub:     '#6B7280',
   border:  '#EDEDF0',
-  green:   '#22C55E',
-  red:     '#EF4444',
-  amber:   '#F59E0B',
+  green:   TOKENS.status.done.fg,
+  red:     TOKENS.status.cancelled.fg,
+  amber:   TOKENS.status.pending.fg,
+  amberBg: TOKENS.status.pending.bg,
 };
 
 interface PendingUser {
@@ -56,7 +60,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
         {item.avatarUrl ? (
           <Image source={{ uri: item.avatarUrl }} style={s.avatar} contentFit="cover" />
         ) : (
-          <LinearGradient colors={[C.dark, C.primary]} style={s.avatarFallback}>
+          <LinearGradient colors={GRADIENTS.brand} style={s.avatarFallback}>
             <Text style={s.avatarInitial}>{(item.firstName?.[0] ?? 'P').toUpperCase()}</Text>
           </LinearGradient>
         )}
@@ -77,7 +81,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
           Alert.alert('Documento', `URL del certificado:\n${item.backgroundCheckUrl}`, [{ text: 'OK' }]);
         }}
       >
-        <Ionicons name="document-text-outline" size={18} color={C.primary} />
+        <Ionicons name="document-text-outline" size={18} color={C.signal} />
         <Text style={s.docText}>Ver certificado subido</Text>
         <Ionicons name="open-outline" size={14} color={tc.textSub} />
       </Pressable>
@@ -133,7 +137,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
               ]);
             }}
           >
-            <LinearGradient colors={[C.dark, C.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.approveBtnGrad}>
+            <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.approveBtnGrad}>
               <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
               <Text style={s.approveBtnText}>Aprobar</Text>
             </LinearGradient>
@@ -171,7 +175,7 @@ export default function AdminBackgroundCheckScreen() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={[s.backBtn, { backgroundColor: tc.card }]} hitSlop={8}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} style={[s.backBtn, { backgroundColor: tc.card }]} hitSlop={8}>
           <Ionicons name="arrow-back" size={20} color={tc.text} />
         </Pressable>
         <View>
@@ -193,7 +197,7 @@ export default function AdminBackgroundCheckScreen() {
         >
           {items.length === 0 ? (
             <View style={s.empty}>
-              <Ionicons name="checkmark-done-circle-outline" size={56} color={C.green} />
+              <Ionicons name="checkmark-done-circle-outline" size={56} color={TOKENS.status.done.fg} />
               <Text style={[s.emptyTitle, { color: tc.text }]}>Todo al día</Text>
               <Text style={[s.emptySub, { color: tc.textSub }]}>No hay antecedentes pendientes de revisión.</Text>
             </View>
@@ -225,16 +229,16 @@ const s = StyleSheet.create({
   avatarInitial:  { fontSize: 18, fontWeight: '700', color: '#fff' },
   cardName:    { fontSize: 15, fontWeight: '700', color: C.text },
   cardEmail:   { fontSize: 12, color: C.sub, marginTop: 2 },
-  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FFF8E1', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.amberBg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   pendingText:  { fontSize: 11, fontWeight: '600', color: C.amber },
 
-  docRow:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF0F3', borderRadius: 12, padding: 12 },
-  docText:     { flex: 1, fontSize: 13, fontWeight: '600', color: C.primary },
+  docRow:      { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, padding: 12 },
+  docText:     { flex: 1, fontSize: 13, fontWeight: '700', color: C.signal },
 
   actionsRow:  { flexDirection: 'row', gap: 10 },
   rejectBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, borderWidth: 1.5, borderColor: C.red, paddingVertical: 11 },
   actionText:  { fontSize: 14, fontWeight: '600' },
-  approveBtnShadow: { flex: 2, borderRadius: 12, elevation: 3, shadowColor: C.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 8 },
+  approveBtnShadow: { flex: 2, borderRadius: 12, ...TOKENS.shadow.glow },
   approveBtn:  { flex: 2, borderRadius: 12, overflow: 'hidden' },
   approveBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
   approveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },

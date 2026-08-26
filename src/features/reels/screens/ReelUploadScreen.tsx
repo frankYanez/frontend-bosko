@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useQueryClient } from '@tanstack/react-query';
@@ -113,7 +114,7 @@ export default function ReelUploadScreen() {
       await uploadReelWithFile(videoUri, videoMime, description, tags);
       qc.invalidateQueries({ queryKey: ['reels'] });
       toast.success('Reel publicado', 'Tu reel ya está disponible en el feed.');
-      router.back();
+      safeBack(router, '/(tabs)/reels');
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'No se pudo publicar el reel.';
       toast.error('Error al publicar', Array.isArray(msg) ? msg.join(' ') : msg);
@@ -133,7 +134,7 @@ export default function ReelUploadScreen() {
     >
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 8, borderBottomColor: tc.divider }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface2 }]}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/reels')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface2 }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <Text style={[s.headerTitle, { color: tc.text }]}>Nuevo Reel</Text>

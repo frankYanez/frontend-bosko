@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { usePayments } from '../state/PaymentContext';
 import { PaymentHistoryItem, EarningsItem, PaymentStatus } from '../services/payments';
 import { TOKENS } from '@/core/design-system/tokens';
@@ -134,7 +135,7 @@ export default function PaymentsScreen() {
     >
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <Text style={[s.headerTitle, { color: tc.text }]}>Pagos</Text>

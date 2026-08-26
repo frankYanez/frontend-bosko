@@ -14,10 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
 import {
@@ -34,6 +36,7 @@ function makeC(tc: ReturnType<typeof useThemeColors>) {
     dark:    TOKENS.color.primaryDark,
     bg:      tc.bg,
     card:    tc.card,
+    accent:  tc.accent,
     text:    tc.text,
     sub:     tc.textSub,
     border:  tc.border,
@@ -46,10 +49,10 @@ function makeC(tc: ReturnType<typeof useThemeColors>) {
 
 function makeStatusConfig(C: ReturnType<typeof makeC>, tc: ReturnType<typeof useThemeColors>): Record<BackgroundCheckStatus, { label: string; color: string; bg: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> {
   return {
-    NOT_SUBMITTED: { label: 'Sin enviar',       color: C.sub,   bg: tc.surface2,          icon: 'document-outline' },
-    UNDER_REVIEW:  { label: 'En revisión',      color: C.amber, bg: 'rgba(245,158,11,0.12)', icon: 'time-outline' },
-    APPROVED:      { label: 'Aprobado',         color: C.green, bg: 'rgba(34,197,94,0.12)',  icon: 'checkmark-circle' },
-    REJECTED:      { label: 'Rechazado',        color: C.red,   bg: 'rgba(239,68,68,0.12)',  icon: 'close-circle' },
+    NOT_SUBMITTED: { label: 'Sin enviar',       color: C.sub,                     bg: tc.surface2,               icon: 'document-outline' },
+    UNDER_REVIEW:  { label: 'En revisión',      color: TOKENS.status.pending.fg,   bg: TOKENS.status.pending.bg,   icon: 'time-outline' },
+    APPROVED:      { label: 'Aprobado',         color: TOKENS.status.done.fg,      bg: TOKENS.status.done.bg,      icon: 'checkmark-circle' },
+    REJECTED:      { label: 'Rechazado',        color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg, icon: 'close-circle' },
   };
 }
 
@@ -157,7 +160,7 @@ export default function BackgroundCheckScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} style={s.backBtn} hitSlop={8}>
           <Ionicons name="arrow-back" size={20} color={C.text} />
         </Pressable>
         <Text style={s.headerTitle}>Antecedentes penales</Text>
@@ -168,7 +171,7 @@ export default function BackgroundCheckScreen() {
         <Animated.View style={{ opacity: fadeAnim }}>
 
           {/* Hero */}
-          <LinearGradient colors={[C.dark, C.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.hero}>
+          <LinearGradient colors={GRADIENTS.brandDeep} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.hero}>
             <View style={s.heroIconWrap}>
               <Ionicons name="shield-checkmark" size={32} color="#fff" />
             </View>
@@ -235,7 +238,7 @@ export default function BackgroundCheckScreen() {
                     disabled={uploading}
                     style={({ pressed }) => [s.uploadBtn, pressed && { opacity: 0.85 }]}
                   >
-                  <LinearGradient colors={[C.dark, C.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.uploadBtnGrad}>
+                  <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.uploadBtnGrad}>
                     {uploading
                       ? <ActivityIndicator color="#fff" />
                       : <>
@@ -252,7 +255,7 @@ export default function BackgroundCheckScreen() {
 
               {status === 'UNDER_REVIEW' && (
                 <View style={s.reviewNote}>
-                  <Ionicons name="information-circle-outline" size={16} color={C.amber} />
+                  <Ionicons name="information-circle-outline" size={16} color={TOKENS.status.pending.fg} />
                   <Text style={s.reviewNoteText}>El equipo de Bosko revisará tu documento en un plazo de 1-3 días hábiles.</Text>
                 </View>
               )}
@@ -284,8 +287,8 @@ const makeStyles = (C: ReturnType<typeof makeC>) => StyleSheet.create({
   infoCard:     { backgroundColor: C.card, borderRadius: 16, padding: 18, marginBottom: 14, gap: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
   infoTitle:    { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 4 },
   step:         { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  stepNum:      { width: 22, height: 22, borderRadius: 11, backgroundColor: C.primary + '18', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  stepNumText:  { fontSize: 11, fontWeight: '700', color: C.primary },
+  stepNum:      { width: 22, height: 22, borderRadius: 11, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  stepNumText:  { fontSize: 11, fontWeight: '700', color: TOKENS.color.signal },
   stepText:     { flex: 1, fontSize: 13, color: C.sub, lineHeight: 19 },
 
   formatsRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' },
@@ -294,10 +297,10 @@ const makeStyles = (C: ReturnType<typeof makeC>) => StyleSheet.create({
   formatNote:   { fontSize: 12, color: C.sub, marginLeft: 4 },
 
   uploadBtn:    { borderRadius: 14, overflow: 'hidden' },
-  uploadBtnShadow: { borderRadius: 14, elevation: 4, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 },
+  uploadBtnShadow: { borderRadius: 14, ...TOKENS.shadow.glow },
   uploadBtnGrad:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16 },
   uploadBtnText:{ fontSize: 15, fontWeight: '700', color: '#fff' },
 
-  reviewNote:   { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#FFF8E1', borderRadius: 12, padding: 14, marginTop: 16 },
-  reviewNoteText: { flex: 1, fontSize: 13, color: C.amber, lineHeight: 18 },
+  reviewNote:   { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: TOKENS.status.pending.bg, borderRadius: 12, padding: 14, marginTop: 16 },
+  reviewNoteText: { flex: 1, fontSize: 13, color: TOKENS.status.pending.fg, lineHeight: 18 },
 });

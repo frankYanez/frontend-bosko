@@ -18,12 +18,14 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useServices } from '../state/ServicesContext';
 import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
 import { RadialBlob } from '@/core/components/RadialBlob';
 
@@ -35,20 +37,6 @@ function useC() {
   const tc = useThemeColors();
   return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: AMBER };
 }
-
-// ── Curated gradients — must match ServicesScreen ────────────────────────────
-const GRADIENTS: [string, string, string][] = [
-  ['#0f0c29', '#302b63', '#24243e'],
-  ['#134e5e', '#71b280', '#134e5e'],
-  [TOKENS.color.primaryDark, TOKENS.color.primary, TOKENS.color.signal],
-  ['#0d0d0d', '#2c3e50', '#4ca1af'],
-  ['#1a1a2e', '#16213e', '#0f3460'],
-  ['#2d1b69', '#553c9a', '#6d28d9'],
-  ['#065f46', '#047857', '#059669'],
-  ['#7c2d12', '#c2410c', '#ea580c'],
-  ['#831843', '#9d174d', '#be185d'],
-  ['#78350f', '#b45309', '#d97706'],
-];
 
 // ── Shimmer skeleton ──────────────────────────────────────────────────────────
 function Shimmer({ width, height, radius = 12 }: { width: number | string; height: number; radius?: number }) {
@@ -146,7 +134,7 @@ const ServiceCard = memo(function ServiceCard({
         transform: [{ translateY: slideAnim }, { scale: scaleA }],
       }}
     >
-      <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={[s.serviceCard, { backgroundColor: c.card }]}>
+      <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={[s.serviceCard, { backgroundColor: c.card, borderColor: c.border }]}>
         {/* Avatar + availability dot */}
         <View style={s.avatarWrap}>
           {item.thumbnail ? (
@@ -157,7 +145,7 @@ const ServiceCard = memo(function ServiceCard({
             </LinearGradient>
           )}
           {item.isAvailable !== undefined && (
-            <View style={[s.availDot, { backgroundColor: item.isAvailable ? '#22C55E' : '#9CA3AF' }]} />
+            <View style={[s.availDot, { backgroundColor: item.isAvailable ? TOKENS.color.mint : c.sub, borderColor: c.card }]} />
           )}
         </View>
 
@@ -200,15 +188,12 @@ const ServiceCard = memo(function ServiceCard({
 // ── Hero header ───────────────────────────────────────────────────────────────
 function Hero({
   category,
-  gradientIndex,
   onBack,
 }: {
   category: { name: string; description: string; icon: string } | undefined;
-  gradientIndex: number;
   onBack: () => void;
 }) {
   const c = useC();
-  const gradient = GRADIENTS[gradientIndex % GRADIENTS.length];
   const scaleA   = useRef(new Animated.Value(0.9)).current;
   const fadeA    = useRef(new Animated.Value(0)).current;
 
@@ -222,7 +207,7 @@ function Hero({
   return (
     <Animated.View style={[s.hero, { opacity: fadeA, transform: [{ scale: scaleA }] }]}>
       <LinearGradient
-        colors={gradient}
+        colors={GRADIENTS.brandDeep}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
       />
@@ -279,7 +264,6 @@ export default function CategoryServicesScreen() {
   const fromFavorites = params.from === 'favorites';
   const fromSearch    = params.from === 'search';
   const category      = categories.find(c => c.id === categoryId);
-  const catIndex      = categories.findIndex(c => c.id === categoryId);
   const services      = categoryId ? getServicesForCategory(categoryId) : [];
   const status        = categoryId ? servicesStatus[categoryId] : undefined;
   const isLoading     = Boolean(status?.loading && services.length === 0);
@@ -310,12 +294,11 @@ export default function CategoryServicesScreen() {
       <View style={s.heroPad}>
         <Hero
           category={category as any}
-          gradientIndex={catIndex >= 0 ? catIndex : 2}
           onBack={() => {
             if (fromHome) return router.replace('/(tabs)');
             if (fromFavorites) return router.replace('/(tabs)/profile/favorites');
             if (fromSearch) return router.replace('/search');
-            return router.back();
+            return safeBack(router, '/(tabs)/services');
           }}
         />
       </View>
@@ -396,11 +379,7 @@ const s = StyleSheet.create({
     minHeight: 180,
     overflow: 'hidden',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 12,
+    ...TOKENS.shadow.glow,
   },
   backBtn: {
     width: 38,
@@ -479,11 +458,7 @@ const s = StyleSheet.create({
     gap: 14,
     borderRadius: 18,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
+    borderWidth: 1,
   },
   cardActions: {
     alignItems: 'center',
@@ -565,7 +540,7 @@ const s = StyleSheet.create({
   price: {
     fontSize: 13,
     fontWeight: '700',
-    color: TOKENS.color.primary,
+    color: TOKENS.color.signal,
   },
 
   // Empty

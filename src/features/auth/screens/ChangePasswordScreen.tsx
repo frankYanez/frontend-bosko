@@ -17,13 +17,14 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import api from '@/core/api/axiosinstance';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash } from '@/core/design-system';
+import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
-const PRIMARY = TOKENS.color.primary;
+const PRIMARY = TOKENS.color.signal;
 
 function getStrength(pwd: string): 0 | 1 | 2 | 3 {
   if (!pwd) return 0;
@@ -35,9 +36,9 @@ function getStrength(pwd: string): 0 | 1 | 2 | 3 {
 }
 
 const STRENGTH_LABELS = ['', 'Débil', 'Regular', 'Fuerte'];
-const STRENGTH_COLORS = ['', '#ef4444', '#f59e0b', '#16a34a'];
+const STRENGTH_COLORS = ['', TOKENS.status.cancelled.fg, TOKENS.status.pending.fg, TOKENS.status.done.fg];
 
-function StrengthBar({ password }: { password: string }) {
+function StrengthBar({ password, tc }: { password: string; tc: ReturnType<typeof useThemeColors> }) {
   const strength = getStrength(password);
   if (!password) return null;
   return (
@@ -45,7 +46,7 @@ function StrengthBar({ password }: { password: string }) {
       {[1, 2, 3].map(i => (
         <View
           key={i}
-          style={[sb.segment, { backgroundColor: i <= strength ? STRENGTH_COLORS[strength] : '#E5E7EB' }]}
+          style={[sb.segment, { backgroundColor: i <= strength ? STRENGTH_COLORS[strength] : tc.border }]}
         />
       ))}
       <Text style={[sb.label, { color: STRENGTH_COLORS[strength] }]}>
@@ -162,7 +163,7 @@ export default function ChangePasswordScreen() {
     try {
       await api.patch('/users/me/password', { currentPassword, newPassword });
       Alert.alert('¡Listo!', 'Tu contraseña fue actualizada exitosamente.', [
-        { text: 'OK', onPress: () => router.back() },
+        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Error al cambiar la contraseña';
@@ -174,12 +175,8 @@ export default function ChangePasswordScreen() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient
-        colors={wash(tc)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={s.background}
-      >
+      <View style={[s.background, { backgroundColor: tc.bg }]}>
+        <AnimatedBackground variant="minimal" />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={s.flex}
@@ -192,7 +189,7 @@ export default function ChangePasswordScreen() {
             <Animated.View style={[s.inner, { opacity: fadeAnim, transform: [{ translateY }] }]}>
               {/* Header */}
               <View style={s.header}>
-                <Pressable onPress={() => router.back()} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
+                <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
                   <Ionicons name="arrow-back" size={24} color={tc.text} />
                 </Pressable>
                 <Text style={[s.headerTitle, { color: tc.text }]}>Cambiar contraseña</Text>
@@ -234,7 +231,7 @@ export default function ChangePasswordScreen() {
                   onBlur={() => setFocused(null)}
                   tc={tc}
                 />
-                <StrengthBar password={newPassword} />
+                <StrengthBar password={newPassword} tc={tc} />
 
                 <FieldInput
                   label="Confirmar nueva contraseña"
@@ -250,7 +247,7 @@ export default function ChangePasswordScreen() {
                   tc={tc}
                 />
 
-                {!!error && <Text style={s.errorText}>{error}</Text>}
+                {!!error && <Text style={[s.errorText, { color: TOKENS.status.cancelled.fg }]}>{error}</Text>}
 
                 <View style={s.buttonShadow}>
                   <Pressable
@@ -259,7 +256,7 @@ export default function ChangePasswordScreen() {
                     style={({ pressed }) => [s.button, pressed && s.buttonPressed]}
                   >
                     <LinearGradient
-                      colors={[PRIMARY, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
+                      colors={GRADIENTS.brand}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={s.buttonGradient}
@@ -275,7 +272,7 @@ export default function ChangePasswordScreen() {
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </LinearGradient>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
@@ -346,10 +343,8 @@ const s = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
     paddingHorizontal: 14,
     paddingVertical: 4,
     gap: 10,
@@ -357,7 +352,11 @@ const s = StyleSheet.create({
   },
   inputWrapperFocused: {
     borderColor: PRIMARY,
-    backgroundColor: '#fff',
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 2,
   },
   input: {
     flex: 1,
@@ -374,11 +373,7 @@ const s = StyleSheet.create({
   buttonShadow: {
     borderRadius: 14,
     marginTop: 12,
-    shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    ...TOKENS.shadow.glow,
   },
   button: {
     borderRadius: 14,

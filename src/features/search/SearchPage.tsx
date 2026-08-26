@@ -18,6 +18,7 @@ import {
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
@@ -43,6 +44,7 @@ export const SearchPage = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
+  const [focused, setFocused] = useState(false);
   const [value, setValue] = useState("");
   const debouncedValue = useDebouncedValue(value, 320);
   const { results, loading, error, runSearch, lastQuery } = useSearch();
@@ -174,11 +176,15 @@ export const SearchPage = () => {
 
         {/* Header */}
         <View style={[s.header, { borderBottomColor: tc.border }]}>
-          <Pressable onPress={() => router.back()} hitSlop={10} style={s.backBtn}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)')} hitSlop={10} style={s.backBtn}>
             <Ionicons name="arrow-back" size={22} color={tc.text} />
           </Pressable>
-          <View style={[s.inputWrap, { backgroundColor: tc.card, borderColor: tc.border }]}>
-            <Ionicons name="search-outline" size={17} color={tc.textSub} />
+          <View style={[
+            s.inputWrap,
+            { backgroundColor: tc.card, borderColor: focused ? SIGNAL : tc.border },
+            focused && s.inputWrapFocused,
+          ]}>
+            <Ionicons name="search-outline" size={17} color={focused ? SIGNAL : tc.textSub} />
             <TextInput
               ref={inputRef}
               style={[s.input, { color: tc.text }]}
@@ -186,6 +192,8 @@ export const SearchPage = () => {
               placeholderTextColor={tc.textSub}
               value={value}
               onChangeText={setValue}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               returnKeyType="search"
               autoCapitalize="none"
               autoCorrect={false}
@@ -276,6 +284,13 @@ const s = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 9,
+  },
+  inputWrapFocused: {
+    shadowColor: SIGNAL,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 2,
   },
   input: {
     flex: 1,

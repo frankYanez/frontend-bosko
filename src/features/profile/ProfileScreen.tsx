@@ -1,5 +1,6 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   Pressable,
@@ -295,7 +296,7 @@ export const ProfileScreen: React.FC = () => {
   const s = useMemo(() => makeStyles(C), [C]);
   const { authState, logout } = useAuth();
   const { profile, isLoading, refreshProfile, updateProfile, toggleAvailability } = useProfile();
-  const { status: roleStatus, kycStatus } = useProviderStatus();
+  const { status: roleStatus, kycStatus, isLoading: roleLoading } = useProviderStatus();
   const { count: favCount } = useFavorites();
 
   const [stats, setStats]               = useState<UserStats | null>(null);
@@ -325,6 +326,12 @@ export const ProfileScreen: React.FC = () => {
   useEffect(() => {
     if (profile) getUserStats().then(setStats).catch(() => {});
   }, [profile?.id]);
+
+  useEffect(() => {
+    if (!roleLoading) {
+      console.log('[ProfileScreen] role:', { roleStatus, kycStatus, isProvider: profile?.isProvider });
+    }
+  }, [roleLoading, roleStatus, kycStatus, profile?.isProvider]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -364,6 +371,17 @@ export const ProfileScreen: React.FC = () => {
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
     : '';
+
+  // Tapa el contenido role-gated hasta saber si es cliente/pending/provider —
+  // evita el flash de CTA "ser proveedor" / quick actions de cliente en cold start.
+  if (roleLoading) {
+    return (
+      <View style={[s.root, s.loaderRoot, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="light-content" />
+        <ActivityIndicator size="large" color={C.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -620,6 +638,21 @@ export const ProfileScreen: React.FC = () => {
               onPress={() => setEditVisible(true)}
             />
             <View style={s.rowSep} />
+            {isPending && (
+              <>
+                <SettingsRow
+                  icon="shield-checkmark-outline"
+                  iconBg={kycCfg?.bg ?? '#FFF8E1'}
+                  iconColor={kycCfg?.color ?? C.amber}
+                  label="Estado de verificación"
+                  badge={kycCfg?.label}
+                  badgeColor={kycCfg?.color}
+                  badgeBg={kycCfg?.bg}
+                  onPress={() => router.push('/(tabs)/profile/become-provider')}
+                />
+                <View style={s.rowSep} />
+              </>
+            )}
             {isProvider && (
               <>
                 <SettingsRow
@@ -656,10 +689,13 @@ export const ProfileScreen: React.FC = () => {
             )}
             <SettingsRow
               icon="card-outline"
-              iconBg="#F0FFF4"
-              iconColor={C.green}
+              iconBg={C.border}
+              iconColor={C.sub}
               label="Métodos de Pago"
-              onPress={() => router.push('/(tabs)/profile/Payments')}
+              badge="Próximamente"
+              badgeColor={C.sub}
+              badgeBg={C.border}
+              accessory={<View style={{ width: 1 }} />}
             />
           </SettingsGroup>
         </Animated.View>
@@ -753,6 +789,10 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: C.bg,
+  },
+  loaderRoot: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: {
     paddingBottom: 40,

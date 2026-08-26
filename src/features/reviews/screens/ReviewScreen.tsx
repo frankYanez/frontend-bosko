@@ -18,6 +18,7 @@ import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import { createReview } from '@/features/reviews/services/review.service';
 import { TOKENS } from '@/core/design-system/tokens';
 import { Button } from '@/core/design-system';
@@ -51,7 +52,7 @@ export default function ReviewScreen() {
     try {
       await createReview({ orderId: orderId!, rating, comment: comment.trim() });
       Alert.alert('¡Gracias!', 'Tu reseña ayuda a la comunidad.', [
-        { text: 'OK', onPress: () => router.back() },
+        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
       ]);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'No se pudo enviar la reseña');
@@ -74,7 +75,7 @@ export default function ReviewScreen() {
           transition={{ type: 'spring', damping: 16 }}
           style={styles.header}
         >
-          <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+          <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
             <MaterialIcons name="arrow-back" size={24} color={tc.text} />
           </Pressable>
         </MotiView>

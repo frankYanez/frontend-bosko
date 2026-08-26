@@ -21,6 +21,7 @@ import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 import * as ImagePicker from 'expo-image-picker';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { uploadAvatar } from '@/features/servicesUser/services/profile';
@@ -78,7 +79,7 @@ export default function EditProfileScreen() {
     try {
       await updateProfile({ firstName, lastName, bio, location });
       Alert.alert('Perfil actualizado', 'Tus datos se guardaron correctamente.', [
-        { text: 'OK', onPress: () => router.back() },
+        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err: any) {
       Alert.alert('Error', getUserErrorMessage(err));
@@ -104,7 +105,7 @@ export default function EditProfileScreen() {
     >
       {/* Header */}
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.border }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
+        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Editar Perfil</Text>
